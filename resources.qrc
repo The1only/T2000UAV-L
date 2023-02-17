@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/">
+        <file>del.png</file>
+        <file>eight.png</file>
+        <file>enter.png</file>
+        <file>five.png</file>
+        <file>fore.png</file>
+        <file>frontend.png</file>
+        <file>ident.png</file>
+        <file>ident_off.png</file>
+        <file>ident_on.png</file>
+        <file>nine.png</file>
+        <file>one.png</file>
+        <file>seven.png</file>
+        <file>six.png</file>
+        <file>tree.png</file>
+        <file>two.png</file>
+        <file>zero.png</file>
+    </qresource>
+</RCC>
