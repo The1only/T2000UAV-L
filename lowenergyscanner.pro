@@ -35,6 +35,7 @@ INSTALLS += target
 
 FORMS += \
     mainwindow.ui \
+    mainwindow_small.ui \
     mainwindow_port.ui \
     remoteselector.ui
 
