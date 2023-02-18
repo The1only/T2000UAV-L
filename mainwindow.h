@@ -5,7 +5,7 @@
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow_port; class MainWindow; }
+namespace Ui { class MainWindow_port; class MainWindow; class MainWindow_small; }
 QT_END_NAMESPACE
 
 #include "mytcpsocket.h"
@@ -62,5 +62,6 @@ private slots:
 private:
     Ui::MainWindow_port *ui2;
     Ui::MainWindow *ui;
+    Ui::MainWindow_small *ui_amall;
 };
 #endif // MAINWINDOW_H

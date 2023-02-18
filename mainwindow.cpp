@@ -10,6 +10,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow_port.h"
+#include "ui_mainwindow_small.h"
 #include "ui_mainwindow.h"
 #include "mytcpsocket.h"
 
@@ -30,7 +31,8 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << (s->isPortrait(s->orientation()) ? "orientation portrait" : "orientation not portrait");
         ScreenMode = s->orientation();
         if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
-        if(s->isPortrait(s->orientation())){
+        if(s->isPortrait(s->orientation()))
+        {
             ui2 = new Ui::MainWindow_port;
             ui2->setupUi(this);
             ui2->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
