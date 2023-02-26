@@ -69,11 +69,11 @@ MyTcpSocket::MyTcpSocket(QObject *parent,  QPlainTextEdit *s, void (*retx)(QByte
         QString n = y.portName();
         qDebug() << n;
 
-    //    if(n.contains("tty"))
-    //        this->text->appendPlainText(n);
+      //  if(n.contains("tty"))
+            this->text->appendPlainText(n);
 
-//        if(n.contains("ttyUSB0") || n.contains("tty.usbserial-110"))
-        if(n.contains("tty.ESP32test") || n.contains("tty.usbserial-110"))
+        //        if(n.contains("tty.ESP32test") || n.contains("tty.usbserial-110"))
+        if(n.contains("ttyUSB0") || n.contains("tty.usbserial-110"))
         {
           // if(n.contains("tty.usbserial-110"))
                 sport = "/dev/"+n;
@@ -172,7 +172,7 @@ void MyTcpSocket::doConnect()
     }
 
     // Do we used UDP...?
-    if( (sport == "" || !port->isOpen()) && clients.length() == 0){
+    if( this->isconnected == false && clients.length() == 0){
         socket = new QTcpSocket(this);
         QObject::connect(socket, SIGNAL(connected()),this, SLOT(connected()));
         QObject::connect(socket, SIGNAL(disconnected()),this, SLOT(disconnected()));

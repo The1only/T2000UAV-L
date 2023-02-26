@@ -5,7 +5,7 @@
 #include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow_port; class MainWindow; class MainWindow_small; }
+namespace Ui { class MainWindow_port; class MainWindow; class MainWindow_small; class MainWindow_port_small; }
 QT_END_NAMESPACE
 
 #include "mytcpsocket.h"
@@ -31,7 +31,6 @@ public:
     static void getVal(QByteArray);
     void onResized(int);
     QScreen* getActiveScreen(QWidget* pWidget) const;
-
 
     QQuickView view;
 
@@ -59,9 +58,11 @@ private slots:
     void on_pushButton_norm_clicked();
     void on_pushButton_alt_clicked();
 
-private:
-    Ui::MainWindow_port *ui2;
-    Ui::MainWindow *ui;
-    Ui::MainWindow_small *ui_amall;
+public:
+    int screen_index;
+
+    std::variant<Ui::MainWindow_port_small, Ui::MainWindow_port, Ui::MainWindow_small,Ui::MainWindow > *xxz2;
+    std::variant<Ui::MainWindow_port_small, Ui::MainWindow_port, Ui::MainWindow_small,Ui::MainWindow >getauto();
+
 };
 #endif // MAINWINDOW_H

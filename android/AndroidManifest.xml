@@ -25,4 +25,5 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.USE_PERIPHERAL_IO"/>
 <uses-permission android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
 </manifest>

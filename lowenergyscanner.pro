@@ -3,6 +3,10 @@ INCLUDEPATH += .
 
 QT += quick widgets
 
+
+
+ANDROID_PERMISSIONS += android.permission.WAKE_LOCK
+
 # Input
 SOURCES += main.cpp \
     chatclient.cpp \
@@ -12,7 +16,8 @@ SOURCES += main.cpp \
     remoteselector.cpp
 
 QT += network
-QT += serialport
+android: QT += serialport
+macx: QT += serialport
 QT += sensors
 QT += bluetooth
 
@@ -36,6 +41,7 @@ INSTALLS += target
 FORMS += \
     mainwindow.ui \
     mainwindow_small.ui \
+    mainwindow_port_small.ui \
     mainwindow_port.ui \
     remoteselector.ui
 

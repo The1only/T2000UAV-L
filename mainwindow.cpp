@@ -8,8 +8,10 @@
 #include <cstdio>
 #include <QApplication>
 
+
 #include "mainwindow.h"
 #include "ui_mainwindow_port.h"
+#include "ui_mainwindow_port_small.h"
 #include "ui_mainwindow_small.h"
 #include "ui_mainwindow.h"
 #include "mytcpsocket.h"
@@ -30,104 +32,205 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << (s->isPortrait(s->nativeOrientation()) ? "nativeOrientation portrait" : "nativeOrientation not portrait");
         qDebug() << (s->isPortrait(s->orientation()) ? "orientation portrait" : "orientation not portrait");
         ScreenMode = s->orientation();
+        QSizeF x = s->physicalSize();
+        float Ssize = sqrt(( x.rheight() * x.rheight() ) + ( x.rwidth()* x.rwidth())) / 25.4;
+        qDebug() << "Screen Size: " << x.rheight() << x.rwidth() << Ssize;;
+
         if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
-        if(s->isPortrait(s->orientation()))
-        {
-            ui2 = new Ui::MainWindow_port;
-            ui2->setupUi(this);
-            ui2->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
-            ui2->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
-            mysocket = new MyTcpSocket(this, ui2->plainTextEdit, &this->getVal);
+
+        getauto();
+        // int idx = xxz2->index();
+
+        if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(xxz2)); intPtr) {
+            intPtr->setupUi(this);
+            intPtr->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
+            intPtr->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
+            mysocket = new MyTcpSocket(this, intPtr->plainTextEdit, &this->getVal);
+        //    qDebug() << "Screen Type 1";
         }
-        else{
-            ui = new Ui::MainWindow;
-            ui->setupUi(this);
-            ui->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
-            ui->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
-            mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal);
+        else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(xxz2)); intPtr) {
+            intPtr->setupUi(this);
+            intPtr->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
+            intPtr->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
+            mysocket = new MyTcpSocket(this, intPtr->plainTextEdit, &this->getVal);
+        //    qDebug() << "Screen Type 2";
+        }
+        else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(xxz2)); intPtr) {
+            intPtr->setupUi(this);
+            intPtr->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
+            intPtr->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
+            mysocket = new MyTcpSocket(this, intPtr->plainTextEdit, &this->getVal);
+        //    qDebug() << "Screen Type 3";
+        }
+        else if  (const auto intPtr (std::get_if<Ui::MainWindow>(xxz2)); intPtr) {
+            intPtr->setupUi(this);
+            intPtr->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
+            intPtr->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
+            mysocket = new MyTcpSocket(this, intPtr->plainTextEdit, &this->getVal);
+        //    qDebug() << "Screen Type 4";
         }
     }
     setmode(0);
 
     mysocket->doConnect();
+}
 
+std::variant<Ui::MainWindow_port_small, Ui::MainWindow_port, Ui::MainWindow_small,Ui::MainWindow >MainWindow::getauto()
+{
+    static std::variant < Ui::MainWindow_port_small, Ui::MainWindow_port, Ui::MainWindow_small,Ui::MainWindow > xxz3;
+    QScreen *s = QGuiApplication::primaryScreen();
+    QSizeF x = s->physicalSize();
+    float Ssize = sqrt(( x.rheight() * x.rheight() ) + ( x.rwidth()* x.rwidth())) / 25.4;
+    //   int index = xxz3.index();
+
+    if(s->isPortrait(s->orientation()))
+    {
+        if( Ssize < 7.0)    xxz3 = *new (Ui::MainWindow_port_small);
+        else                xxz3 = *new (Ui::MainWindow_port);
+    }
+    else{
+        if( Ssize < 7.0)    xxz3 = *new (Ui::MainWindow_small);
+        else                xxz3 = *new (Ui::MainWindow);
+    }
+    this->xxz2 = &xxz3;
+    return xxz3;
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+
+    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(xxz2)); intPtr) {
+        Ui::MainWindow_port_small *ui = intPtr;
+        //delete ui;
+    }
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(xxz2)); intPtr) {
+        Ui::MainWindow_port *ui = intPtr;
+        //delete ui;
+    }
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(xxz2)); intPtr) {
+        Ui::MainWindow_small *ui = intPtr;
+        //delete ui;
+    }
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(xxz2)); intPtr) {
+        Ui::MainWindow *ui = intPtr;
+        //delete ui;
+    }
 }
 
 void MainWindow::getVal(QByteArray array)
 {
     static char buffer[30];
     static int pos = 0;
- //   qDebug() << "Reseive: " << array;
+    //   qDebug() << "Reseive: " << array;
 
     for(int i=0; i < array.size();i++){
         if(array.at(i) < 0x1F || pos >= sizeof(buffer)){
-      //    qDebug() << "R: >>buffer;  //m_message);
+            //    qDebug() << "R: >>buffer;  //m_message);
 
             if(pos >= 3){
                 switch (buffer[0]){
                 case 's':
                 {
                     QString x;
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        x = saved_this->ui2->pushButton_off->styleSheet();
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_off->styleSheet();
                         x.replace(QString("1 #561"), QString("1 #888"));
-                        saved_this->ui2->pushButton_off->setStyleSheet(x);
-                        saved_this->ui2->pushButton_norm->setStyleSheet(x);
-                        saved_this->ui2->pushButton_stby->setStyleSheet(x);
-                        saved_this->ui2->pushButton_alt->setStyleSheet(x);
+                        intPtr->pushButton_off->setStyleSheet(x);
+                        intPtr->pushButton_norm->setStyleSheet(x);
+                        intPtr->pushButton_stby->setStyleSheet(x);
+                        intPtr->pushButton_alt->setStyleSheet(x);
                     }
-                    else{
-                        x = saved_this->ui->pushButton_off->styleSheet();
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_off->styleSheet();
                         x.replace(QString("1 #561"), QString("1 #888"));
-                        saved_this->ui->pushButton_off->setStyleSheet(x);
-                        saved_this->ui->pushButton_norm->setStyleSheet(x);
-                        saved_this->ui->pushButton_stby->setStyleSheet(x);
-                        saved_this->ui->pushButton_alt->setStyleSheet(x);
+                        intPtr->pushButton_off->setStyleSheet(x);
+                        intPtr->pushButton_norm->setStyleSheet(x);
+                        intPtr->pushButton_stby->setStyleSheet(x);
+                        intPtr->pushButton_alt->setStyleSheet(x);
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_off->styleSheet();
+                        x.replace(QString("1 #561"), QString("1 #888"));
+                        intPtr->pushButton_off->setStyleSheet(x);
+                        intPtr->pushButton_norm->setStyleSheet(x);
+                        intPtr->pushButton_stby->setStyleSheet(x);
+                        intPtr->pushButton_alt->setStyleSheet(x);
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_off->styleSheet();
+                        x.replace(QString("1 #561"), QString("1 #888"));
+                        intPtr->pushButton_off->setStyleSheet(x);
+                        intPtr->pushButton_norm->setStyleSheet(x);
+                        intPtr->pushButton_stby->setStyleSheet(x);
+                        intPtr->pushButton_alt->setStyleSheet(x);
                     }
                     x.replace(QString("1 #888"), QString("1 #561"));
 
                     switch(buffer[2]){
                     case 'o':
-                        if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                            saved_this->ui2->pushButton_off->setStyleSheet(x);
+                        if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_off->setStyleSheet(x);
                         }
-                        else{
-                            saved_this->ui->pushButton_off->setStyleSheet(x);
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_off->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_off->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_off->setStyleSheet(x);
                         }
                         saved_this->mode = 0;
                         break;
+
                     case 't':
-                        if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                            saved_this->ui2->pushButton_stby->setStyleSheet(x);
+                        if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_stby->setStyleSheet(x);
                         }
-                        else{
-                            saved_this->ui->pushButton_stby->setStyleSheet(x);
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_stby->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_stby->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_stby->setStyleSheet(x);
                         }
                         saved_this->mode = 1;
                         break;
+
                     case 'a':
-                        if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                            saved_this->ui2->pushButton_norm->setStyleSheet(x);
+                        if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_norm->setStyleSheet(x);
                         }
-                        else{
-                            saved_this->ui->pushButton_norm->setStyleSheet(x);
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_norm->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_norm->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_norm->setStyleSheet(x);
                         }
                         saved_this->mode = 2;
                         break;
+
                     case 'c':
-                        if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                            saved_this->ui2->pushButton_alt->setStyleSheet(x);
+                        if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_alt->setStyleSheet(x);
                         }
-                        else{
-                            saved_this->ui->pushButton_alt->setStyleSheet(x);
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_alt->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_alt->setStyleSheet(x);
+                        }
+                        else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                            intPtr->pushButton_alt->setStyleSheet(x);
                         }
                         saved_this->mode = 3;
                         break;
+
                     }
                     break;
                 }
@@ -137,11 +240,17 @@ void MainWindow::getVal(QByteArray array)
                     if (buffer[2] == 'N') state = false;
 
                     QString x;
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        x = saved_this->ui2->pushButton_10->styleSheet();
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_10->styleSheet();
                     }
-                    else{
-                        x = saved_this->ui->pushButton_10->styleSheet();
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_10->styleSheet();
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_10->styleSheet();
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_10->styleSheet();
                     }
 
                     if ( state == false){
@@ -150,14 +259,23 @@ void MainWindow::getVal(QByteArray array)
                         x.replace(QString("1 #900"), QString("1 #090"));
                     }
 
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        saved_this->ui->pushButton_10->setStyleSheet(x);
-                        saved_this->ui->pushButton_10->update();
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_10->setStyleSheet(x);
+                        intPtr->pushButton_10->update();
                     }
-                    else{
-                        saved_this->ui->pushButton_10->setStyleSheet(x);
-                        saved_this->ui->pushButton_10->update();
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_10->setStyleSheet(x);
+                        intPtr->pushButton_10->update();
                     }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_10->setStyleSheet(x);
+                        intPtr->pushButton_10->update();
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_10->setStyleSheet(x);
+                        intPtr->pushButton_10->update();
+                    }
+
                     break;
                 }
                 case 'i':
@@ -167,25 +285,41 @@ void MainWindow::getVal(QByteArray array)
                     else state = true;
 
                     QString x;
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        x = saved_this->ui2->pushButton_Ident->styleSheet();
+
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_Ident->styleSheet();
                     }
-                    else{
-                        x = saved_this->ui->pushButton_Ident->styleSheet();
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_Ident->styleSheet();
                     }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_Ident->styleSheet();
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        x = intPtr->pushButton_Ident->styleSheet();
+                    }
+
                     if ( state == false){
                         x.replace(QString("1 #561"), QString("1 #953"));
                     }else{
                         x.replace(QString("1 #953"), QString("1 #561"));
                     }
 
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        saved_this->ui->pushButton_Ident->setStyleSheet(x);
-                        saved_this->ui->pushButton_Ident->update();
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_Ident->setStyleSheet(x);
+                        intPtr->pushButton_Ident->update();
                     }
-                    else{
-                        saved_this->ui->pushButton_Ident->setStyleSheet(x);
-                        saved_this->ui->pushButton_Ident->update();
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_Ident->setStyleSheet(x);
+                        intPtr->pushButton_Ident->update();
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_Ident->setStyleSheet(x);
+                        intPtr->pushButton_Ident->update();
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        intPtr->pushButton_Ident->setStyleSheet(x);
+                        intPtr->pushButton_Ident->update();
                     }
                     break;
                 }
@@ -201,19 +335,33 @@ void MainWindow::getVal(QByteArray array)
                     saved_this->current[2]=numout[2]-0x30;
                     saved_this->current[1]=numout[1]-0x30;
                     saved_this->current[0]=numout[0]-0x30;
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        saved_this->ui2->lcdNumber->display(QString::number(saved_this->current[0]*1000+
-                                                            saved_this->current[1]*100+
-                                saved_this->current[2]*10+
-                                saved_this->current[3]).rightJustified(4, '0'));
+
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber->display(QString::number( saved_this->current[0]*1000+
+                                                                    saved_this->current[1]*100+
+                                                                    saved_this->current[2]*10+
+                                                                    saved_this->current[3]).rightJustified(4, '0'));
                     }
-                    else{
-                        saved_this->ui->lcdNumber->display(QString::number(saved_this->current[0]*1000+
-                                                           saved_this->current[1]*100+
-                                saved_this->current[2]*10+
-                                saved_this->current[3]).rightJustified(4, '0'));
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber->display(QString::number( saved_this->current[0]*1000+
+                                                                    saved_this->current[1]*100+
+                                                                    saved_this->current[2]*10+
+                                                                    saved_this->current[3]).rightJustified(4, '0'));
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber->display(QString::number( saved_this->current[0]*1000+
+                                                                    saved_this->current[1]*100+
+                                                                    saved_this->current[2]*10+
+                                                                    saved_this->current[3]).rightJustified(4, '0'));
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber->display(QString::number( saved_this->current[0]*1000+
+                                                                    saved_this->current[1]*100+
+                                                                    saved_this->current[2]*10+
+                                                                    saved_this->current[3]).rightJustified(4, '0'));
                     }
                     break;
+
                 }
                 case 'a':
                 {
@@ -224,25 +372,39 @@ void MainWindow::getVal(QByteArray array)
                     for (unsigned long key=0; key < strlen(buffer); key++) if(buffer[key]=='M') {number*=3.2808399; break;}
                     sprintf(numout,"%.4d",(int)number);
 
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        saved_this->ui2->lcdNumber_3->display(numout);
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber_3->display(numout);
                     }
-                    else{
-                        saved_this->ui->lcdNumber_3->display(numout);
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber_3->display(numout);
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber_3->display(numout);
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        intPtr->lcdNumber_3->display(numout);
                     }
                     break;
+
                 }
                 case 'z':
                 {
                     qDebug() << "T: %s\r\n" << &buffer[2];
 
-                    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                        saved_this->ui2->plainTextEdit->appendPlainText(&buffer[2]);
+                    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->plainTextEdit->appendPlainText(&buffer[2]);
                     }
-                    else{
-                        saved_this->ui->plainTextEdit->appendPlainText(&buffer[2]);
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {
+                        intPtr->plainTextEdit->appendPlainText(&buffer[2]);
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {
+                        intPtr->plainTextEdit->appendPlainText(&buffer[2]);
+                    }
+                    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {
+                        intPtr->plainTextEdit->appendPlainText(&buffer[2]);
                     }
                     break;
+
                 }
                 }
             }
@@ -286,11 +448,18 @@ void MainWindow::addnext(int x)
     this->next[3]=x;
 
     QString num = QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0');
-    if(saved_this->ScreenMode == Qt::PortraitOrientation){
-        ui2->lcdNumber_2->display( num);
+
+    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(xxz2)); intPtr) {
+        intPtr->lcdNumber_2->display( num);
     }
-    else{
-        ui->lcdNumber_2->display( num);
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(xxz2)); intPtr) {
+        intPtr->lcdNumber_2->display( num);
+    }
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(xxz2)); intPtr) {
+        intPtr->lcdNumber_2->display( num);
+    }
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(xxz2)); intPtr) {
+        intPtr->lcdNumber_2->display( num);
     }
 }
 
@@ -335,8 +504,8 @@ void MainWindow::on_pushButton_16_clicked()
 
     char data[100];
     sprintf(data,"c=%d\r\n",this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]);
-//    QString num = QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]);
-//    QString msg = QString("c=%1\r\n").arg(num);
+    //    QString num = QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]);
+    //    QString msg = QString("c=%1\r\n").arg(num);
     qDebug() << data;
     mysocket->readyWrite(data);
 
@@ -351,11 +520,18 @@ void MainWindow::on_pushButton_18_clicked()
     for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
         if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost){
             qDebug() << address.toString();
-            if(saved_this->ScreenMode == Qt::PortraitOrientation){
-                ui2->plainTextEdit->appendPlainText(address.toString());
+
+            if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(xxz2)); intPtr) {
+                intPtr->plainTextEdit->appendPlainText(address.toString());
             }
-            else{
-                ui->plainTextEdit->appendPlainText(address.toString());
+            else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(xxz2)); intPtr) {
+                intPtr->plainTextEdit->appendPlainText(address.toString());
+            }
+            else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(xxz2)); intPtr) {
+                intPtr->plainTextEdit->appendPlainText(address.toString());
+            }
+            else if  (const auto intPtr (std::get_if<Ui::MainWindow>(xxz2)); intPtr) {
+                intPtr->plainTextEdit->appendPlainText(address.toString());
             }
         }
     }

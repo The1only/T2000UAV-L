@@ -41,10 +41,10 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>130</x>
       <y>20</y>
-      <width>111</width>
-      <height>111</height>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -60,10 +60,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>240</x>
       <y>20</y>
-      <width>111</width>
-      <height>111</height>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -79,10 +79,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_3">
     <property name="geometry">
      <rect>
-      <x>250</x>
+      <x>350</x>
       <y>20</y>
-      <width>111</width>
-      <height>111</height>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -98,10 +98,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_4">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>140</y>
-      <width>111</width>
-      <height>111</height>
+      <x>460</x>
+      <y>20</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -117,10 +117,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_5">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>140</y>
-      <width>111</width>
-      <height>111</height>
+      <x>20</x>
+      <y>130</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -136,10 +136,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_6">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>140</y>
-      <width>111</width>
-      <height>111</height>
+      <x>130</x>
+      <y>130</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -155,10 +155,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_7">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>260</y>
-      <width>111</width>
-      <height>111</height>
+      <x>240</x>
+      <y>130</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -174,10 +174,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_8">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>260</y>
-      <width>111</width>
-      <height>111</height>
+      <x>350</x>
+      <y>130</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -193,10 +193,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_9">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>260</y>
-      <width>111</width>
-      <height>111</height>
+      <x>460</x>
+      <y>130</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -214,13 +214,13 @@ background-color: rgb(49, 49, 49);
      <rect>
       <x>10</x>
       <y>830</y>
-      <width>111</width>
+      <width>91</width>
       <height>71</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>24</pointsize>
+      <pointsize>21</pointsize>
       <bold>true</bold>
      </font>
     </property>
@@ -248,7 +248,7 @@ padding: 5px;
    <widget class="QPushButton" name="pushButton_stby">
     <property name="geometry">
      <rect>
-      <x>250</x>
+      <x>230</x>
       <y>830</y>
       <width>111</width>
       <height>71</height>
@@ -256,7 +256,7 @@ padding: 5px;
     </property>
     <property name="font">
      <font>
-      <pointsize>35</pointsize>
+      <pointsize>30</pointsize>
       <bold>true</bold>
      </font>
     </property>
@@ -283,7 +283,7 @@ padding: 5px;
    <widget class="QPushButton" name="pushButton_norm">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>350</x>
       <y>830</y>
       <width>111</width>
       <height>71</height>
@@ -291,7 +291,7 @@ padding: 5px;
     </property>
     <property name="font">
      <font>
-      <pointsize>35</pointsize>
+      <pointsize>26</pointsize>
       <bold>true</bold>
      </font>
     </property>
@@ -311,21 +311,21 @@ padding: 5px;
 </string>
     </property>
     <property name="text">
-     <string>Norm</string>
+     <string>Mode A</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_alt">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>480</x>
       <y>830</y>
-      <width>101</width>
+      <width>111</width>
       <height>71</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>35</pointsize>
+      <pointsize>26</pointsize>
       <bold>true</bold>
      </font>
     </property>
@@ -345,7 +345,7 @@ padding: 5px;
 </string>
     </property>
     <property name="text">
-     <string>Alt</string>
+     <string>Mode C</string>
     </property>
    </widget>
    <widget class="QLCDNumber" name="lcdNumber">
@@ -378,10 +378,10 @@ padding: 5px;
    <widget class="QPushButton" name="pushButton_16">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>380</y>
-      <width>111</width>
-      <height>111</height>
+      <x>20</x>
+      <y>240</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -397,10 +397,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_17">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>380</y>
-      <width>111</width>
-      <height>111</height>
+      <x>20</x>
+      <y>20</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -416,10 +416,10 @@ background-color: rgb(49, 49, 49);
    <widget class="QPushButton" name="pushButton_18">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>380</y>
-      <width>111</width>
-      <height>111</height>
+      <x>130</x>
+      <y>240</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -435,8 +435,8 @@ background-color: rgb(49, 49, 49);
    <widget class="QLCDNumber" name="lcdNumber_2">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>410</y>
+      <x>20</x>
+      <y>340</y>
       <width>221</width>
       <height>131</height>
      </rect>
@@ -459,44 +459,10 @@ background-color: rgb(49, 49, 49);
      <number>8888</number>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_19">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>500</y>
-      <width>71</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>24</pointsize>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton {
-background-color: rgb(255, 166, 20);
-border: 2px solid #555;
-border-radius: 40px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.5, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #557
-);
-padding: 5px;
-}
-
-</string>
-    </property>
-    <property name="text">
-     <string>Exit</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="pushButton_Ident">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>110</x>
       <y>830</y>
       <width>111</width>
       <height>71</height>
@@ -531,8 +497,8 @@ padding: 5px;
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>320</x>
-      <y>530</y>
+      <x>190</x>
+      <y>470</y>
       <width>41</width>
       <height>21</height>
      </rect>
@@ -575,16 +541,16 @@ padding: 5px;
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>20</y>
-      <width>221</width>
-      <height>381</height>
+      <x>250</x>
+      <y>240</y>
+      <width>321</width>
+      <height>241</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>Times New Roman</family>
-      <pointsize>22</pointsize>
+      <pointsize>30</pointsize>
      </font>
     </property>
     <property name="currentIndex">
@@ -597,8 +563,8 @@ padding: 5px;
      <widget class="QLabel" name="label_2">
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>110</y>
+        <x>250</x>
+        <y>140</y>
         <width>51</width>
         <height>31</height>
        </rect>
@@ -620,9 +586,9 @@ padding: 5px;
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
-        <width>221</width>
-        <height>111</height>
+        <y>10</y>
+        <width>301</width>
+        <height>131</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -651,8 +617,8 @@ padding: 5px;
        <rect>
         <x>10</x>
         <y>0</y>
-        <width>201</width>
-        <height>341</height>
+        <width>281</width>
+        <height>191</height>
        </rect>
       </property>
       <property name="font">
@@ -675,6 +641,40 @@ padding: 5px;
      <attribute name="title">
       <string>Config</string>
      </attribute>
+     <widget class="QPushButton" name="pushButton_19">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>50</y>
+        <width>151</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>24</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+background-color: rgb(255, 166, 20);
+border: 2px solid #555;
+border-radius: 40px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.5, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #557
+);
+padding: 5px;
+}
+
+</string>
+      </property>
+      <property name="text">
+       <string>Exit</string>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QPushButton" name="pushButton_10">
@@ -682,7 +682,7 @@ padding: 5px;
      <rect>
       <x>230</x>
       <y>501</y>
-      <width>41</width>
+      <width>151</width>
       <height>41</height>
      </rect>
     </property>
