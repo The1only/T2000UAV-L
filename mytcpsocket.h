@@ -22,12 +22,14 @@ class MyTcpSocket : public QObject
 {
     Q_OBJECT
 public:
-    explicit MyTcpSocket(QObject *parent = 0, QPlainTextEdit *s=NULL, void(*)(QByteArray) = NULL);
+    explicit MyTcpSocket(QObject *parent = 0, QPlainTextEdit *s=NULL, void(*)(QByteArray) = NULL, void(*)(QByteArray) = NULL);
     void readyWrite(char *data);
     void doConnect();
+    void (*ret_lidar)(QByteArray);
     void (*ret)(QByteArray);
-
+    int com_setup(QSerialPort *com_port, QString sport);
     QSerialPort *port = NULL;
+    QSerialPort *lidar = NULL;
     QString sport = "";
     QList<QSerialPortInfo> serialport;
     QPlainTextEdit *text = NULL;

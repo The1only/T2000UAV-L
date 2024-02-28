@@ -16,23 +16,24 @@
 
 #include "mytcpsocket.h"
 
-//static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
-static const QLatin1String serviceUuid("00001101-0000-1000-8000-00805f9b34fb");
-//static const QLatin1String serviceUuid("00001124-0000-1000-8000-00805f9b34fb");
-//static const QLatin1String serviceUuid(  "C586467F-B255-5170-2F3F-63FDA1AE3AF7");
-
-#ifdef Q_OS_ANDROID
+//#ifdef Q_OS_ANDROID
 //static const QLatin1String reverseUuid("c8e96402-0102-cf9c-274b-701a950fe1e8");
 static const QLatin1String reverseUuid("00001101-0000-1000-8000-00805f9b34fb");
 //static const QLatin1String reverseUuid("bf43b9f5-0800-0008-0001-000010110000");
 //static const QLatin1String reverseUuid("bf43b9f5-0800-0008-0001-000042110000");
 //static const QLatin1String serviceUuid(  "7FA3EA1A-DF63-F32F-0715-552BF764685C");
-#endif
+//#else
+static const QLatin1String serviceUuid("00001101-0000-1000-8000-00805f9b34fb");
+//static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
+//static const QLatin1String serviceUuid("00001124-0000-1000-8000-00805f9b34fb");
+//static const QLatin1String serviceUuid(  "C586467F-B255-5170-2F3F-63FDA1AE3AF7");
+//#endif
 
-MyTcpSocket::MyTcpSocket(QObject *parent,  QPlainTextEdit *s, void (*retx)(QByteArray)) :
+MyTcpSocket::MyTcpSocket(QObject *parent,  QPlainTextEdit *s, void (*retx)(QByteArray), void (*rety)(QByteArray)) :
     QObject(parent)
 {
-    this->ret = retx;
+    this->ret = retx; // callback function with data...
+    this->ret_lidar = rety;
     this->text = s;
 
     localAdapters = QBluetoothLocalDevice::allDevices();
@@ -62,38 +63,79 @@ MyTcpSocket::MyTcpSocket(QObject *parent,  QPlainTextEdit *s, void (*retx)(QByte
     localName = QBluetoothLocalDevice().name();
     //! [Get local device name]
 
-
     this->serialport = QSerialPortInfo::availablePorts();
     for (QSerialPortInfo y : this->serialport)
     {
         QString n = y.portName();
-        qDebug() << n;
 
-      //  if(n.contains("tty"))
-            this->text->appendPlainText(n);
-
+        if(n.contains("tty")){
+            if(!n.contains("ttyG") && !n.contains("ttyS")){
+                this->text->appendPlainText(n);
+            }
+        }
+        if(n.contains("ttyACM0")){
+            this->text->appendPlainText("Using this port for LIDAR...");
+            if(this->com_setup(this->lidar,"/dev/"+n)){
+                QObject::connect(this->port, &QSerialPort::readyRead, [this](){ this->ret(this->lidar->readAll());});
+            }
+            else{
+                this->lidar = 0;
+            }
+        }
         //        if(n.contains("tty.ESP32test") || n.contains("tty.usbserial-110"))
-        if(n.contains("ttyUSB0") || n.contains("tty.usbserial-110"))
-        {
-          // if(n.contains("tty.usbserial-110"))
-                sport = "/dev/"+n;
-          // else
-            //    sport = n;
-
+        if(n.contains("ttyUSB0") || n.contains("tty.usbserial-110") || n.contains("SH-B30")){
             this->text->appendPlainText("Using this port: ");
             this->text->appendPlainText(sport);
+            sport = "/dev/"+n;
+            qDebug() << "Will use port: " + sport;
         }
     }
 }
 
 void MyTcpSocket::showMessage(const QString &sender, const QString &message) const
 {
-    qDebug() << "From: " << sender << " received: " << message;
+//    qDebug() << "From: " << sender << " received: " << message;
     QByteArray tmp = message.toUtf8();
     tmp.append('\0');
     this->ret(tmp);
 }
 
+
+void MyTcpSocket::doAlt()
+{
+    static int state=0;
+
+    if(this->isconnected == true){
+        switch(state){
+        case 0:
+            this->readyWrite((char*)"v=1\r\n");
+            break;
+        case 1:
+            this->readyWrite((char*)"z=?\r\n");
+            break;
+        case 2:
+            this->readyWrite((char*)"a=?\r\n");
+            break;
+        case 3:
+            this->readyWrite((char*)"c=?\r\n");
+            break;
+        case 4:
+            this->readyWrite((char*)"s=?\r\n");
+            break;
+        case 5:
+            this->readyWrite((char*)"i=?\r\n");
+            break;
+        case 6:
+            this->readyWrite((char*)"r=y\r\n");
+            break;
+        }
+
+        if(++state > 6){
+            state = 2;
+        }
+    }
+//    timerAlt->start(250);
+}
 
 void MyTcpSocket::doConnect()
 { 
@@ -148,27 +190,12 @@ void MyTcpSocket::doConnect()
     if(sport != "" && clients.length() == 0)
     {
         qDebug() << "Opening port: " << sport;
-        port = new QSerialPort(sport);
-        this->text->appendPlainText("Opening port...");
-
-        port->setBaudRate(QSerialPort::Baud9600);
-        port->setDataBits(QSerialPort::Data8);
-        port->setStopBits(QSerialPort::OneStop);
-        port->setParity(QSerialPort::NoParity);
-        port->setFlowControl(QSerialPort::NoFlowControl);
-
-        QObject::connect(port, &QSerialPort::bytesWritten, [](qint64 bytes){ qDebug() << bytes << " bytes written...";});
-        QObject::connect(port, &QSerialPort::readyRead, [this](){ this->ret(this->port->readAll());});
-        QObject::connect(port, &QSerialPort::errorOccurred, [](QSerialPort::SerialPortError error){ qDebug() << error; });
-
-        if (port->open(QSerialPort::OpenModeFlag::ReadWrite))
+        if(this->com_setup(port,sport))
         {
-            this->text->appendPlainText("Port open...");
+            QObject::connect(this->port, &QSerialPort::readyRead, [this](){ this->ret(this->port->readAll());});
             timerAlt->start(500);
             this->isconnected = true;
         }
-        qDebug() <<  port->error();
-        this->text->appendPlainText(port->errorString());
     }
 
     // Do we used UDP...?
@@ -189,6 +216,30 @@ void MyTcpSocket::doConnect()
     }
 }
 
+int MyTcpSocket::com_setup(QSerialPort *com_port, QString c_port)
+{
+    com_port = new QSerialPort(c_port);
+    this->text->appendPlainText("Opening port...");
+
+    com_port->setBaudRate(QSerialPort::Baud9600);
+    com_port->setDataBits(QSerialPort::Data8);
+    com_port->setStopBits(QSerialPort::OneStop);
+    com_port->setParity(QSerialPort::NoParity);
+    com_port->setFlowControl(QSerialPort::NoFlowControl);
+
+    QObject::connect(com_port, &QSerialPort::bytesWritten, [](qint64 bytes){ qDebug() << bytes << " bytes written...";});
+    QObject::connect(com_port, &QSerialPort::errorOccurred, [](QSerialPort::SerialPortError error){ qDebug() << error; });
+
+    if (com_port->open(QSerialPort::OpenModeFlag::ReadWrite))
+    {
+        this->text->appendPlainText("Port open...");
+        return 1;
+    }
+    qDebug() <<  com_port->error();
+    this->text->appendPlainText(com_port->errorString());
+    return 0;
+}
+
 void MyTcpSocket::reactOnSocketError(const QString &error)
 {
      qDebug() << error;
@@ -203,45 +254,9 @@ void MyTcpSocket::clientDisconnected()
     }
 }
 
-void MyTcpSocket::doAlt()
-{
-    static int state=0;
-
-    if(this->isconnected == true){
-        switch(state){
-        case 0:
-            this->readyWrite("v=1\r\n");
-            break;
-        case 1:
-            this->readyWrite("z=?\r\n");
-            break;
-        case 2:
-            this->readyWrite("a=?\r\n");
-            break;
-        case 3:
-            this->readyWrite("c=?\r\n");
-            break;
-        case 4:
-            this->readyWrite("s=?\r\n");
-            break;
-        case 5:
-            this->readyWrite("i=?\r\n");
-            break;
-        case 6:
-            this->readyWrite("r=?\r\n");
-            break;
-        }
-
-        if(++state > 6){
-            state = 2;
-        }
-    }
-//    timerAlt->start(250);
-}
-
 void MyTcpSocket::doWork()
 {
-    qDebug() << "connecting...";
+    qDebug() << "connecting...!";
 
     // this is not blocking call
     socket->connectToHost("0.0.0.0", 6000);
@@ -272,8 +287,9 @@ void MyTcpSocket::disconnected()
 
 void MyTcpSocket::readyWrite(char *data)
 {
-    if(this->isconnected == true){
-
+    if(this->isconnected == true)
+    {
+        qDebug() << "Sending: " << data;
         if(socket)
         {
             if(this->isconnected == true)

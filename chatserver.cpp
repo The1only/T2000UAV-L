@@ -109,10 +109,12 @@ void ChatServer::stopServer()
 //! [sendMessage]
 void ChatServer::sendMessage(const QString &message)
 {
+
     QByteArray text = message.toUtf8() + '\n';
 
     for (QBluetoothSocket *socket : std::as_const(clientSockets))
         socket->write(text);
+
 }
 //! [sendMessage]
 

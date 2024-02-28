@@ -106,7 +106,7 @@
      <string notr="true">color: rgb(155, 155, 155);</string>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab_4">
      <attribute name="title">
@@ -392,6 +392,64 @@ background-color: rgb(49, 49, 49);
        <number>88888</number>
       </property>
      </widget>
+     <widget class="QPushButton" name="pushButton_12">
+      <property name="geometry">
+       <rect>
+        <x>189</x>
+        <y>220</y>
+        <width>121</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #000;
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+
+</string>
+      </property>
+      <property name="text">
+       <string>Meter</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_13">
+      <property name="geometry">
+       <rect>
+        <x>39</x>
+        <y>221</y>
+        <width>121</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #000;
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+
+</string>
+      </property>
+      <property name="text">
+       <string>Feet</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
@@ -471,7 +529,7 @@ padding: 5px;
       </property>
       <property name="font">
        <font>
-        <pointsize>30</pointsize>
+        <pointsize>22</pointsize>
         <bold>true</bold>
        </font>
       </property>
@@ -492,7 +550,7 @@ padding: 5px;
 </string>
       </property>
       <property name="text">
-       <string>Refresh</string>
+       <string>HW check</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_Ident">
@@ -554,7 +612,7 @@ border-radius: 30px;
 border-style: outset;
 background: qradialgradient(
 cx: 0.5, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #090
+radius: 1.35, stop: 0 #fff, stop: 1 #2F0
 );
 padding: 5px;
 }
@@ -640,9 +698,9 @@ padding: 5px;
     <property name="geometry">
      <rect>
       <x>270</x>
-      <y>550</y>
-      <width>71</width>
-      <height>61</height>
+      <y>530</y>
+      <width>81</width>
+      <height>31</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -665,7 +723,7 @@ padding: 5px;
      <string/>
     </property>
     <property name="checkable">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QLCDNumber" name="lcdNumber_2">
@@ -717,12 +775,103 @@ padding: 5px;
      <string>Next</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_11">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>570</y>
+      <width>81</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+background-color: rgb(0, 0, 0);
+border: 2px solid #505;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.5, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #900
+);
+padding: 5px;
+}
+
+
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_14">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>610</y>
+      <width>81</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+background-color: rgb(255, 166, 20);
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.5, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #0F0
+);
+padding: 5px;
+}
+
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_15">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>630</y>
+      <width>81</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+background-color: rgb(255, 166, 20);
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.5, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #00F
+);
+padding: 5px;
+}
+
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
    <zorder>lcdNumber</zorder>
    <zorder>tabWidget</zorder>
    <zorder>pushButton_10</zorder>
    <zorder>lcdNumber_2</zorder>
    <zorder>label</zorder>
    <zorder>label_3</zorder>
+   <zorder>pushButton_11</zorder>
+   <zorder>pushButton_14</zorder>
+   <zorder>pushButton_15</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar">
    <property name="sizeGripEnabled">

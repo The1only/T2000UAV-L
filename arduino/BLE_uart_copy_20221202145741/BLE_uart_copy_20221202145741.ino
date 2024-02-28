@@ -1,4 +1,4 @@
-#define T10_V20
+//#define T10_V20
 
 #include <SPI.h>
 
@@ -71,6 +71,9 @@ int mode = 4;
 int alt = 0;
 int squak = 7000;
 int pos = 30;
+bool Annunciator = false;
+bool ping = false;
+bool hwcheck = false;
 
 uint8_t inputbuff[100];
 int inputpos = 0;
@@ -110,15 +113,21 @@ void BTAuthCompleteCallback(boolean success) {
 }
 
 void playSound(void) {
+#if defined(T10_V20)
   ledcWriteTone(CHANNEL_0, 1000);
   delay(200);
   ledcWriteTone(CHANNEL_0, 0);
+#else
+  digitalWrite(TFT_BL, HIGH);
+  delay(200);
+  digitalWrite(TFT_BL, LOW);
+#endif
 }
 
 void setup() {
   pinMode(BUZZER, OUTPUT);
-  ledcSetup(CHANNEL_0, 1000, 8);
-  ledcAttachPin(BUZZER, CHANNEL_0);
+//  ledcSetup(CHANNEL_0, 1000, 8);
+//  ledcAttachPin(BUZZER, CHANNEL_0);
 
   pinMode(RXD2, INPUT_PULLUP);
   pinMode(TXD2, OUTPUT);
@@ -178,7 +187,7 @@ void setup() {
   }
 
   display.clearDisplay();
-  display.setRotation(2);
+  display.setRotation(0);
   display.setTextColor(WHITE);
   display.setCursor(0, 23);
   display.setTextSize(2);
@@ -194,6 +203,8 @@ void setup() {
 
   Serial.println("Waiting a client connection to notify...");
   delay(1000);
+  playSound();
+  delay(100);
   playSound();
 
 #if defined(T10_V20)
@@ -217,11 +228,13 @@ int old_ser_inn = 0;
 int m_ser = 2;
 int pos_ser = 0;
 
+int timout = 10;
+
 void loop() {
 
   // While we are not connected... Get some values to display in the OLED...
   if (confirmRequestPending) {
-    if (wait++ > 100000) {
+    if (wait++ > 80000) {
       wait = 0;
 
       switch (state) {
@@ -237,13 +250,18 @@ void loop() {
           break;
         case 3:
           Serial1.println("a=?\r\n");
-        //  SerialBT.println("a=1050\r\n");
           break;
         case 4:
+          Serial1.println("i=?\r\n");
+          break;
+        case 5:
           Serial1.println("s=?\r\n");
           break;
+        case 6:
+          Serial1.println("r=y\r\n");
+          break;
       }
-      if (++state > 4) state = 2;
+      if (++state > 6) state = 2;
     }
   }
 
@@ -254,32 +272,51 @@ void loop() {
   if (send++ > 50000) {
     send = 0;
     Dodisplay = true;
+
+    // If we loose connection to bluetooth...
+    if( timout++ > 10){
+      timout= 10;
+      confirmRequestPending = true;
+    }
   }
 
   if (Serial1.available()) {
     ser_inn++;
     inputbuff[inputpos] = Serial1.read();
     if (Debug) Serial.write(inputbuff[inputpos]);
-    inputpos += 1;
 
-    if (inputbuff[inputpos - 1] < 0x1F || inputpos >= 20) {
-      if (inputpos >= 3) {
-        inputbuff[inputpos - 1] = '\n';
-        inputbuff[inputpos] = 0;
-        if (!confirmRequestPending) {
-          SerialBT.println((char *)inputbuff);
+    if (inputbuff[inputpos] == '*')
+    {
+      ping = true;
+      SerialBT.println("*");
+      playSound();
+    }
+    else{
+      inputpos += 1;
+
+      if (inputbuff[inputpos - 1] < 0x1F || inputpos >= 20) {
+        if (inputpos >= 3) {
+          inputbuff[inputpos - 1] = '\n';
+          inputbuff[inputpos] = 0;
+          if (!confirmRequestPending) {
+            SerialBT.println((char *)inputbuff);
+          }
+//          if (Debug) Serial.println((char *)inputbuff);
+          if (inputbuff[0] == 'i' && inputbuff[1] == '=' && inputbuff[2] == '1') { ident = true; }
+          if (inputbuff[0] == 'i' && inputbuff[1] == '=' && inputbuff[2] == '0') { ident = false; }
+          if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 'o') { mode = 0; }
+          if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 't') { mode = 1; }
+          if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 'a') { mode = 2; }
+          if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 'c') { mode = 3; }
+          if (inputbuff[0] == 'a' && inputbuff[1] == '=') { sscanf((const char *)&inputbuff[2], "%d", &alt); }
+          if (inputbuff[0] == 'c' && inputbuff[1] == '=') { sscanf((const char *)&inputbuff[2], "%d", &squak); }
+          if (inputbuff[0] == 'r' && inputbuff[1] == '=' && inputbuff[2] == 'Y') { Annunciator = true; }
+          if (inputbuff[0] == 'r' && inputbuff[1] == '=' && inputbuff[2] == 'N') { Annunciator = false; }
+          if (inputbuff[0] == 'p' && inputbuff[1] == '=' && inputbuff[2] == 'Y') { hwcheck = true; }
+          if (inputbuff[0] == 'p' && inputbuff[1] == '=' && inputbuff[2] == 'N') { hwcheck = false; }
         }
-        if (Debug) Serial.println((char *)inputbuff);
-        if (inputbuff[0] == 'i' && inputbuff[1] == '=' && inputbuff[2] == '1') { ident = true; }
-        if (inputbuff[0] == 'i' && inputbuff[1] == '=' && inputbuff[2] == '0') { ident = false; }
-        if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 'o') { mode = 0; }
-        if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 't') { mode = 1; }
-        if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 'a') { mode = 2; }
-        if (inputbuff[0] == 's' && inputbuff[1] == '=' && inputbuff[2] == 'c') { mode = 3; }
-        if (inputbuff[0] == 'a' && inputbuff[1] == '=') { sscanf((const char *)&inputbuff[2], "%d", &alt); }
-        if (inputbuff[0] == 'c' && inputbuff[1] == '=') { sscanf((const char *)&inputbuff[2], "%d", &squak); }
+        inputpos = 0;
       }
-      inputpos = 0;
     }
   }
 
@@ -314,10 +351,12 @@ void loop() {
 
     tft.setTextSize(1);
     tft.setCursor(100, 52);
-    //      sprintf(buff, "%.5d", pC1Characteristic->back->ID);
+    sprintf(buff, "Ann: %d", Annunciator);
+
     tft.print(buff);
     tft.setCursor(100, 65);
-    //      sprintf(buff, "%.5d", pC2Characteristic->back->ID);
+    sprintf(buff, "HwC: %d", hwcheck);
+
     tft.print(buff);
     tft.setTextSize(1);
 
@@ -403,18 +442,20 @@ void loop() {
 
     display.setTextSize(1);
     display.setCursor(90, 42);
-    //      sprintf(buff, "%.5d", pC1Characteristic->back->ID);
+    sprintf(buff, "Ann: %d", Annunciator);
+
     display.print(buff);
     display.setCursor(90, 53);
-    //      sprintf(buff, "%.5d", pC2Characteristic->back->ID);
+    sprintf(buff, "HwC: %d", hwcheck);
+
     display.print(buff);
     display.setTextSize(1);
-
+/*
     float x = (((float)pos / 100.0) * 64.0) + 64.0;
     tft.drawFastVLine((int)x - 1, 56, 6, TFT_BLACK);
     display.drawFastVLine((int)x, 56, 6, TFT_BLACK);
     tft.drawFastVLine((int)x + 1, 56, 6, TFT_BLACK);
-
+*/
     pos+=m;
     if(pos >  100) m= -2;
     if(pos < -100) m=  2;
@@ -485,6 +526,8 @@ void loop() {
   if (SerialBT.available()) {
     bt_inn++;
     confirmRequestPending = false;
+    timout = 0;
+    
     uint8_t r = SerialBT.read();
     Serial1.write(r);
     if (Debug) Serial.write(r);
