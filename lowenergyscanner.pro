@@ -1,9 +1,8 @@
 TARGET = wlanscanner
 INCLUDEPATH += .
 
-QT += quick widgets
-
-
+QT += quick widgets charts
+C
 
 ANDROID_PERMISSIONS += android.permission.WAKE_LOCK
 
@@ -15,11 +14,16 @@ SOURCES += main.cpp \
     mytcpsocket.cpp \
     remoteselector.cpp
 
-QT += network
 android: QT += serialport
 macx: QT += serialport
-QT += sensors
-QT += bluetooth
+
+android {
+    QT += network
+    QT += sensors
+    QT += bluetooth
+}
+
+CONFIG += mobility
 
 ios: QMAKE_INFO_PLIST = Info.plist
 macos: QMAKE_INFO_PLIST = Info.qmake.macos.plist
