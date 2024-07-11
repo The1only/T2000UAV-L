@@ -7,6 +7,7 @@
 //#include <iostream>
 #include <cstdio>
 #include <QApplication>
+#include <QElapsedTimer>
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QSplineSeries>
@@ -19,11 +20,6 @@
 #include "mytcpsocket.h"
 
 static MainWindow *saved_this;
-
-template<class T>
-T clone(const T& orig) {
-    return T{orig};
-}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -58,6 +54,22 @@ MainWindow::MainWindow(QWidget *parent)
         ui->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
         ui->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
         mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->getLidar);
+        mysocket->doConnect();
+
+        // Whenever the location data source signals that the current
+        // position is updated, the positionUpdated function is called.
+#ifdef Q_OS_ANDROID
+        this->m_geoPositionInfo = QGeoPositionInfoSource::createDefaultSource(this);
+        if (this->m_geoPositionInfo)
+        {
+            connect(m_geoPositionInfo,SIGNAL(positionUpdated(QGeoPositionInfo)),this,SLOT(positionUpdated(QGeoPositionInfo)));
+            // Start listening for position updates
+            m_geoPositionInfo->setUpdateInterval(200);
+            m_geoPositionInfo->startUpdates();
+        }
+        this->m_compass_sensor = new QCompass();
+        connect(m_compass_sensor, SIGNAL(readingChanged()), this, SLOT(onCompassReadingChanged()));
+        m_compass_sensor->start();
 
         this->m_pressure_sensor = new QPressureSensor();
         connect(m_pressure_sensor, SIGNAL(readingChanged()), this, SLOT(onPressureReadingChanged()));
@@ -67,53 +79,109 @@ MainWindow::MainWindow(QWidget *parent)
         connect(m_rotation_sensor, SIGNAL(readingChanged()), this, SLOT(onRotationReadingChanged()));
         m_rotation_sensor->start();
 
+        QList<QSensor*> mySensorList;
+        for (const QByteArray &type : QSensor::sensorTypes()) {
+            qDebug() << "Found a sensor type:" << type;
+            for (const QByteArray &identifier : QSensor::sensorsForType(type)) {
+                qDebug() << "    " << "Found a sensor of that type:" << identifier;
+                QSensor* sensor = new QSensor(type, this);
+                sensor->setIdentifier(identifier);
+                mySensorList.append(sensor);
+            }
+        }
+#endif
         ui->plainTextEdit->appendPlainText("Transponder 200-UAV v1.01a");
 
     }
+    qDebug() << "  setmode  ";
     setmode(0);
 
-    mysocket->doConnect();
-
+    qDebug() << "  m_timer  ";
     m_timer.start();
     m_Clock = new QTimer(this);
     m_Clock->setSingleShot(false);
     connect(m_Clock, SIGNAL(timeout()), this, SLOT(doClock()));
     m_Clock->start(1000);
 
-
+    qDebug() << "  timerAlt  ";
     timerAlt = new QTimer(this);
     timerAlt->setSingleShot(false);
     connect(timerAlt, SIGNAL(timeout()), this, SLOT(doAlt()));
     timerAlt->start(5000);
 
+    qDebug() << "  timerPing  ";
     timerPing = new QTimer(this);
     timerPing->setSingleShot(false);
     connect(timerPing, SIGNAL(timeout()), this, SLOT(reset_ping()));
 
-    //use a timer to allow the constructor to exit
-    series = new QSplineSeries();
-    series->setName("spline");
-    srand((unsigned)time(NULL));
+/*
+    QWebView *webView = new QWebView(ui->webwidget);
+    webView->resize(1000,500);
+    webView->move(10,10);
+    QString gMapURL = "England"; // this is where you want to point
+    gMapURL = "http://maps.google.com.sg/maps?q="+gMapURL+"&oe=utf-8&rls=org.mozilla:en-US:official&client=firefox-a&um=1&ie=UTF-8&hl=en&sa=N&tab=wl";
+    webView->setUrl(QUrl(gMapURL));
+*/
 
-    timerpaint = new QTimer(this);
-    timerpaint->setSingleShot(false);
-    connect(timerpaint, SIGNAL(timeout()), this, SLOT(doPaint()));
-    timerpaint->start(100);
+    qDebug() << "  Booted...  ";
 }
 
 void MainWindow::doClock()
 {
+ //   qDebug() << "  doClock  ";
+
     ui->timeEdit->setDateTime(QDateTime::currentDateTime());
 
     if(m_takeoff){
         ui->timeEdit_2->setTime(QTime::fromMSecsSinceStartOfDay(m_timer.elapsed()));
     }
 
-    qDebug() << "Phone's P  sensor = " << (m_pressure_reader->pressure());
+ //   qDebug() << "Phone's P  sensor = " << (m_pressure_reader->pressure());
 }
 
+
+#ifdef Q_OS_ANDROID
+void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
+{
+    static bool first = true;
+
+    qDebug() << "  positionUpdated  ";
+
+    if (geoPositionInfo.isValid())
+    {
+        //locationDataSource->stopUpdates();
+        QGeoCoordinate geoCoordinate = geoPositionInfo.coordinate();
+        this->m_speed = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed)*3.6;
+        this->m_latitude = geoCoordinate.latitude();
+        this->m_longitude = geoCoordinate.longitude();
+        this->m_altitude=geoCoordinate.altitude();
+        this->m_head=geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+/*
+        qDebug() << "m_speed     = " << m_speed << Qt::endl;
+        qDebug() << "m_latitude  = " << m_latitude << Qt::endl;
+        qDebug() << "m_longitude = " << m_longitude << Qt::endl;
+        qDebug() << "m_altitude  = " << m_altitude << Qt::endl;
+        qDebug() << "m_head      = " << m_head << Qt::endl;
+*/
+
+        if(first){
+            first = false;
+            m_alt = this->m_altitude;
+        }
+        // If more than 1mb change then we takeoff...
+        if( abs(m_alt-this->m_altitude) > 5 && m_armed == true){
+            m_takeoff = true;
+        }
+    }
+}
+void MainWindow::onCompassReadingChanged()
+{
+ //   qDebug() << "  onCompassReadingChanged  ";
+    m_compass_reader = m_compass_sensor->reading();
+}
 void MainWindow::onPressureReadingChanged()
 {
+    qDebug() << "  onPressureReadingChanged  ";
     static bool first = true;
 
     m_pressure_reader = m_pressure_sensor->reading();
@@ -122,10 +190,10 @@ void MainWindow::onPressureReadingChanged()
         first = false;
         m_alt = m_pressure_reader->pressure();
     }
-    qDebug() << "Phone's 'Pa' sensor = " << m_pressure_reader->pressure();
+ //   qDebug() << "Phone's 'Pa' sensor = " << m_pressure_reader->pressure();
 
     // If more than 1mb change then we takeoff...
-    if(abs(m_alt-(m_pressure_reader->pressure())) > 100){
+    if( abs(m_alt-(m_pressure_reader->pressure())) > 100 && m_armed == true){
         m_takeoff = true;
     }
 
@@ -133,6 +201,14 @@ void MainWindow::onPressureReadingChanged()
 
 void MainWindow::onRotationReadingChanged()
 {
+    Ui::MainWindow_small *local_ui;
+    if (const auto intPtr (std::get_if<Ui::MainWindow_port_small>(saved_this->xxz2)); intPtr) {local_ui = (Ui::MainWindow_small *)intPtr;}
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow_port>(saved_this->xxz2)); intPtr) {local_ui = (Ui::MainWindow_small *)intPtr;}
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow_small>(saved_this->xxz2)); intPtr) {local_ui = (Ui::MainWindow_small *)intPtr;}
+    else if  (const auto intPtr (std::get_if<Ui::MainWindow>(saved_this->xxz2)); intPtr) {local_ui = (Ui::MainWindow_small *)intPtr;}
+    else return;
+
+//    qDebug() << "  onRotationReadingChanged  ";
     m_rotation_reader = m_rotation_sensor->reading();
 
     if(m_first){
@@ -152,62 +228,71 @@ void MainWindow::onRotationReadingChanged()
     float x1 = cos(m_rotation_reader->x()/(180.0/3.1415));
     float y1 = sin(m_rotation_reader->x()/(180.0/3.1415));
 
-    int offset = m_rotation_reader->y()-m_offset;
+    int offset = (m_rotation_reader->y()/2)-(m_offset/2);
     if (offset > 180) offset = offset -180;
     offset = offset * (x.height()/180.0);
 
     // -----------------------------------------
-    m_graphScen->addLine((int)((x.width() /2)-(x1*70)),
-                         (int)((x.height()/2)-(y1*70))+offset,
-                         (int)((x.width() /2)+(x1*70)),
-                         (int)((x.height()/2)+(y1*70))+offset,
+    m_graphScen->addLine((int)((x.width() /2)-(x1*140)),
+                         (int)((x.height()/2)-(y1*140))+offset,
+                         (int)((x.width() /2)+(x1*140)),
+                         (int)((x.height()/2)+(y1*140))+offset,
                          QPen(QBrush(Qt::yellow),3));
 
     // -----------------------------------------
-    m_graphScen->addLine((int)0,
+    m_graphScen->addLine((int)5,
                          (int)((x.height()/2)-0),
-                         (int)x.width(),
+                         (int)x.width()-5,
                          (int)((x.height()/2)+0),
                          QPen(QBrush(Qt::green),1,Qt::PenStyle(Qt::DashLine)));
 
     m_graphScen->addLine((int)(x.width() /2),
-                         (int)((x.height()/2)-60),
+                         (int) 5,
                          (int)(x.width() /2),
-                         (int)((x.height()/2)+60),
+                         (int)x.height()-5,
                          QPen(QBrush(Qt::green),1,Qt::PenStyle(Qt::DashLine)));
 
     // -----------------------------------------
     // Center main angle...
-    m_graphScen->addLine((int)((x.width() /2)-(x1*30)),
-                         (int)((x.height()/2)-(y1*30)),
-                         (int)((x.width() /2)+(x1*30)),
-                         (int)((x.height()/2)+(y1*30)),
+    m_graphScen->addLine((int)((x.width() /2)-(x1*60)),
+                         (int)((x.height()/2)-(y1*60)),
+                         (int)((x.width() /2)+(x1*60)),
+                         (int)((x.height()/2)+(y1*60)),
                          QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
 
     // First upper bar...
     float p_loc_A = (x.width() /2)  + (y1*15.0);
     float p_loc_B = (x.height() /2) - (x1*15.0);
 
-    m_graphScen->addLine((int)(p_loc_A-(x1*20)),
-                         (int)(p_loc_B-(y1*20)),
-                         (int)(p_loc_A+(x1*20)),
-                         (int)(p_loc_B+(y1*20)),
+    m_graphScen->addLine((int)(p_loc_A-(x1*50)),
+                         (int)(p_loc_B-(y1*50)),
+                         (int)(p_loc_A+(x1*50)),
+                         (int)(p_loc_B+(y1*50)),
                          QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
 
     // Second upper bar...
     p_loc_A = (x.width() /2)  + (y1*30.0);
     p_loc_B = (x.height() /2) - (x1*30.0);
 
-    m_graphScen->addLine((int)(p_loc_A-(x1*10)),
-                         (int)(p_loc_B-(y1*10)),
-                         (int)(p_loc_A+(x1*10)),
-                         (int)(p_loc_B+(y1*10)),
+    m_graphScen->addLine((int)(p_loc_A-(x1*40)),
+                         (int)(p_loc_B-(y1*40)),
+                         (int)(p_loc_A+(x1*40)),
+                         (int)(p_loc_B+(y1*40)),
                          QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
 
+    // Third upper bar...
+    p_loc_A = (x.width() /2)  + (y1*45.0);
+    p_loc_B = (x.height() /2) - (x1*45.0);
 
-    // First lower bar...
-    p_loc_A = (x.width() /2)  - (y1*15.0);
-    p_loc_B = (x.height() /2) + (x1*15.0);
+    m_graphScen->addLine((int)(p_loc_A-(x1*30)),
+                         (int)(p_loc_B-(y1*30)),
+                         (int)(p_loc_A+(x1*30)),
+                         (int)(p_loc_B+(y1*30)),
+                         QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
+
+    // Forth upper bar...
+    p_loc_A = (x.width() /2)  + (y1*60.0);
+    p_loc_B = (x.height() /2) - (x1*60.0);
 
     m_graphScen->addLine((int)(p_loc_A-(x1*20)),
                          (int)(p_loc_B-(y1*20)),
@@ -215,76 +300,111 @@ void MainWindow::onRotationReadingChanged()
                          (int)(p_loc_B+(y1*20)),
                          QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
 
+    // First lower bar...
+    p_loc_A = (x.width() /2)  - (y1*15.0);
+    p_loc_B = (x.height() /2) + (x1*15.0);
+
+    m_graphScen->addLine((int)(p_loc_A-(x1*50)),
+                         (int)(p_loc_B-(y1*50)),
+                         (int)(p_loc_A+(x1*50)),
+                         (int)(p_loc_B+(y1*50)),
+                         QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
+
     // Second lower bar...
     p_loc_A = (x.width() /2)  - (y1*30.0);
     p_loc_B = (x.height() /2) + (x1*30.0);
 
-    m_graphScen->addLine((int)(p_loc_A-(x1*10)),
-                         (int)(p_loc_B-(y1*10)),
-                         (int)(p_loc_A+(x1*10)),
-                         (int)(p_loc_B+(y1*10)),
+    m_graphScen->addLine((int)(p_loc_A-(x1*40)),
+                         (int)(p_loc_B-(y1*40)),
+                         (int)(p_loc_A+(x1*40)),
+                         (int)(p_loc_B+(y1*40)),
+                         QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
+
+    // Third lower bar...
+    p_loc_A = (x.width() /2)  - (y1*45.0);
+    p_loc_B = (x.height() /2) + (x1*45.0);
+
+    m_graphScen->addLine((int)(p_loc_A-(x1*30)),
+                         (int)(p_loc_B-(y1*30)),
+                         (int)(p_loc_A+(x1*30)),
+                         (int)(p_loc_B+(y1*30)),
+                         QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
+    // Forth lower bar...
+    p_loc_A = (x.width() /2)  - (y1*60.0);
+    p_loc_B = (x.height() /2) + (x1*60.0);
+
+    m_graphScen->addLine((int)(p_loc_A-(x1*20)),
+                         (int)(p_loc_B-(y1*20)),
+                         (int)(p_loc_A+(x1*20)),
+                         (int)(p_loc_B+(y1*20)),
                          QPen(QBrush(Qt::white),1,Qt::PenStyle(Qt::DashLine)));
 
     // -----------------------------------------
-    m_graphScen->addLine((int)((x.width() /2)-70),
-                         (int)((x.height()/2)-14+offset),
-                         (int)((x.width() /2)-50),
-                         (int)((x.height()/2)-11+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
-    m_graphScen->addLine((int)((x.width() /2)+70),
-                         (int)((x.height()/2)-14+offset),
-                         (int)((x.width() /2)+50),
-                         (int)((x.height()/2)-11+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+    m_graphScen->addLine((int)((x.width() /2)-100),
+                         (int)((x.height()/2)-19+offset),
+                         (int)((x.width() /2)-80),
+                         (int)((x.height()/2)-15+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
-    m_graphScen->addLine((int)((x.width() /2)-70),
-                         (int)((x.height()/2)+14+offset),
-                         (int)((x.width() /2)-50),
-                         (int)((x.height()/2)+11+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+    m_graphScen->addLine((int)((x.width() /2)+100),
+                         (int)((x.height()/2)-19+offset),
+                         (int)((x.width() /2)+80),
+                         (int)((x.height()/2)-15+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
-    m_graphScen->addLine((int)((x.width() /2)+70),
-                         (int)((x.height()/2)+14+offset),
-                         (int)((x.width() /2)+50),
-                         (int)((x.height()/2)+11+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+    m_graphScen->addLine((int)((x.width() /2)-100),
+                         (int)((x.height()/2)+19+offset),
+                         (int)((x.width() /2)-80),
+                         (int)((x.height()/2)+15+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
-    m_graphScen->addLine((int)((x.width() /2)+60),
-                         (int)((x.height()/2)+30+offset),
-                         (int)((x.width() /2)+45),
-                         (int)((x.height()/2)+21+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+    m_graphScen->addLine((int)((x.width() /2)+100),
+                         (int)((x.height()/2)+19+offset),
+                         (int)((x.width() /2)+80),
+                         (int)((x.height()/2)+15+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+
+
+
+    m_graphScen->addLine((int)((x.width() /2)+80),
+                         (int)((x.height()/2)+40+offset),
+                         (int)((x.width() /2)+60),
+                         (int)((x.height()/2)+30+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+
+    m_graphScen->addLine((int)((x.width() /2)-80),
+                         (int)((x.height()/2)+40+offset),
+                         (int)((x.width() /2)-60),
+                         (int)((x.height()/2)+30+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+
+    m_graphScen->addLine((int)((x.width() /2)+80),
+                         (int)((x.height()/2)-40+offset),
+                         (int)((x.width() /2)+60),
+                         (int)((x.height()/2)-30+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+
+    m_graphScen->addLine((int)((x.width() /2)-80),
+                         (int)((x.height()/2)-40+offset),
+                         (int)((x.width() /2)-60),
+                         (int)((x.height()/2)-30+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+
+
 
     m_graphScen->addLine((int)((x.width() /2)-60),
-                         (int)((x.height()/2)+30+offset),
+                         (int)((x.height()/2)-60+offset),
                          (int)((x.width() /2)-45),
-                         (int)((x.height()/2)+21+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+                         (int)((x.height()/2)-45+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
     m_graphScen->addLine((int)((x.width() /2)+60),
-                         (int)((x.height()/2)-30+offset),
+                         (int)((x.height()/2)-60+offset),
                          (int)((x.width() /2)+45),
-                         (int)((x.height()/2)-21+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+                         (int)((x.height()/2)-45+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+
+    m_graphScen->addLine((int)((x.width() /2)+60),
+                         (int)((x.height()/2)+60+offset),
+                         (int)((x.width() /2)+45),
+                         (int)((x.height()/2)+45+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
     m_graphScen->addLine((int)((x.width() /2)-60),
-                         (int)((x.height()/2)-30+offset),
+                         (int)((x.height()/2)+60+offset),
                          (int)((x.width() /2)-45),
-                         (int)((x.height()/2)-21+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
+                         (int)((x.height()/2)+45+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
-    m_graphScen->addLine((int)((x.width() /2)-48),
-                         (int)((x.height()/2)-45+offset),
-                         (int)((x.width() /2)-36),
-                         (int)((x.height()/2)-32+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)+48),
-                         (int)((x.height()/2)-45+offset),
-                         (int)((x.width() /2)+36),
-                         (int)((x.height()/2)-32+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)+48),
-                         (int)((x.height()/2)+45+offset),
-                         (int)((x.width() /2)+36),
-                         (int)((x.height()/2)+32+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)-48),
-                         (int)((x.height()/2)+45+offset),
-                         (int)((x.width() /2)-36),
-                         (int)((x.height()/2)+32+offset), QPen(QBrush(Qt::red),1,Qt::PenStyle(Qt::DashLine)));
 
     // -----------------------------------------
     m_graphScen->addRect(QRect(1,1,x.width()-4,x.height()-4),QPen(QBrush(Qt::gray),1));
@@ -292,14 +412,22 @@ void MainWindow::onRotationReadingChanged()
     ui->graphicsView->setScene(m_graphScen);
     ui->graphicsView->show();
 
-    ui->roll->setText(QString("%1").arg(abs(m_rotation_reader->x()), 0, 'f', 1));
-    ui->pitch->setText(QString("%1").arg(-1*(m_rotation_reader->y()-m_offset), 0, 'f', 1));
+    ui->compass->setText(QString("%1").arg(abs(m_head), 0, 'f', 1));
+    ui->speed->setText(QString("%1").arg(abs(m_speed), 0, 'f', 1));
+
+    if( m_rotation_reader != NULL){ ui->roll->setText(QString("%1").arg(abs(m_rotation_reader->x()), 0, 'f', 0));}
+    if( m_rotation_reader != NULL){ui->pitch->setText(QString("%1").arg(-1*(m_rotation_reader->y()-m_offset), 0, 'f', 0));}
+    if( m_altitude != 9999){ui->altitude->setText(QString("%1").arg(m_altitude*3.2808399, 0, 'f', 0));}
+//    if( m_altitude != 9999){ui->altitude->setText(QString("%1").arg(m_pressure_reader->pressure(), 0, 'f', 0));}
+
 
     m_reading|=0x04;
 }
+#endif
 
 void MainWindow::reset_ping()
 {
+    qDebug() << "  reset_ping  ";
     QString x;
     x = ui->pushButton_10->styleSheet();
     x.replace(QString("1 #090"), QString("1 #900"));
@@ -396,24 +524,17 @@ void MainWindow::getVal(QByteArray array)
                 // Make the flash activity...
                 {
                     static bool f = false;
-                    QString x,y;
-                    x = local_ui->pushButton_14->styleSheet();
-                    y = x;
-
-                    if(f == false)
-                    {
+                    QString x = local_ui->pushButton_14->styleSheet();
+                    if(f == false){
                         f = true;
-                        x.replace(QString("1 #0F0"), QString("1 #00F"));
+                        x.replace(QString("1 #2F0"), QString("1 #090"));
                     }
                     else{
                         f = false;
-                        x.replace(QString("1 #00F"), QString("1 #0F0"));
+                        x.replace(QString("1 #090"), QString("1 #2F0"));
                     }
-
                     local_ui->pushButton_14->setStyleSheet(x);
                     local_ui->pushButton_14->update();
-                    local_ui->pushButton_15->setStyleSheet(y);
-                    local_ui->pushButton_15->update();
                 }
 
                 switch (buffer[0]){
@@ -466,16 +587,15 @@ void MainWindow::getVal(QByteArray array)
                 case 'i':
                 {
                     bool state;
-                    if (buffer[2] == '1') state = false;
+                    if (buffer[2] == '0') state = false;
                     else state = true;
 
-                    QString x;
-                    x = local_ui->pushButton_Ident->styleSheet();
+                    QString x = local_ui->pushButton_Ident->styleSheet();
 
                     if ( state == false){
-                        x.replace(QString("1 #561"), QString("1 #953"));
+                        x.replace(QString("1 #900"), QString("1 #888"));
                     }else{
-                        x.replace(QString("1 #953"), QString("1 #561"));
+                        x.replace(QString("1 #888"), QString("1 #900"));
                     }
                     local_ui->pushButton_Ident->setStyleSheet(x);
                     local_ui->pushButton_Ident->update();
@@ -487,7 +607,7 @@ void MainWindow::getVal(QByteArray array)
                     int number;
                     char numout[5];
                     sscanf(buffer,"c=%d",&number);
-                    sprintf(numout,"%.4d",number);
+                    snprintf(numout,5,"%.4d",number);
 
                     saved_this->current[3]=numout[3]-0x30;
                     saved_this->current[2]=numout[2]-0x30;
@@ -519,7 +639,7 @@ void MainWindow::getVal(QByteArray array)
                         num = round(number);
                         altType="Alt.M.";
                     }
-                    sprintf(numout,"%.4d",num);
+                    snprintf(numout,10,"%.4d",num);
                     local_ui->lcdNumber_3->display(numout);
                     local_ui->label_2->setText(altType);
 
@@ -650,7 +770,7 @@ void MainWindow::on_pushButton_16_clicked()
     this->current[0]=this->next[0];
 
     char data[100];
-    sprintf(data,"c=%d\r\n",this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]);
+    snprintf(data,100,"c=%d\r\n",this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]);
     //    QString num = QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]);
     //    QString msg = QString("c=%1\r\n").arg(num);
     qDebug() << data;
@@ -704,9 +824,40 @@ void MainWindow::on_pushButton_off_clicked(){
     mysocket->readyWrite((char*)"p=?\r\n");
 }
 
+void MainWindow::on_select_gyro_page_clicked()        {ui->stackedWidget->setCurrentIndex(0);}
+void MainWindow::on_select_gyro_page2_clicked()       {ui->stackedWidget->setCurrentIndex(0);}
+void MainWindow::on_select_dumy_page_clicked()        {ui->stackedWidget->setCurrentIndex(1);}
+void MainWindow::on_select_dumy_page2_clicked()       {ui->stackedWidget->setCurrentIndex(1);}
+void MainWindow::on_select_transponder_page_clicked() {ui->stackedWidget->setCurrentIndex(2);}
+void MainWindow::on_select_transponder_page2_clicked(){ui->stackedWidget->setCurrentIndex(2);}
 
-void MainWindow::on_pushButton_20_clicked()
+
+
+
+void MainWindow::on_imu_reset_clicked()
 {
     m_first = true;
+    ui->imu_reset->setIcon(QIcon(":/icons/..."));
+    ui->imu_reset->setIconSize(QSize(65, 65));
+}
+
+
+void MainWindow::on_timer_start_clicked()
+{
+    QString x = ui->timer_start->styleSheet();
+    if(m_armed == false)
+    {
+        m_armed = true;
+        x.replace(QString("1 #888"), QString("1 #00F"));
+        qDebug() << "Timer pressed 1...";
+    }
+    else{
+        m_armed = false;
+        x.replace(QString("1 #00F"), QString("1 #888"));
+        qDebug() << "Timer pressed 2...";
+    }
+
+    ui->timer_start->setStyleSheet(x);
+    ui->timer_start->update();
 }
 

@@ -6,6 +6,7 @@
 
 #include <QtBluetooth/qbluetoothlocaldevice.h>
 #include <QtBluetooth/qbluetoothservicediscoveryagent.h>
+#include <QFile>
 
 QT_USE_NAMESPACE
 
@@ -14,12 +15,36 @@ RemoteSelector::RemoteSelector(const QBluetoothAddress &localAdapter, QWidget *p
 {
     ui->setupUi(this);
 
+
+    QBluetoothServiceInfo *serviceInfo;  //= new QBluetoothServiceInfo();
+    QFile l_file("config.txt");
+    if (l_file.open(QIODevice::ReadOnly)){
+        QByteArray blob = l_file.readAll();
+        l_file.close();
+        serviceInfo = (QBluetoothServiceInfo*) &blob;
+#if 0
+        qDebug() << "Discovered all: " << serviceInfo;
+        qDebug() << "Discovered service on"
+                 << serviceInfo->device().name() << serviceInfo->device().address().toString();
+        qDebug() << "\tService name:" << serviceInfo->serviceName();
+        qDebug() << "\tDescription:"
+                 << serviceInfo->attribute(QBluetoothServiceInfo::ServiceDescription).toString();
+        qDebug() << "\tProvider:"
+                 << serviceInfo->attribute(QBluetoothServiceInfo::ServiceProvider).toString();
+        qDebug() << "\tL2CAP protocol service multiplexer:"
+                 << serviceInfo->protocolServiceMultiplexer();
+        qDebug() << "\tRFCOMM server channel:" << serviceInfo->serverChannel();
+#endif
+    }
+
+
     m_discoveryAgent = new QBluetoothServiceDiscoveryAgent(localAdapter);
 
     connect(m_discoveryAgent, SIGNAL(serviceDiscovered(QBluetoothServiceInfo)),
             this, SLOT(serviceDiscovered(QBluetoothServiceInfo)));
     connect(m_discoveryAgent, SIGNAL(finished()), this, SLOT(discoveryFinished()));
     connect(m_discoveryAgent, SIGNAL(canceled()), this, SLOT(discoveryFinished()));
+
 }
 
 RemoteSelector::~RemoteSelector()
@@ -55,7 +80,21 @@ QBluetoothServiceInfo RemoteSelector::service() const
 
 void RemoteSelector::serviceDiscovered(const QBluetoothServiceInfo &serviceInfo)
 {
+
+    QFile l_file("config.txt");
+    if (l_file.open(QIODevice::WriteOnly)){
+        QByteArray *blob = new QByteArray((const char*)&serviceInfo, sizeof(QBluetoothServiceInfo));
+        l_file.write(*blob);
+        l_file.close();
+    }
+
 #if 0
+
+//    QBluetoothServiceInfo *serviceInfo_x = new QBluetoothServiceInfo();
+//    serviceInfo_x->device().setName("Transponder");
+//    serviceInfo_x->device().setManufacturerData("24:D7:EB:37:C5:EE");
+
+    qDebug() << "Discovered all: " << serviceInfo;
     qDebug() << "Discovered service on"
              << serviceInfo.device().name() << serviceInfo.device().address().toString();
     qDebug() << "\tService name:" << serviceInfo.serviceName();
@@ -67,6 +106,7 @@ void RemoteSelector::serviceDiscovered(const QBluetoothServiceInfo &serviceInfo)
              << serviceInfo.protocolServiceMultiplexer();
     qDebug() << "\tRFCOMM server channel:" << serviceInfo.serverChannel();
 #endif
+
     const QBluetoothAddress address = serviceInfo.device().address();
     for (const QBluetoothServiceInfo &info : std::as_const(m_discoveredServices)) {
         if (info.device().address() == address)
@@ -89,7 +129,7 @@ void RemoteSelector::serviceDiscovered(const QBluetoothServiceInfo &serviceInfo)
 
 void RemoteSelector::discoveryFinished()
 {
-    ui->status->setText(tr("Select the chat service to connect to."));
+    ui->status->setText(tr("Select the transponder to connect to."));
 }
 
 void RemoteSelector::on_remoteDevices_itemActivated(QListWidgetItem *item)
@@ -111,6 +151,7 @@ void RemoteSelector::on_connectButton_clicked()
     auto items = ui->remoteDevices->selectedItems();
     if (items.size()) {
         QListWidgetItem *item = items[0];
+        qDebug() << "Connection Address:" << item;
         m_service = m_discoveredServices.value(item);
         if (m_discoveryAgent->isActive())
             m_discoveryAgent->stop();

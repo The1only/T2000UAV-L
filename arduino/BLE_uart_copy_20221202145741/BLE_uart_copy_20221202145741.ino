@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include "string.h"
-
 #include <TFT_eSPI.h>
 #include "WiFi.h"
 #include <Ticker.h>

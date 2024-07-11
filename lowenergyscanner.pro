@@ -1,10 +1,14 @@
-TARGET = wlanscanner
+TARGET = Transponder
 INCLUDEPATH += .
 
 QT += quick widgets charts
-C
 
 ANDROID_PERMISSIONS += android.permission.WAKE_LOCK
+ANDROID_PERMISSIONS += android.permission.BLUETOOTH android:maxSdkVersion="30"
+ANDROID_PERMISSIONS += android.permission.BLUETOOTH_ADMIN android:maxSdkVersion="30"
+ANDROID_PERMISSIONS += android.permission.BLUETOOTH_SCAN
+ANDROID_PERMISSIONS += android.permission.BLUETOOTH_ADVERTISE
+ANDROID_PERMISSIONS += android.permission.BLUETOOTH_CONNECT
 
 # Input
 SOURCES += main.cpp \
@@ -21,6 +25,7 @@ android {
     QT += network
     QT += sensors
     QT += bluetooth
+    QT += positioning
 }
 
 CONFIG += mobility

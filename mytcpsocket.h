@@ -6,8 +6,11 @@
 #include <QAbstractSocket>
 #include <QDebug>
 #include <QTimer>
+
+#ifdef Q_OS_ANDROID
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#endif
 #include <QList>
 #include <QtBluetooth/qbluetoothhostinfo.h>
 
@@ -27,11 +30,13 @@ public:
     void doConnect();
     void (*ret_lidar)(QByteArray);
     void (*ret)(QByteArray);
+#ifdef Q_OS_ANDROID
     int com_setup(QSerialPort *com_port, QString sport);
     QSerialPort *port = NULL;
     QSerialPort *lidar = NULL;
-    QString sport = "";
     QList<QSerialPortInfo> serialport;
+#endif
+    QString sport = "";
     QPlainTextEdit *text = NULL;
     bool isconnected = false;
 

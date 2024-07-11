@@ -33,7 +33,8 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_ANDROID
     d.showMaximized();
 #else
-    d.show();
+    d.showMaximized();
+//    d.show();
 #endif
 
     app.exec();

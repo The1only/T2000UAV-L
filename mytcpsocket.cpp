@@ -3,8 +3,10 @@
 #include <QTime>
 #include <QTimer>
 #include <QThread>
+#ifdef Q_OS_ANDROID
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#endif
 #include <QList>
 #include "remoteselector.h"
 #include "chatserver.h"
@@ -16,18 +18,11 @@
 
 #include "mytcpsocket.h"
 
-//#ifdef Q_OS_ANDROID
-//static const QLatin1String reverseUuid("c8e96402-0102-cf9c-274b-701a950fe1e8");
+#ifdef Q_OS_ANDROID
 static const QLatin1String reverseUuid("00001101-0000-1000-8000-00805f9b34fb");
-//static const QLatin1String reverseUuid("bf43b9f5-0800-0008-0001-000010110000");
-//static const QLatin1String reverseUuid("bf43b9f5-0800-0008-0001-000042110000");
-//static const QLatin1String serviceUuid(  "7FA3EA1A-DF63-F32F-0715-552BF764685C");
-//#else
+#else
 static const QLatin1String serviceUuid("00001101-0000-1000-8000-00805f9b34fb");
-//static const QLatin1String serviceUuid("e8e10f95-1a70-4b27-9ccf-02010264e9c8");
-//static const QLatin1String serviceUuid("00001124-0000-1000-8000-00805f9b34fb");
-//static const QLatin1String serviceUuid(  "C586467F-B255-5170-2F3F-63FDA1AE3AF7");
-//#endif
+#endif
 
 MyTcpSocket::MyTcpSocket(QObject *parent,  QPlainTextEdit *s, void (*retx)(QByteArray), void (*rety)(QByteArray)) :
     QObject(parent)
@@ -62,7 +57,8 @@ MyTcpSocket::MyTcpSocket(QObject *parent,  QPlainTextEdit *s, void (*retx)(QByte
     //! [Get local device name]
     localName = QBluetoothLocalDevice().name();
     //! [Get local device name]
-
+    //!
+#ifdef Q_OS_ANDROID
     this->serialport = QSerialPortInfo::availablePorts();
     for (QSerialPortInfo y : this->serialport)
     {
@@ -90,10 +86,12 @@ MyTcpSocket::MyTcpSocket(QObject *parent,  QPlainTextEdit *s, void (*retx)(QByte
             qDebug() << "Will use port: " + sport;
         }
     }
+#endif
 }
 
 void MyTcpSocket::showMessage(const QString &sender, const QString &message) const
 {
+     Q_UNUSED(sender);
 //    qDebug() << "From: " << sender << " received: " << message;
     QByteArray tmp = message.toUtf8();
     tmp.append('\0');
@@ -138,7 +136,8 @@ void MyTcpSocket::doAlt()
 }
 
 void MyTcpSocket::doConnect()
-{ 
+{
+    qDebug() << "Terje::: 1";
     //use a timer to allow the constructor to exit
     timerAlt = new QTimer(this);
     timerAlt->setSingleShot(false);
@@ -149,18 +148,19 @@ void MyTcpSocket::doConnect()
                                            QBluetoothAddress() :
                                            localAdapters.at(currentAdapterIndex).address();
 
-    RemoteSelector remoteSelector(adapter);
+    RemoteSelector *remoteSelector = new RemoteSelector(adapter);
+
 #ifdef Q_OS_ANDROID
     // QTBUG-61392
-    Q_UNUSED(serviceUuid);
-    remoteSelector.startDiscovery(QBluetoothUuid(reverseUuid));
+//    Q_UNUSED(serviceUuid);
+    remoteSelector->startDiscovery(QBluetoothUuid(reverseUuid));
 #else
-    remoteSelector.startDiscovery(QBluetoothUuid(serviceUuid));
+    remoteSelector->startDiscovery(QBluetoothUuid(serviceUuid));
 #endif
 
     // Do we use Bluetooth...?
-    if (remoteSelector.exec() == QDialog::Accepted) {
-        QBluetoothServiceInfo service = remoteSelector.service();
+    if (remoteSelector->exec() == QDialog::Accepted) {
+        QBluetoothServiceInfo service = remoteSelector->service();
 
         qDebug() << "Connecting to service 2" << service.serviceName()
                  << "on" << service.device().name();
@@ -180,7 +180,6 @@ void MyTcpSocket::doConnect()
 
         qDebug() << "Start client";
         client->startClient(service);
-
         clients.append(client);
     }
 
@@ -190,12 +189,14 @@ void MyTcpSocket::doConnect()
     if(sport != "" && clients.length() == 0)
     {
         qDebug() << "Opening port: " << sport;
+#ifdef Q_OS_ANDROID
         if(this->com_setup(port,sport))
         {
             QObject::connect(this->port, &QSerialPort::readyRead, [this](){ this->ret(this->port->readAll());});
-            timerAlt->start(500);
+            timerAlt->start(200);
             this->isconnected = true;
         }
+#endif
     }
 
     // Do we used UDP...?
@@ -215,6 +216,8 @@ void MyTcpSocket::doConnect()
         connect(timer, SIGNAL(timeout()), this, SLOT(doWork()));
     }
 }
+
+#ifdef Q_OS_ANDROID
 
 int MyTcpSocket::com_setup(QSerialPort *com_port, QString c_port)
 {
@@ -239,7 +242,7 @@ int MyTcpSocket::com_setup(QSerialPort *com_port, QString c_port)
     this->text->appendPlainText(com_port->errorString());
     return 0;
 }
-
+#endif
 void MyTcpSocket::reactOnSocketError(const QString &error)
 {
      qDebug() << error;
@@ -256,7 +259,7 @@ void MyTcpSocket::clientDisconnected()
 
 void MyTcpSocket::doWork()
 {
-    qDebug() << "connecting...!";
+//    qDebug() << "connecting...!";
 
     // this is not blocking call
     socket->connectToHost("0.0.0.0", 6000);
@@ -264,7 +267,7 @@ void MyTcpSocket::doWork()
     // we need to wait...
     if(!socket->waitForConnected(50000))
     {
-        qDebug() << "Error: " << socket->errorString();
+       // qDebug() << "Error: " << socket->errorString();
         timer->start(1500);
     }
 }
@@ -273,7 +276,7 @@ void MyTcpSocket::connected()
 {
     this->isconnected = true;    
     qDebug() << "connected...";
-    timerAlt->start(500);
+    timerAlt->start(200);
 
 }
 
@@ -299,13 +302,14 @@ void MyTcpSocket::readyWrite(char *data)
             }
         }
 
+#ifdef Q_OS_ANDROID
         if(port){
             if(port->isWritable()){
                 port->write(data);
                 this->text->appendPlainText(data);
             }
         }
-
+#endif
         emit sendMessage(data);
     }
 }
