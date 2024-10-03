@@ -1,4 +1,4 @@
-# T2000UAV-L
+# T2000UAV-L used in Sports Planes...
 MicroAir T2000UAV-L user interface for Linux, Mac, Windows, Android, and IOS
 
 This software creates a bridge from a user app to the T2000UAV Transponder.
