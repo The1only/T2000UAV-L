@@ -6,27 +6,49 @@
 #include <QtCharts/QChartView>
 #include <QtCharts/QSplineSeries>
 #include <QElapsedTimer>
+#include <QCameraDevice>
+#include <QMediaDevices>
+#include <QCamera>
+#include <QMediaCaptureSession>
 
-#ifdef Q_OS_ANDROID
-#include <QGyroscope>
-#include <qgyroscope.h>
-#include <QAccelerometer>
-#include <qaccelerometer.h>
-#include <QRotationSensor>
-#include <qrotationsensor.h>
 #include <QPressureReading>
-#include <QCompassReading>
 #include <QGeoPositionInfo>
 #include <QGeoCoordinate>
 #include <QGeoPositionInfoSource>
 //#include <QAltimeterReading>
-#endif
-
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow_port; class MainWindow; class MainWindow_small; class MainWindow_port_small; }
-QT_END_NAMESPACE
 
 #include "mytcpsocket.h"
+
+#ifdef Q_OS_ANDROID
+#include "ui_mainwindow_port_new.h"
+#define SCREEN MainWindow_port_new
+#endif
+
+#ifdef Q_OS_IOS
+#include "ui_mainwindow_port_iPhone.h"
+#define SCREEN MainWindow_port_iPhone
+#endif
+
+#ifdef Q_OS_MAC
+#include "ui_mainwindow_port_new.h"
+#define SCREEN MainWindow_port_new
+#endif
+
+//#include "ui_mainwindow_phone.h"
+//#include "ui_mainwindow_port_small.h"
+//#include "ui_mainwindow_small.h"
+//#define SCREEN MainWindow_port_small
+//#define SCREEN MainWindow_small
+
+#include "lockhelper.h"
+
+QT_BEGIN_NAMESPACE
+namespace Ui { class SCREEN; }
+QT_END_NAMESPACE
+
+#define RADIO "/setup_radio_b.txt"
+#define AIRPLANE "/setup_ln_b.txt"
+
 
 class MainWindow : public QMainWindow
 {
@@ -39,6 +61,17 @@ public:
     void addnext(int x);
     void addcurrent(int x);
     void setmode(int mode);
+    void set_default_radio(void);
+    void set_default_planes(void);
+    void logLanded();
+    void logTakeoff();
+    void init();
+    void updateCameras();
+    void hideCamera();
+    void setCamera(const QCameraDevice &cameraDevice);
+//    void updateCameraActive(bool active);
+
+
     Qt::ScreenOrientation ScreenMode;
 
     int next[4]   ={7,0,0,0};
@@ -47,28 +80,46 @@ public:
     double m_altitude=9999;
     double m_latitude=0;
     double m_longitude=0;
-    double m_speed=NULL;
-    double m_head=NULL;
+    double m_speed=9999;
+    double m_head =9999;
+    qreal m_temp =9999;
 
     MyTcpSocket *mysocket = NULL;
+
     static void getLidar(QByteArray);
     static void getVal(QByteArray);
     void onResized(int);
     QScreen* getActiveScreen(QWidget* pWidget) const;
-    Ui::MainWindow_small *ui;
+
+    std::variant < Ui::SCREEN > xxz3 = *new (Ui::SCREEN);
+    Ui::SCREEN *ui = (Ui::SCREEN *) &xxz3;
+
     QQuickView view;
     QSplineSeries *series;
-
     QElapsedTimer m_timer;
+    KeepAwakeHelper helper;
 
 
 private:
+    QActionGroup *videoDevicesGroup = nullptr;
+    QMediaDevices m_devices;
+    QScopedPointer<QCamera> m_camera;
+    QMediaCaptureSession m_captureSession;
+    QMediaRecorder *m_recorder;
+    QCameraDevice *m_cameraDevic;
+
     bool alt_receiced;
     QTimer* m_Clock;
     QTimer* timerAlt;
     QTimer* timerPing;
+    QTimer* timerActive;
     QTimer* timerpaint;
+    QTimer *timertakePicture;
+    QTimer *m_IMU;
+
     int alt_mode = 1;
+   // const QRect *m_vsize;
+    QSize *m_size;
     void setalt(int alt_mode);
 
     int m_reading = 0;
@@ -76,16 +127,10 @@ private:
     bool m_armed = false;
     bool m_takeoff = false;
 
- #ifdef Q_OS_ANDROID
  //   QAltimeterSensor*  m_altimeter_sensor;
     QPressureSensor*  m_pressure_sensor = NULL;
     QPressureReading* m_pressure_reader = NULL;
-    QRotationSensor*  m_rotation_sensor = NULL;
-    QRotationReading* m_rotation_reader = NULL;
-    QCompass*         m_compass_sensor = NULL;
-    QCompassReading*  m_compass_reader = NULL;
     QGeoPositionInfoSource* m_geoPositionInfo = NULL;
-#endif
 
     qreal m_offset;
     qreal m_alt;
@@ -115,18 +160,17 @@ private slots:
     void on_pushButton_alt_clicked();
     void on_pushButton_12_clicked();
     void on_pushButton_13_clicked();
+    void on_reconnect_clicked();
+    void on_pushButton_20_clicked();
 
-    void doAlt();
+    void doCheck();
     void reset_ping();
+    void active_ping();
     void doClock();
 
     void onRotationReadingChanged();
     void onPressureReadingChanged();
-    void onCompassReadingChanged();
-
-#ifdef Q_OS_ANDROID
     void positionUpdated(QGeoPositionInfo geoPositionInfo);
-#endif
 
     void on_select_gyro_page_clicked();
     void on_select_gyro_page2_clicked();
@@ -134,18 +178,25 @@ private slots:
     void on_select_dumy_page2_clicked();
     void on_select_transponder_page_clicked();
     void on_select_transponder_page2_clicked();
-
-
-
     void on_imu_reset_clicked();
-
     void on_timer_start_clicked();
+    void on_textEdit_textChanged();
+    void on_textEdit_2_textChanged();
+    void on_pushButton_15_clicked();
+    void on_select_transponder_page2_2_clicked();
+    void on_select_gyro_page2_2_clicked();
+    void on_select_transponder_page2_3_clicked();
+    void on_select_gyro_page2_3_clicked();
+    void on_pushButton_21_clicked();
+    void on_pushButton_22_clicked();
+
+    void takePicture();
+    void on_pushButton_23_clicked();
+
+    void on_exit_2_clicked();
 
 public:
     int screen_index;
-
-    std::variant<Ui::MainWindow_port_small, Ui::MainWindow_port, Ui::MainWindow_small,Ui::MainWindow > *xxz2;
-    std::variant<Ui::MainWindow_port_small, Ui::MainWindow_port, Ui::MainWindow_small,Ui::MainWindow >getauto();
 
 };
 #endif // MAINWINDOW_H

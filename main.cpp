@@ -24,17 +24,16 @@ int main(int argc, char *argv[])
         qDebug() << "Screen Size: " << x.rheight() << x.rwidth() << Ssize;;
 
         if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
-
     }
 
     MainWindow d;
 //    QObject::connect(&d, &MainWindow::accepted, &app, &QApplication::quit);
 
-#ifdef Q_OS_ANDROID
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     d.showMaximized();
 #else
-    d.showMaximized();
-//    d.show();
+//    d.showMaximized();
+    d.show();
 #endif
 
     app.exec();

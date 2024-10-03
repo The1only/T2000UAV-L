@@ -16,5 +16,8 @@
         <file>tree.png</file>
         <file>two.png</file>
         <file>zero.png</file>
+        <file>places_map.qml</file>
+        <file>marker.qml</file>
+        <file>plane.png</file>
     </qresource>
 </RCC>

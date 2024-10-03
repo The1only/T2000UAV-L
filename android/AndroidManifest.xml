@@ -1,32 +1,45 @@
 <?xml version="1.0"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.qtproject.example" android:installLocation="auto" android:versionCode="-- %%INSERT_VERSION_CODE%% --" android:versionName="-- %%INSERT_VERSION_NAME%% --">
-    <!-- %%INSERT_PERMISSIONS -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <!-- %%INSERT_FEATURES -->
-    <supports-screens android:anyDensity="true" android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
-    <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="-- %%INSERT_APP_NAME%% --" android:requestLegacyExternalStorage="true" android:allowNativeHeapPointerTagging="false" android:allowBackup="true" android:fullBackupOnly="false">
-        <activity android:name="org.qtproject.qt.android.bindings.QtActivity" android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:label="-- %%INSERT_APP_NAME%% --" android:launchMode="singleTop" android:screenOrientation="landscape" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-            <intent-filter>
-               <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
-            </intent-filter>
-            <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/usb_device_filter"/>
-            <meta-data android:name="android.app.lib_name" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
-            <meta-data android:name="android.app.arguments" android:value="-- %%INSERT_APP_ARGUMENTS%% --"/>
-            <meta-data android:name="android.app.extract_android_style" android:value="minimal"/>
-        </activity>
-    </application>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.qtproject.example" android:installLocation="auto" android:versionCode="1" android:versionName="1.0">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.USE_PERIPHERAL_IO"/>
     <uses-permission android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
+
+    <supports-screens android:anyDensity="true" android:largeScreens="true" android:normalScreens="true" android:smallScreens="true"/>
+    <application android:name="org.qtproject.qt.android.bindings.QtApplication" android:hardwareAccelerated="true" android:label="aTransponder" android:allowBackup="true" android:fullBackupOnly="false">
+        <activity android:name="org.qtproject.qt.android.bindings.QtActivity" android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:label="Transponder" android:launchMode="singleTop" android:exported="true" android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
+                <action android:name="android.hardware.usb.action.INTENT_ACTION_USB_PERMISSION"/>
+            </intent-filter>
+            <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/device_filter"/>
+            <meta-data android:name="android.app.lib_name" android:value="Transponder"/>
+            <meta-data android:name="android.app.arguments" android:value=""/>
+            <meta-data android:name="android.app.extract_android_style" android:value="minimal"/>
+        </activity>
+        <!-- If this receiver listens for broadcasts sent from the system or from
+             other apps, even other apps that you own, set android:exported to "true". -->
+        <receiver android:name=".broadcastReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="INTENT_ACTION_GRANT_USB"/>
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
 </manifest>
