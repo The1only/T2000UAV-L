@@ -87,7 +87,7 @@ public class TestClassTerje implements SerialInputOutputManager.Listener
 
     void status(String str) {
     //       System.out.println(str);
-         Log.i(TAG, str);
+ //        Log.i(TAG, str);
     }
 
 

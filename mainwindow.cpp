@@ -963,8 +963,8 @@ void MainWindow::on_pushButton_4_clicked(){addnext(4);}
 void MainWindow::on_pushButton_5_clicked(){addnext(5);}
 void MainWindow::on_pushButton_6_clicked(){addnext(6);}
 void MainWindow::on_pushButton_7_clicked(){addnext(7);}
-void MainWindow::on_pushButton_8_clicked(){addnext(8);}
-void MainWindow::on_pushButton_9_clicked(){addnext(9);}
+void MainWindow::on_pushButton_8_clicked(){};//addnext(8);}
+void MainWindow::on_pushButton_9_clicked(){};//addnext(9);}
 void MainWindow::on_pushButton_17_clicked(){addnext(0);}
 
 void MainWindow::on_exit_2_clicked(){           this->close();  }
@@ -999,7 +999,7 @@ void MainWindow::on_pushButton_18_clicked()
 {
     //   device.startDeviceDiscovery();
     //    view.show();
-
+/*
     const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
     for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
         if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost){
@@ -1007,6 +1007,22 @@ void MainWindow::on_pushButton_18_clicked()
             ui->plainTextEdit->appendPlainText(address.toString());
         }
     }
+*/
+    this->next[3]=0;
+    this->next[2]=0;
+    this->next[1]=0;
+    this->next[0]=7;
+
+    QString num = QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0');
+    ui->lcdNumber_2->display( num);
+
+    char data[100];
+    snprintf(data,100,"c=%d\r\n",7000);
+    qDebug() << data;
+
+#ifndef Q_OS_IOS
+    mysocket->readyWrite(data);
+#endif
 }
 
 
