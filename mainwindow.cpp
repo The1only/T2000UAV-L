@@ -4,11 +4,9 @@
 #include <QColorDialog>
 #include <QNetworkInterface>
 #include <QTimer>
-//#include <iostream>
 #include <cstdio>
 #include <QApplication>
 #include <QElapsedTimer>
-//#include <QAmbientTemperatureReading>
 #include <QFile>
 #include <QDir>
 #include <QStandardPaths>
@@ -19,9 +17,14 @@
 #include <QCameraDevice>
 #include <QPixmap>
 #include <QMediaRecorder>
+#include <QImageCapture>
+#include <QMediaFormat>
+#include <QMediaPlayer>
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QSplineSeries>
+
+// Q_IMPORT_PLUGIN(QDarwinLocationPermissionPlugin)
 
 #include "mainwindow.h"
 #include "mytcpsocket.h"
@@ -33,7 +36,9 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     saved_this = this;
-    KeepAwakeHelper helper;
+#ifdef Q_OS_ANDROID
+    static KeepAwakeHelper helper;
+#endif
 
     QScreen *s = QGuiApplication::primaryScreen();
     if(s != NULL){
@@ -48,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
         float Ssize = sqrt(( x.rheight() * x.rheight() ) + ( x.rwidth()* x.rwidth())) / 25.4;
         qDebug() << "Screen Size: " << x.rheight() << x.rwidth() << Ssize;;
     }
-//    if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
+    //    if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
 
     ui->setupUi(this);
     ui->quickWidget->setSource(QUrl("qrc:/places_map.qml"));
@@ -61,7 +66,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 // Whenever the location data source signals that the current
 // position is updated, the positionUpdated function is called.
-#ifdef Q_OS_ANDROID
     this->m_geoPositionInfo = QGeoPositionInfoSource::createDefaultSource(this);
     if (this->m_geoPositionInfo)
     {
@@ -71,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
         m_geoPositionInfo->startUpdates();
     }
 
+#ifdef Q_OS_ANDROID
     this->m_pressure_sensor = new QPressureSensor();
     connect(m_pressure_sensor, SIGNAL(readingChanged()), this, SLOT(onPressureReadingChanged()));
     m_pressure_sensor->start();
@@ -166,13 +171,12 @@ MainWindow::MainWindow(QWidget *parent)
 */
 
 
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/log.txt");
+    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/flightlog.txt");
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-        QString data = "System booted at: "+QDateTime::currentDateTime().toString()+"\n\r";
-        l_file->write(data.toLocal8Bit());
+        QString data = "System booted at: "+QDateTime::currentDateTime().toString();
+        l_file->write(data.toLocal8Bit()+"\n");
         l_file->close();
-        qDebug() << data;
-        qDebug() << "Log file opened at: " << QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] <<  "/log.txt \n\r";
+        ui->listView->appendPlainText(data);
     }
     else{
         qDebug() << "Log file error...  ";
@@ -195,6 +199,22 @@ MainWindow::~MainWindow()
 }
 
 
+void MainWindow::permissionUpdated(const QPermission &permission)
+{
+    if (permission.status() != Qt::PermissionStatus::Granted){
+        qDebug() << "Precise location premission denied";
+        return;
+    }
+    auto locationPermission = permission.value<QLocationPermission>();
+    if (!locationPermission || locationPermission->accuracy() != QLocationPermission::Precise){
+        qDebug() << "Precise location premission error";
+        return;
+    }
+    qDebug() << "Precise location OK";
+
+//        QUpdatePreciseLocation();
+}
+
 void MainWindow::init()
 {
 
@@ -211,6 +231,11 @@ void MainWindow::init()
     case Qt::PermissionStatus::Granted:
         break;
     }
+
+    QLocationPermission locationPermission;
+    locationPermission.setAccuracy(QLocationPermission::Precise);
+    qApp->requestPermission(locationPermission, this, &MainWindow::permissionUpdated);
+
 #endif
 
     // Camera devices:
@@ -221,7 +246,7 @@ void MainWindow::init()
     m_size = new QSize( m_vsize->width(),m_vsize->height());
     qDebug() << "TERJE:::::::" <<  m_vsize->height() << "    "  <<  m_vsize->width();
 
- //   setCamera(QMediaDevices::defaultVideoInput());
+    //   setCamera(QMediaDevices::defaultVideoInput());
 }
 
 
@@ -243,7 +268,7 @@ void MainWindow::setCamera(const QCameraDevice &cameraDevice)
     m_camera.reset(new QCamera(*m_cameraDevic));
     m_captureSession.setCamera(m_camera.data());
 
-/*
+    /*
     if (!m_imageCapture) {
         m_imageCapture.reset(new QImageCapture);
         m_captureSession.setImageCapture(m_imageCapture.get());
@@ -253,14 +278,31 @@ void MainWindow::setCamera(const QCameraDevice &cameraDevice)
         connect(m_imageCapture.get(), &QImageCapture::errorOccurred, this,&Camera::displayCaptureError);
     }
 */
+
     m_captureSession.setVideoOutput(ui->viewfinder);
     ui->viewfinder->resize(*m_size);
     ui->viewfinder->show();
 
+    /*
+    connect(m_captureSession, &QCameraImageCapture::imageAvailable, [=] (int id, QVideoFrame v ) {
+        if (v.isValid()) {
+            if(v.map(QAbstractVideoBuffer::ReadOnly)) {
+                Image.clear();
+                QBuffer buffer(&Image);
+                buffer.open(QIODevice::WriteOnly);
+                v.image().save(&buffer, "jpg");
+                buffer.close();
+                Image = qCompress(Image).toBase64();
+                this->id = QDateTime::currentDateTime().toMSecsSinceEpoch();
+                v.unmap();
+            }
+        }
+    });
 
- //   updateCameraActive(m_camera->isActive());
-//    updateRecorderState(m_mediaRecorder->recorderState());
-//    readyForCapture(m_imageCapture->isReadyForCapture());
+*/
+    //   updateCameraActive(m_camera->isActive());
+    //    updateRecorderState(m_mediaRecorder->recorderState());
+    //    readyForCapture(m_imageCapture->isReadyForCapture());
 
     m_camera->start();
 }
@@ -279,8 +321,9 @@ void MainWindow::logTakeoff()
 {
     QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/flightlog.txt");
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-        QString data = "Takeoff at: "+QDateTime::currentDateTime().toString()+"\n\r";
-        l_file->write(data.toLocal8Bit());
+        m_takeoffTime = QDateTime::currentDateTime();
+        QString data = "Takeoff at: "+m_takeoffTime.toString();
+        l_file->write(data.toLocal8Bit()+"\n");
         l_file->close();
         ui->listView->appendPlainText(data);
     }
@@ -288,12 +331,23 @@ void MainWindow::logTakeoff()
 
 void MainWindow::logLanded()
 {
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/log.txt");
+    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/flightlog.txt");
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-        QString data = "Landed at: "+QDateTime::currentDateTime().toString()+"\n\r";
-        l_file->write(data.toLocal8Bit());
+
+        m_landedTime = QDateTime::currentDateTime();
+        QString data = "Landed at: "+m_landedTime.toString();
+        l_file->write(data.toLocal8Bit()+"\n");
+
+        QTime dif(0,0,0,0);
+        QTime t=dif.addMSecs(m_landedTime.toMSecsSinceEpoch()-m_takeoffTime.toMSecsSinceEpoch());
+        QString result=t.toString("hh:mm:ss.zzz");
+
+        QString dtime = "Duration: "+result;
+        l_file->write(dtime.toLocal8Bit()+"\n");
+
         l_file->close();
         ui->listView->appendPlainText(data);
+        ui->listView->appendPlainText(dtime);
         // }
     }
 }
@@ -323,7 +377,7 @@ void MainWindow::doClock()
     }
     else{
         // If more than 40Km/t we are taking off...
-        if( this->m_speed > 30.0 && this->m_speed < 500.0 ){
+        if( this->m_speed > 30.0 && this->m_altitude > (m_alt + 5) ){
             m_takeoff = true;
             logTakeoff();
         }
@@ -334,22 +388,20 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
 {
     static bool first = true;
 
-//    qDebug() << "  positionUpdated  ";
-
     if (geoPositionInfo.isValid())
     {
+        m_geopos = true;
         //locationDataSource->stopUpdates();
         QGeoCoordinate geoCoordinate = geoPositionInfo.coordinate();
         this->m_speed     = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed)*3.6;
         this->m_latitude  = geoCoordinate.latitude();
         this->m_longitude = geoCoordinate.longitude();
         this->m_altitude  = geoCoordinate.altitude();
-    //    this->m_head      = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+        //    this->m_head      = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
 
-        //   qDebug() << "  doClock  ";
         ui->quickWidget->rootObject()->setProperty("lat", this->m_latitude);
         ui->quickWidget->rootObject()->setProperty("lon", this->m_longitude);
-/*
+        /*
         qDebug() << "Lat: " << this->m_latitude << " Lon: " << this->m_longitude;
         qDebug() << "m_speed     = " << m_speed << Qt::endl;
         qDebug() << "m_latitude  = " << m_latitude << Qt::endl;
@@ -357,7 +409,6 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         qDebug() << "m_altitude  = " << m_altitude << Qt::endl;
         qDebug() << "m_head      = " << m_head << Qt::endl;
 */
-
         if(first){
             first = false;
             m_alt = this->m_altitude;
@@ -367,7 +418,7 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
 
 void MainWindow::onPressureReadingChanged()
 {
-//    qDebug() << "  onPressureReadingChanged  ";
+    //    qDebug() << "  onPressureReadingChanged  ";
     static bool first = true;
 
     m_pressure_reader = m_pressure_sensor->reading();
@@ -387,15 +438,52 @@ void MainWindow::onPressureReadingChanged()
 
 void MainWindow::onRotationReadingChanged()
 {
-    #define filterlength 15
+#define filterlength 15
     static double filter[filterlength]={0};
 
     //    qDebug() << "  onRotationReadingChanged  ";
-//    m_rotation_reader = m_rotation_sensor->reading();
+    //    m_rotation_reader = m_rotation_sensor->reading();
 
     double x_att = mysocket->AngleX;
     double y_att = mysocket->AngleY;
     double z_att = mysocket->AngleZ;
+
+#ifdef Q_OS_MAC
+    static double angX = 1.0;
+    static double angY = 0.7;
+    static double angB = 0.05;
+    static double angZ = 2.0;
+    static double altX = 3.2;
+    static double speedX = 3.1;
+
+    mysocket->AngleZ+= angZ;
+    mysocket->AngleX+= angX;
+    mysocket->AngleY+= angY;
+    m_altitude+= altX;
+    m_speed+=speedX;
+
+    if(m_speed >  200.0) speedX = -3.1;
+    if(m_speed < -0.0) speedX =  3.1;
+
+    if(mysocket->AngleX >  60.0) angX = -1.0;
+    if(mysocket->AngleX < -60.0) angX =  1.0;
+
+    if(mysocket->AngleY >  30.0) angY = -1.0;
+    if(mysocket->AngleY < -30.0) angY =  1.0;
+
+    if(m_altitude >  350.0) altX = -3.0;
+    if(m_altitude < -0.0) altX =  3.0;
+
+    if(mysocket->AngleZ >  357.0) angZ = -2.0;
+    if(mysocket->AngleZ <  2.0)   angZ =  2.0;
+
+    mysocket->AccY= mysocket->AngleX/-60.0;
+    mysocket->Temperature = 20.0;
+    mysocket->Electricity = 85.3;
+
+    m_geopos = true;
+
+#endif
 
     double turnbank = 0;
     for(int x=0; x < filterlength-1;x++){
@@ -409,22 +497,14 @@ void MainWindow::onRotationReadingChanged()
     turnbank+=filter[filterlength-1];
     turnbank/=filterlength;
 
-    /*
-    double x_att = m_rotation_reader->x();
-    double y_att = m_rotation_reader->y();
-    double z_att = m_rotation_reader->z();
-    */
-    m_head = z_att;
+    m_head = floor(180.0 - z_att - heading_offset);
+    if(m_head >= 360.0) m_head-=360.0;
+    if(m_head < 0.0) m_head+=360.0;
 
     if(m_first){
         m_first = false;
         m_offset = mysocket->AngleY; // m_rotation_reader->y();
     }
-
-    //    qDebug() << "Phone's X  rotation = " << (m_rotation_reader->x());
-    //   qDebug() << "Phone's Y  rotation = " << (m_rotation_reader->y());
-    //   qDebug() << "Phone's Y2 rotation = " << (m_offset);
-    //    qDebug() << "Phone's Z rotation = " << (m_rotation_reader->z());
 
     QGraphicsScene * m_graphScen = new QGraphicsScene;
     QSize x = ui->graphicsView->size();
@@ -432,8 +512,10 @@ void MainWindow::onRotationReadingChanged()
     m_graphScen->setSceneRect(0,0,x.width(),x.height());
     float x1 = cos(x_att/(180.0/3.1415));
     float y1 = sin(x_att/(180.0/3.1415));
+    float z1 = sin(y_att/(180.0/3.1415));
 
-    int offset = (y_att/2)-(m_offset/2);
+    int offset = (y_att)-(m_offset);
+    //    int offset = (y_att/2)-(m_offset/2);
     if (offset > 180) offset = offset -180;
     offset = offset * (x.height()/180.0);
 
@@ -452,6 +534,7 @@ void MainWindow::onRotationReadingChanged()
                          (int)x.width()-5,
                          (int)((x.height()/2)+0),
                          QPen(QBrush(Qt::green),2,Qt::PenStyle(Qt::DashLine)));
+
     // Vertical center line...
     m_graphScen->addLine((int)(x.width() /2),
                          (int) 5,
@@ -466,6 +549,12 @@ void MainWindow::onRotationReadingChanged()
                          (int)((x.height()/1)-100),
                          QPen(QBrush(Qt::darkMagenta),8));
 
+    m_graphScen->addLine((int)175,
+                         (int)((x.height()/1)-100),
+                         (int)x.width()-175,
+                         (int)((x.height()/1)-100),
+                         QPen(QBrush(Qt::white),1));
+
     // Horisontal bottom line...
     m_graphScen->addEllipse(turnbank+((x.width()/2)-11),x.height()-110,20,20,QPen(Qt::white),QBrush(Qt::cyan));
 
@@ -477,9 +566,56 @@ void MainWindow::onRotationReadingChanged()
                          (int)((x.height()/2)+(y1*60)),
                          QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
 
+    // Center main angle...
+    float p_loc_A = (x.width() /2) + ((int)m_head % 60);//  - (y1*1.0);
+    float p_loc_B = (x.height() /2);// + (x1*1.0);
+    // qDebug() << y1 << "    " << x1 << "   " << z1 << "   " << y_att  <<  "    " << m_head;
+
+    m_graphScen->addLine((int)(p_loc_A),//-(x1*0)),
+                         (int)(p_loc_B-10),//+10+offset-(y1*abs(m_head*2))),
+                         (int)(p_loc_A),//+(x1*0)),
+                         (int)(p_loc_B+10),//-10+offset-(y1*abs(m_head*2))),
+                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+    m_graphScen->addLine((int)(p_loc_A-60),//-(x1*0)),
+                         (int)(p_loc_B-10), //+offset-(y1*80)),
+                         (int)(p_loc_A-60),//+(x1*0)),
+                         (int)(p_loc_B+10), //+offset-(y1*80)),
+                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+    m_graphScen->addLine((int)(p_loc_A+60),//-(x1*0)),
+                         (int)(p_loc_B-10),//-(y1*20)),
+                         (int)(p_loc_A+60),//+(x1*0)),
+                         (int)(p_loc_B+10),//+(y1*20)),
+                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+    m_graphScen->addLine((int)(p_loc_A-120),//-(x1*0)),
+                         (int)(p_loc_B-10),//-(y1*20)),
+                         (int)(p_loc_A-120),//+(x1*0)),
+                         (int)(p_loc_B+10),//+(y1*20)),
+                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+    m_graphScen->addLine((int)(p_loc_A+120),//-(x1*0)),
+                         (int)(p_loc_B-10),//-(y1*20)),
+                         (int)(p_loc_A+120),//+(x1*0)),
+                         (int)(p_loc_B+10),//+(y1*20)),
+                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+    m_graphScen->addLine((int)(p_loc_A-180),//-(x1*0)),
+                         (int)(p_loc_B-10),//-(y1*20)),
+                         (int)(p_loc_A-180),//+(x1*0)),
+                         (int)(p_loc_B+10),//+(y1*20)),
+                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+    m_graphScen->addLine((int)(p_loc_A+180),//-(x1*0)),
+                         (int)(p_loc_B-10),//-(y1*20)),
+                         (int)(p_loc_A+180),//+(x1*0)),
+                         (int)(p_loc_B+10),//+(y1*20)),
+                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
     // First upper bar...
-    float p_loc_A = (x.width() /2)  + (y1*15.0);
-    float p_loc_B = (x.height() /2) - (x1*15.0);
+    p_loc_A = (x.width() /2)  + (y1*15.0);
+    p_loc_B = (x.height() /2) - (x1*15.0);
 
     m_graphScen->addLine((int)(p_loc_A-(x1*50)),
                          (int)(p_loc_B-(y1*50)),
@@ -632,14 +768,18 @@ void MainWindow::onRotationReadingChanged()
     if(m_speed < 300 && m_speed > 0){
         ui->speed->setText(QString("%1").arg(abs(m_speed), 0, 'f', 1));
     }
-    if(mysocket->IMUconnected == true){
+
+#ifndef Q_OS_MAC
+    if(mysocket->IMUconnected == true)
+#endif
+    {
         ui->roll->setText(QString("%1").arg(abs(x_att), 0, 'f', 0));
         ui->pitch->setText(QString("%1").arg(-1*(y_att-m_offset), 0, 'f', 0));
-        ui->temp->setText(QString("%1").arg(this->mysocket->Electricity, 0, 'f', 0));
+        ui->temp->setText(QString("%1").arg(mysocket->Electricity, 0, 'f', 0));
         ui->temperature->setText(QString("%1").arg(mysocket->Temperature, 0, 'f', 1));
-        ui->compass->setText(QString("%1").arg(abs(m_head), 0, 'f', 1));
+        ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
     }
-    if( m_altitude != 9999){
+    if( m_geopos == true){
         ui->altitude->setText(QString("%1").arg(m_altitude*3.2808399, 0, 'f', 0));
     }
     m_reading|=0x04;
@@ -697,7 +837,7 @@ void MainWindow::getVal(QByteArray array)
 {
     static char buffer[30];
     static int pos = 0;
-//    qDebug() << "Reseive: " << array;
+    //    qDebug() << "Reseive: " << array;
 
     Ui::SCREEN *local_ui = (Ui::SCREEN *)&saved_this->xxz3;
 
@@ -719,9 +859,10 @@ void MainWindow::getVal(QByteArray array)
                 // Log all commands... This might be slow... will look at a timed write...
                 QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/log.txt");
                 if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-                    QString data = QDateTime::currentDateTime().toString()+": "+buffer+"\n\r";
+                    QString data = QDateTime::currentDateTime().toString()+": "+buffer;
                     l_file->write(data.toLocal8Bit());
                     l_file->close();
+                    //     local_ui->listView->appendPlainText(data+"\n");
                 }
 
                 // Make the flash activity...
@@ -999,7 +1140,7 @@ void MainWindow::on_pushButton_18_clicked()
 {
     //   device.startDeviceDiscovery();
     //    view.show();
-/*
+    /*
     const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
     for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
         if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost){
@@ -1204,17 +1345,163 @@ void MainWindow::on_reconnect_clicked()
 
 void MainWindow::on_pushButton_20_clicked()
 {
+    //   m_camera->stop();
+
+    qDebug() << "--------Take picture --------- " ;
     QDateTime date = QDateTime::currentDateTime();
-//    QString filename = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/"+date.toString("yyyy.dd.MM.hh.mm.ss").append(".jpg");
-    QString filename = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/"+date.toString("yyyy.dd.MM.hh.mm.ss").append(".mp4");
+    QString filename = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/"+date.toString("yyyy_dd_MM_hh_mm_ss").append(".jpg");
+    //   QString filename2 = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/terje.jpg";
+    QString filename2 = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/"+date.toString("yyyy.dd.MM.hh.mm.ss").append(".mp4");
+
+    //    QPixmap qPixMap = QPixmap::grabWidget(this);  // *this* is window pointer, the snippet     is in the mainwindow.cpp file
+    //   QImage qImage = qPixMap.toImage();
+    /*
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if(!screen){
+        m_camera->start();
+        qDebug() << "Screen error: " << filename;
+       // return;
+    }
+
+    QPixmap originalPixmap = screen->grabWindow(0);
+    if(!originalPixmap){
+        m_camera->start();
+        qDebug() << "Video error: " << filename;
+    //    return;
+    }
+
+    QImage *image = new QImage(originalPixmap.toImage());
+    image->save(filename);
+
+*/
+    /*
+    QCamera *camera = new QCamera(*m_cameraDevic);
+    QMediaPlayer *mediaPlayer = new QMediaPlayer(camera);
+    QMediaRecorder recorder = new QMediaRecorder(mediaPlayer); //camera);
+    QMediaCaptureSession session;
+    session.setRecorder(&recorder);
+    recorder.setQuality(QMediaRecorder::HighQuality);
+
+    QMediaFormat mediaFormat;
+    mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
+    mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H264);
+    mediaFormat.setFileFormat(QMediaFormat::MPEG4);
+    recorder.setMediaFormat(mediaFormat);
+    recorder.setOutputLocation(QUrl::fromLocalFile(filename2));
+    mediaPlayer->play();
+    recorder.record();
+    QThread::msleep(1500);
+    recorder.stop();
+    mediaPlayer->stop();
+    qDebug() << "Store file: " << filename2;
+
+    //    QScreen *screen = QGuiApplication::primaryScreen();
+    //  screen->grabWindow( 0 ).save(filename); // as 0 is the id of main screen
+*/
+
+    //    QGuiApplication::primaryScreen()->grabWindow(0).toImage().save(filename,"png",100);
+    /*
+    QCamera *camera = new QCamera(*m_cameraDevic);
+    auto vs = qobject_cast<QVideoSink*>(camera);
+    if(!vs){
+        m_camera->start();
+        qDebug() << "Video error: " << filename;
+        return;
+    }
+    QImage image{vs->videoFrame().toImage()};
+    image.save(filename);
+
+    */
+
+    /*
+    QMediaCaptureSession captureSession;
+    QCamera *camera = new QCamera(*m_cameraDevic);
+//    QCamera *camera = new QCamera;
+    captureSession.setCamera(camera);
+
+//    ui->viewfinder->show();
+    captureSession.setVideoOutput(ui->viewfinder);
+
+    QImageCapture *imageCapture = new QImageCapture();
+    captureSession.setImageCapture(imageCapture);
+
+    camera->start();
+    //on shutter button pressed
+    imageCapture->capture();
+
+    camera->stop();
+*/
+    //    QScreen *screen = QGuiApplication::primaryScreen();
+    //  screen->grabWindow( 0 ).save(filename); // as 0 is the id of main screen
+
+
+    //   QPixmap pixmap(ui->viewfinder->size());
+    //   ui->viewfinder->render(&pixmap);
+    //   pixmap.save(filename);
+    /*
+    QPixmap originalPixmap = QGuiApplication::primaryScreen()->grabWindow(0);
+    qDebug() << "------------" << originalPixmap.size();
+
+
+    QGuiApplication::primaryScreen()->grabWindow(0).toImage().save(filename,"png",100);
+
+
+    */
+
+    /*
+    auto vs = qobject_cast<QVideoSink*>(qmlPreview);
+    QPixmap originalPixmap = QGuiApplication::primaryScreen()->grabWindow(0);
+    QImage image{originalPixmap->videoFrame().toImage()};
+
+    QImage myScreen = qpx_pixmap.toImage();
+
+    //  save image
+    image.save("123.jpeg")
+
+
+    QScreen *screen = QGuiApplication::primaryScreen();
+ //   QPixmap screenshot = screen->grabWindow(1);
+    QPixmap screenshot = screen->grabWindow(QApplication::desktop()->winId(), this->x(), this->y(), width(), height());
+    qDebug() << "------------" << screenshot.size();
+
+    if (screenshot.save(filename, nullptr, 100)) {
+//    if (screenshot.save(filename, "PNG")) {
+        qDebug() << "Screenshot saved to:" << filename;
+    } else {
+        qWarning() << "Failed to save screenshot!";
+    }
+
+
+*/
+    //    QImage myScreen = QGuiApplication::primaryScreen()->grabWindow(0).toImage().save(filename,"png",100);
+    // myScreen.save(filename);
+    //    myScreen.save(filename, "png", 100);
+    /*
+
+    auto geom = QGuiApplication::primaryScreen();->geometry();
+    QPixmap qpx_pixmap = screen->grabWindow(0, geom.x(), geom.y(), geom.width(), geom.height());
+    QImage myScreen = qpx_pixmap.toImage();
+    myScreen.save(&buffer, "JPEG");
+
+    qpx_pixmap.save(filename);
+
+//    QPixmap originalPixmap = QGuiApplication::primaryScreen()->grabWindow(0);
+  //  originalPixmap.save(filename);
+
+//  QWidget *widget= ui->viewfinder;
+  //  widget->render(&originalPixmap);
+    //widget->grab().save(filename);
+
+*/
+
+    /*
 
     qDebug() << "Recording ";
-    m_camera->stop();
 
     QCamera *camera = new QCamera(*m_cameraDevic);
     m_recorder = new QMediaRecorder(camera);
 //    m_recorder->setOutputLocation(QUrl(filename));
-    m_recorder->setOutputLocation(filename);
+    m_recorder->setOutputLocation(filename2);
 
     camera->start();
     m_recorder->record();
@@ -1222,10 +1509,9 @@ void MainWindow::on_pushButton_20_clicked()
     qDebug()<<m_recorder->error();
     m_recorder->stop();
     camera->stop();
+*/
 
-    m_camera->start();
-
- /*
+    /*
     QWidget *widget= ui->viewfinder;
     QPixmap pixmap(widget->size());
     pixmap.fill(Qt::transparent);
@@ -1245,8 +1531,10 @@ void MainWindow::on_pushButton_20_clicked()
     ui->page_5->grab().save(filename);
 //    ui->viewfinder->grab().save(filename);
     */
+
+    //   m_camera->start();
     qDebug() << "Store file: " << filename;
- }
+}
 
 void MainWindow::takePicture()
 {
@@ -1271,4 +1559,8 @@ void MainWindow::on_pushButton_23_clicked()
     timertakePicture->stop();
 }
 
-
+void MainWindow::on_reset_heading_clicked()
+{
+    heading_offset = 180.0 - mysocket->AngleZ;
+    if(heading_offset<0.0) heading_offset+=360.0;
+}

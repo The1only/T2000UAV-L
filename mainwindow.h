@@ -22,6 +22,7 @@
 #ifdef Q_OS_ANDROID
 #include "ui_mainwindow_port_new.h"
 #define SCREEN MainWindow_port_new
+#include "lockhelper.h"
 #endif
 
 #ifdef Q_OS_IOS
@@ -39,8 +40,6 @@
 //#include "ui_mainwindow_small.h"
 //#define SCREEN MainWindow_port_small
 //#define SCREEN MainWindow_small
-
-#include "lockhelper.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class SCREEN; }
@@ -69,20 +68,24 @@ public:
     void updateCameras();
     void hideCamera();
     void setCamera(const QCameraDevice &cameraDevice);
-//    void updateCameraActive(bool active);
+    //    void updateCameraActive(bool active);
 
+    void permissionUpdated(const QPermission &permission);
 
     Qt::ScreenOrientation ScreenMode;
 
     int next[4]   ={7,0,0,0};
     int current[4]={8,8,8,8};
     int mode=0;
-    double m_altitude=9999;
+    double m_altitude=0;
     double m_latitude=0;
     double m_longitude=0;
-    double m_speed=9999;
+    double m_speed=0;
     double m_head =9999;
     qreal m_temp =9999;
+
+    QDateTime m_takeoffTime;
+    QDateTime m_landedTime;
 
     MyTcpSocket *mysocket = NULL;
 
@@ -97,8 +100,10 @@ public:
     QQuickView view;
     QSplineSeries *series;
     QElapsedTimer m_timer;
-    KeepAwakeHelper helper;
 
+#ifdef Q_OS_ANDROID
+    KeepAwakeHelper helper;
+#endif
 
 private:
     QActionGroup *videoDevicesGroup = nullptr;
@@ -118,7 +123,7 @@ private:
     QTimer *m_IMU;
 
     int alt_mode = 1;
-   // const QRect *m_vsize;
+    // const QRect *m_vsize;
     QSize *m_size;
     void setalt(int alt_mode);
 
@@ -127,15 +132,18 @@ private:
     bool m_armed = false;
     bool m_takeoff = false;
 
- //   QAltimeterSensor*  m_altimeter_sensor;
+    //   QAltimeterSensor*  m_altimeter_sensor;
     QPressureSensor*  m_pressure_sensor = NULL;
     QPressureReading* m_pressure_reader = NULL;
     QGeoPositionInfoSource* m_geoPositionInfo = NULL;
 
     qreal m_offset;
-    qreal m_alt;
+    qreal m_alt = 0.0;
+    double heading_offset=0.0;
+    bool m_geopos = false;
 
-// Q_SIGNALS:
+
+    // Q_SIGNALS:
     void accepted();
 
 private slots:
@@ -162,6 +170,8 @@ private slots:
     void on_pushButton_13_clicked();
     void on_reconnect_clicked();
     void on_pushButton_20_clicked();
+    void on_reset_heading_clicked();
+
 
     void doCheck();
     void reset_ping();

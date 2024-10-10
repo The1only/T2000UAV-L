@@ -38,7 +38,7 @@ class MyTcpSocket : public QObject
     Q_OBJECT
 public:
     explicit MyTcpSocket(QObject *parent = 0, QPlainTextEdit *s=NULL, void(*)(QByteArray) = NULL, void(*)(QByteArray) = NULL);
-     ~MyTcpSocket();
+    ~MyTcpSocket();
 
     void readyWrite(char *data);
     void doConnect();
@@ -118,7 +118,7 @@ public slots:
     void doIMU();
     void doStart();
     void showMessage(const QString &sender, const QString &message) const;
- //   void processClientRequest();
+    //   void processClientRequest();
 
 private:
     QTimer* timer;

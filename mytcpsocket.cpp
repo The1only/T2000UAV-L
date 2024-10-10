@@ -72,8 +72,8 @@ void MyTcpSocket::connectedIMU()
     if(QJniObject::isClassAvailable("com/wit/witsdk/Device/IMUActivity"))
     {
         imuJavaObject = new QJniObject("com/wit/witsdk/Device/IMUActivity"
-                                        ,"(Landroid/content/Context;)V",
-                                        context.object());
+                                       ,"(Landroid/content/Context;)V",
+                                       context.object());
 
         QString stat = imuJavaObject->callMethod<jstring>("TestIMU").toString();
         if( stat == "true"){
@@ -110,11 +110,11 @@ void MyTcpSocket::connected()
     if(QJniObject::isClassAvailable("com/hoho/android/usbserial/driver/TestClassTerje"))
     {
         someJavaObject = new QJniObject("com/hoho/android/usbserial/driver/TestClassTerje"
-                                               ,"(Landroid/content/Context;)V",
-                                               context.object());
+                                        ,"(Landroid/content/Context;)V",
+                                        context.object());
 
         Transponderstat = someJavaObject->callMethod<jstring>("getconnected").toString();
-        qDebug() << "Serial port status= " + Transponderstat;
+        //    qDebug() << "Serial port status= " + Transponderstat;
 
         if( Transponderstat == "true"){
             this->isconnected = true;
@@ -154,7 +154,7 @@ MyTcpSocket::~MyTcpSocket()
 
 void MyTcpSocket::showMessage(const QString &sender, const QString &message) const
 {
-     Q_UNUSED(sender);
+    Q_UNUSED(sender);
     QByteArray tmp = message.toUtf8();
     tmp.append('\0');
     this->ret(tmp);
@@ -214,8 +214,8 @@ void MyTcpSocket::doIMU()
                 this->Temperature = element.at(1).toDouble();
             }
         }
-//        qDebug() <<  AccX << " " << AccY << " " << AccZ << " " << AsX << " " << AsY << " " << AsZ << " " <<
-  //       AngleX << " " << AngleY << " " << AngleZ << " " << HX << " " << HY << " " << HZ << " " << Electricity ;
+        //        qDebug() <<  AccX << " " << AccY << " " << AccZ << " " << AsX << " " << AsY << " " << AsZ << " " <<
+        //       AngleX << " " << AngleY << " " << AngleZ << " " << HX << " " << HY << " " << HZ << " " << Electricity ;
     }
 }
 

@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     d.showMaximized();
 #else
-//    d.showMaximized();
+    //    d.showMaximized();
     d.show();
 #endif
 
