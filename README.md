@@ -4,6 +4,8 @@ MicroAir T2000UAV-L user interface for Linux, Mac, Windows, Android, and IOS
 This software creates a bridge from a user app to the T2000UAV Transponder.
 
 It also includes an artificial horizon, camera, map, list of used frequencies, and call signs.
+The system supports both external IMU and internal Android IMU. 
+It can be used in a split screen on a pad together with Skydemon etc. 
 
 ![Image 14-02-2025 at 17 27](https://github.com/user-attachments/assets/aba1260b-9114-43ed-a97e-ba2f127c9c8b)
 ![Image 14-02-2025 at 17 27 (1)](https://github.com/user-attachments/assets/70d21569-e40b-4f17-9266-99547bd3e868)
