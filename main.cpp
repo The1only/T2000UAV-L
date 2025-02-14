@@ -2,7 +2,22 @@
 #include <QtCore/QLoggingCategory>
 
 #include "mainwindow.h"
-
+/*
+void KeepScreenOn()
+{
+    QJniObject activity = QJniObject::callStaticObjectMethod("org/qtproject/qt/android/QtNative", "activity", "()Landroid/app/Activity;");
+    if ( activity.isValid() )
+    {
+        QJniObject window= activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+        if (window.isValid()) {
+            const int FLAG_KEEP_SCREEN_ON= 128;
+            //window.callObjectMethod("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON); // Method 1
+            window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+            qDebug() << "-------------------Always ON -------------";
+        }
+    }
+}
+*/
 int main(int argc, char *argv[])
 {
     Qt::ScreenOrientation ScreenMode;
@@ -12,6 +27,7 @@ int main(int argc, char *argv[])
 
     QScreen *s = QGuiApplication::primaryScreen();
     if(s != NULL){
+        /*
         qDebug() << "nativeOrientation: " << s->nativeOrientation();
         qDebug() << "orientation: " << s->orientation();
         qDebug() << (s->isLandscape(s->nativeOrientation()) ? "nativeOrientation lanscape" : "nativeOrientation not lanscape");
@@ -22,8 +38,8 @@ int main(int argc, char *argv[])
         QSizeF x = s->physicalSize();
         float Ssize = sqrt(( x.rheight() * x.rheight() ) + ( x.rwidth()* x.rwidth())) / 25.4;
         qDebug() << "Screen Size: " << x.rheight() << x.rwidth() << Ssize;;
-
-        if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
+*/
+     //   if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
     }
 
     MainWindow d;
@@ -35,9 +51,11 @@ int main(int argc, char *argv[])
     //    d.showMaximized();
     d.show();
 #endif
-
+   // KeepScreenOn();
     app.exec();
 
     return 0;
 }
+
+
 

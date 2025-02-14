@@ -6,10 +6,14 @@ import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+
 import android.view.View;
+import android.view.WindowManager;
+
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Switch;
@@ -53,8 +57,10 @@ public class IMUActivity implements DeviceDataListener, DeviceFindListener
 
     public String TestIMU()
     {
-        status("********* TestIMU  ****");
-        return "true";
+        String ret = "false";
+        if(active) ret = "true";
+        status("********* TestIMU  ****" + ret);
+        return ret;
     }
 
     public String getIMU()
@@ -119,7 +125,6 @@ public class IMUActivity implements DeviceDataListener, DeviceFindListener
             deviceManager.AddDevice(name, deviceModel);
             try {
                 deviceModel.Connect(mcontext); //IMUActivity.this);
-                active = true;
             } catch (Exception e) {
                 Log.e(TAG, "Connect Error：" + e.getMessage());
             }
@@ -143,6 +148,7 @@ public class IMUActivity implements DeviceDataListener, DeviceFindListener
     public void OnStatusChange(String deviceName, boolean status) {
         if(status){
             status(deviceName + "  Connected");
+            active = true;
             StopScan();
         }
         else {

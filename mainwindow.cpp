@@ -20,6 +20,9 @@
 #include <QImageCapture>
 #include <QMediaFormat>
 #include <QMediaPlayer>
+//#include <QCameraImageCapture>
+#include <QImageCapture>
+
 
 #include <QtCharts/QChartView>
 #include <QtCharts/QSplineSeries>
@@ -29,40 +32,44 @@
 #include "mainwindow.h"
 #include "mytcpsocket.h"
 
+using namespace std;
 
-static MainWindow *saved_this;
+//static MainWindow *saved_this;
 
+#undef USE_KeepAwakeHelper
+
+// ----------------------------------------------
+// ----------------------------------------------
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent),
+    _widgetAI   ( Q_NULLPTR ),
+    _widgetTC   ( Q_NULLPTR ),
+    _widgetALT  ( Q_NULLPTR ),
+    _widgetASI  ( Q_NULLPTR ),
+    _widgetVSI  ( Q_NULLPTR ),
+    _widgetHI   ( Q_NULLPTR ),
+    _widgetEADI ( Q_NULLPTR ),
+    _widgetEHSI ( Q_NULLPTR )
 {
-    saved_this = this;
-#ifdef Q_OS_ANDROID
+//    saved_this = this;
+#if defined(Q_OS_ANDROID) && defined(USE_KeepAwakeHelper)
     static KeepAwakeHelper helper;
 #endif
 
-    QScreen *s = QGuiApplication::primaryScreen();
-    if(s != NULL){
-        qDebug() << "nativeOrientation: " << s->nativeOrientation();
-        qDebug() << "orientation: " << s->orientation();
-        qDebug() << (s->isLandscape(s->nativeOrientation()) ? "nativeOrientation lanscape" : "nativeOrientation not lanscape");
-        qDebug() << (s->isLandscape(s->orientation()) ? "orientation lanscape" : "orientation not lanscape");
-        qDebug() << (s->isPortrait(s->nativeOrientation()) ? "nativeOrientation portrait" : "nativeOrientation not portrait");
-        qDebug() << (s->isPortrait(s->orientation()) ? "orientation portrait" : "orientation not portrait");
-        ScreenMode = s->orientation();
-        QSizeF x = s->physicalSize();
-        float Ssize = sqrt(( x.rheight() * x.rheight() ) + ( x.rwidth()* x.rwidth())) / 25.4;
-        qDebug() << "Screen Size: " << x.rheight() << x.rwidth() << Ssize;;
-    }
-    //    if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
+    if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
 
     ui->setupUi(this);
+
     ui->quickWidget->setSource(QUrl("qrc:/places_map.qml"));
     ui->quickWidget->rootObject()->setProperty("zoomLevel", 18);
 
     ui->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
     ui->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
+    ui->plainTextEdit->appendPlainText("Transponder 200-UAV v1.01a");
+    ui->listView->raise();
+    ui->listView->setHidden(true);
 
-    mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->getLidar);
+    mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->setIMU);
 
 // Whenever the location data source signals that the current
 // position is updated, the positionUpdated function is called.
@@ -74,27 +81,6 @@ MainWindow::MainWindow(QWidget *parent)
         m_geoPositionInfo->setUpdateInterval(200);
         m_geoPositionInfo->startUpdates();
     }
-
-#ifdef Q_OS_ANDROID
-    this->m_pressure_sensor = new QPressureSensor();
-    connect(m_pressure_sensor, SIGNAL(readingChanged()), this, SLOT(onPressureReadingChanged()));
-    m_pressure_sensor->start();
-
-    QList<QSensor*> mySensorList;
-    for (const QByteArray &type : QSensor::sensorTypes()) {
-        qDebug() << "Found a sensor type:" << type;
-        for (const QByteArray &identifier : QSensor::sensorsForType(type)) {
-            qDebug() << "    " << "Found a sensor of that type:" << identifier;
-            QSensor* sensor = new QSensor(type, this);
-            sensor->setIdentifier(identifier);
-            mySensorList.append(sensor);
-        }
-    }
-#endif
-
-    ui->plainTextEdit->appendPlainText("Transponder 200-UAV v1.01a");
-    ui->listView->raise();
-    ui->listView->setHidden(true);
 
     // Setup the parameters...
     {
@@ -130,11 +116,6 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "  m_timer  ";
     m_timer.start();
 
-    m_IMU = new QTimer(this);
-    m_IMU->setSingleShot(false);
-    connect(m_IMU, SIGNAL(timeout()), this, SLOT(onRotationReadingChanged()));
-    m_IMU->start(180);
-
     m_Clock = new QTimer(this);
     m_Clock->setSingleShot(false);
     connect(m_Clock, SIGNAL(timeout()), this, SLOT(doClock()));
@@ -161,16 +142,6 @@ MainWindow::MainWindow(QWidget *parent)
     timertakePicture->setSingleShot(false);
     connect(timertakePicture, SIGNAL(timeout()), this, SLOT(takePicture()));
 
-    /*
-    QWebView *webView = new QWebView(ui->webwidget);
-    webView->resize(1000,500);
-    webView->move(10,10);
-    QString gMapURL = "England"; // this is where you want to point
-    gMapURL = "http://maps.google.com.sg/maps?q="+gMapURL+"&oe=utf-8&rls=org.mozilla:en-US:official&client=firefox-a&um=1&ie=UTF-8&hl=en&sa=N&tab=wl";
-    webView->setUrl(QUrl(gMapURL));
-*/
-
-
     QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/flightlog.txt");
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
         QString data = "System booted at: "+QDateTime::currentDateTime().toString();
@@ -180,24 +151,180 @@ MainWindow::MainWindow(QWidget *parent)
     }
     else{
         qDebug() << "Log file error...  ";
-
     }
-
     // try to actually initialize camera & mic
     init();
 
-    qDebug() << "  Booted...  ";
+    _widgetAI  = ui->widgetai;
+    _widgetAI->reinit();
+    _widgetTC  = ui->widgetTC;
+    _widgetTC->reinit();
+    _widgetALT  = ui->widgetALT;
+    _widgetALT->reinit();
+    _widgetASI  = ui->widgetASI;
+    _widgetASI->reinit();
+    _widgetVSI  = ui->widgetVSI;
+    _widgetVSI->reinit();
+    _widgetHI  = ui->widgetHI;
+    _widgetHI->reinit();
+    _widgetEADI  = ui->widgetEADI;
+    _widgetEADI->reinit();
+    _widgetEHSI  = ui->widgetEHSI;
+    _widgetEHSI->reinit();
+
+    _widgetHI->setHeading(0);
+    _widgetHI->redraw();
+
+    _widgetVSI->setClimbRate(0);
+    _widgetVSI->redraw();
+
+    _widgetASI->setAirspeed(0);
+    _widgetASI->redraw();
+
+    _widgetALT->setAltitude(0);
+    _widgetALT->redraw();
+
+    _widgetTC->setTurnRate(0);
+    _widgetTC->setSlipSkid(0);
+    _widgetTC->redraw();
+
+    _widgetAI->setRoll ( 0 );
+    _widgetAI->setPitch( 0 );
+    _widgetAI->redraw();
 
 
+    _widgetEADI->setFltMode( qfi_EADI::FltMode::Off);
+    _widgetEADI->setSpdMode( qfi_EADI::SpdMode::Off);
+    _widgetEADI->setLNAV( qfi_EADI::LNAV::Off);
+    _widgetEADI->setVNAV( qfi_EADI::VNAV::Off);
+    _widgetEADI->setRoll( 0.0 );
+    _widgetEADI->setPitch( 0.0 );
+    _widgetEADI->setFPM( 0.0, 0.0 );
+    _widgetEADI->setSlipSkid( 0.0 );
+    _widgetEADI->setTurnRate( 0.0 );
+    _widgetEADI->setDots( 0.0,0.0,false,false);
+    _widgetEADI->setFD( 0.0,0.0,true);
+    _widgetEADI->setStall( false );
+    _widgetEADI->setAltitude( 0.0 );
+    _widgetEADI->setPressure( 1024.13, qfi_EADI::PressureMode::MB );
+    _widgetEADI->setAirspeed( 0.0 );
+    _widgetEADI->setMachNo( 0.0 );
+    _widgetEADI->setHeading( 0.0 );
+    _widgetEADI->setClimbRate( 0.0 );
+    _widgetEADI->setAirspeedSel( 0.0 );
+    _widgetEADI->setAltitudeSel(0 );
+    _widgetEADI->setHeadingSel( 0.0 );
+    _widgetEADI->setVfe( 0.0 );
+    _widgetEADI->setVne( 0.0 );
+    _widgetEADI->redraw();
+
+    _widgetEHSI->setHeading( 45);
+    _widgetEHSI->setCourse( 270 );
+    _widgetEHSI->setBearing( 280, true );
+    _widgetEHSI->setDeviation( 4.0, qfi_EHSI::CDI::FROM);
+    _widgetEHSI->setDistance( 200, true );
+    _widgetEHSI->setHeadingSel( 50 );
+    _widgetEHSI->setHeading(0);
+    _widgetEHSI->redraw();
+
+
+    m_msgBox = new QMessageBox(QMessageBox::Information,tr("Software is booting"),tr("Please wait for the system to connect!"));
+    m_msgBox->setStandardButtons(QMessageBox::NoButton);
+    m_msgBox->show();
+
+    // Save the current index page...
+    currentIndex = ui->stackedWidget->currentIndex();
+    qDebug() << "  Booted...  " << currentIndex << " Index";
+
+    // Quantum computer test, just to see if it would work...
+//    Qiskit();
 }
 
 MainWindow::~MainWindow()
 {
-    //    delete ui;
     qDebug() << "Exiting...";
     qApp->closeAllWindows();
 }
 
+// Call back funtion from the sensor handler...
+void MainWindow::setIMU(void *parent, bool use_imu)
+{
+    MainWindow* local = (MainWindow*)parent;
+    QList<QSensor*> mySensorList;
+
+    local->m_use_imu = use_imu;
+    qDebug() << "Found a sensors...";
+    for (const QByteArray &type : QSensor::sensorTypes()) {
+        qDebug() << "Found a sensor type:" << type;
+
+        for (const QByteArray &identifier : QSensor::sensorsForType(type)) {
+            qDebug() << "    " << "Found a sensor of that type:" << identifier;
+            QSensor* sensor = new QSensor(type, local);
+            sensor->setIdentifier(identifier);
+            mySensorList.append(sensor);
+        }
+
+        if(!strncmp(type,"QPressureSensor",strlen("QPressureSensor"))){
+            local->m_pressure_sensor = new QPressureSensor();
+            connect(local->m_pressure_sensor, SIGNAL(readingChanged()), local, SLOT(onPressureReadingChanged()));
+            local->m_pressure_sensor->start();
+            local->m_pressure_sensor->setDataRate(100);
+            qDebug() << "Found a sensor QPressureSensor";
+        }
+
+        if(use_imu  == false)
+        {
+            if(!strncmp(type,"QRotationSensor",strlen("QRotationSensor"))){
+                local->m_rotation_sensor = new QRotationSensor();
+                local->m_rotation_sensor->setDataRate(50);
+                connect(local->m_rotation_sensor, SIGNAL(readingChanged()), local, SLOT(onRotationReadingChanged()));
+                local->m_rotation_sensor->start();
+                qDebug() << "Found a sensor QRotationSensor";
+            }
+
+            if(!strncmp(type,"QCompass",strlen("QCompass"))){
+                local->m_compass_sensor = new QCompass();
+                local->m_compass_sensor->setDataRate(100);
+                connect(local->m_compass_sensor, SIGNAL(readingChanged()), local, SLOT(onCompassReadingChanged()));
+                local->m_compass_sensor->start();
+                qDebug() << "Found a sensor QCompass";
+            }
+
+            if(!strncmp(type,"QAccelerometer",strlen("QAccelerometer"))){
+                local->m_accel_sensor = new QAccelerometer();
+                local->m_accel_sensor->setDataRate(50);
+                connect(local->m_accel_sensor, SIGNAL(readingChanged()), local, SLOT(onAccelerometerReadingChanged()));
+                local->m_accel_sensor->start();
+                qDebug() << "Found a sensor QAccelerometerReading";
+            }
+
+            if(!strncmp(type,"QGyroscope",strlen("QGyroscope"))){
+                local->m_gyro_sensor = new QGyroscope();
+                local->m_gyro_sensor->setDataRate(50);
+                connect(local->m_gyro_sensor, SIGNAL(readingChanged()), local, SLOT(onGyroReadingChanged()));
+                local->m_gyro_sensor->start();
+                qDebug() << "Found a sensor QGyroscopeReading";
+            }
+
+            if(!strncmp(type,"QMagnetometer",strlen("QMagnetometer"))){
+                local->m_mag_sensor = new QMagnetometer();
+                local->m_mag_sensor->setDataRate(50);
+                connect(local->m_mag_sensor, SIGNAL(readingChanged()), local, SLOT(onMagReadingChanged()));
+                local->m_mag_sensor->start();
+                qDebug() << "Found a sensor QMagnetometerReading";
+            }
+        }
+    }
+    qDebug() << mySensorList;
+
+    local->m_IMU = new QTimer(local);
+    local->m_IMU->setSingleShot(false);
+    connect(local->m_IMU, SIGNAL(timeout()), local, SLOT(onReadingChanged()));
+    local->m_IMU->start(105);
+    qDebug() << "Found a sensor EXTERNAL QRotationSensor";
+
+    local->m_msgBox->hide();
+}
 
 void MainWindow::permissionUpdated(const QPermission &permission)
 {
@@ -268,41 +395,24 @@ void MainWindow::setCamera(const QCameraDevice &cameraDevice)
     m_camera.reset(new QCamera(*m_cameraDevic));
     m_captureSession.setCamera(m_camera.data());
 
-    /*
-    if (!m_imageCapture) {
-        m_imageCapture.reset(new QImageCapture);
-        m_captureSession.setImageCapture(m_imageCapture.get());
-        connect(m_imageCapture.get(), &QImageCapture::readyForCaptureChanged, this,&Camera::readyForCapture);
-        connect(m_imageCapture.get(), &QImageCapture::imageCaptured, this,&Camera::processCapturedImage);
-        connect(m_imageCapture.get(), &QImageCapture::imageSaved, this, &Camera::imageSaved);
-        connect(m_imageCapture.get(), &QImageCapture::errorOccurred, this,&Camera::displayCaptureError);
-    }
-*/
-
     m_captureSession.setVideoOutput(ui->viewfinder);
     ui->viewfinder->resize(*m_size);
     ui->viewfinder->show();
 
-    /*
-    connect(m_captureSession, &QCameraImageCapture::imageAvailable, [=] (int id, QVideoFrame v ) {
-        if (v.isValid()) {
-            if(v.map(QAbstractVideoBuffer::ReadOnly)) {
-                Image.clear();
-                QBuffer buffer(&Image);
-                buffer.open(QIODevice::WriteOnly);
-                v.image().save(&buffer, "jpg");
-                buffer.close();
-                Image = qCompress(Image).toBase64();
-                this->id = QDateTime::currentDateTime().toMSecsSinceEpoch();
-                v.unmap();
-            }
-        }
-    });
+    /*Initialize a QImageCapture instance*/
+    m_capture = new QImageCapture;
+    m_captureSession.setImageCapture(m_capture);
 
-*/
-    //   updateCameraActive(m_camera->isActive());
-    //    updateRecorderState(m_mediaRecorder->recorderState());
-    //    readyForCapture(m_imageCapture->isReadyForCapture());
+    /*Initialize a QImageCapture instance*/
+    connect(m_capture, &QImageCapture::imageCaptured,[this](int id, const QImage &preview) {
+        qDebug() << "Image Captured...";
+        ui->plainTextEdit->appendPlainText(QString("Image Captured:%1").arg(id));
+        QDateTime date = QDateTime::currentDateTime();
+        QString filename2 = "/storage/emulated/0/Pictures/"+date.toString("yyyy_dd_MM_hh_mm_ss").append(".png");
+        QPixmap pixmap(QPixmap::fromImage(preview));
+        QImage *imagex = new QImage(pixmap.toImage());
+        imagex->save(filename2, "png", 100);
+    });
 
     m_camera->start();
 }
@@ -348,7 +458,6 @@ void MainWindow::logLanded()
         l_file->close();
         ui->listView->appendPlainText(data);
         ui->listView->appendPlainText(dtime);
-        // }
     }
 }
 
@@ -376,12 +485,130 @@ void MainWindow::doClock()
         }
     }
     else{
-        // If more than 40Km/t we are taking off...
+        // If more than 30Km/t we are taking off...
         if( this->m_speed > 30.0 && this->m_altitude > (m_alt + 5) ){
             m_takeoff = true;
+
+            this->takeoff_latitude  = this->m_latitude;
+            this->takeoff_longitude = this->m_longitude;
+            this->takeoff_altitude  = this->m_altitude;
+
             logTakeoff();
         }
     }
+
+// Calculate meters/s ...
+#define varfilterlength 4
+
+    static double vario = 0;
+    double var,ms;
+
+    if(m_pressure_reader){
+        var = this->m_preasure_alt - vario;
+        vario = this->m_preasure_alt;
+        var*=60;  // Feet/m...
+    }
+    else{
+        ms = this->m_altitude - vario;
+        vario = this->m_altitude;
+        var=ms*3.2808399*60;  // Feet/m...
+    }
+
+    /*
+    double var = (mysocket->AccZ-1) - vario;
+    vario = mysocket->AccZ-1;
+    var*=9.80665*3.2808399*60;  // Feet/m...
+    */
+    static double varfilter[varfilterlength]={0};
+    double var_speed = 0;
+    for(int x=0; x < varfilterlength-1;x++){
+        varfilter[x] = varfilter[x+1];
+        var_speed+=varfilter[x];
+    }
+    varfilter[varfilterlength-1] = var;
+    var_speed+=var;
+    var_speed/=varfilterlength;
+
+    _widgetVSI->setClimbRate(var_speed);
+    _widgetVSI->redraw();
+
+    _widgetEADI->setClimbRate( ms);
+    _widgetEADI->redraw();
+}
+
+void MainWindow::onGyroReadingChanged()
+{
+    m_gyro_reader = m_gyro_sensor->reading();
+    //    qDebug() << "Gyro..." << m_gyro_sensor->x();
+    mysocket->AsX  = m_gyro_reader->x()*DEG_TO_RAD;
+    mysocket->AsY  = m_gyro_reader->y()*DEG_TO_RAD;
+    mysocket->AsZ  = m_gyro_reader->z()*DEG_TO_RAD;
+}
+
+void MainWindow::onMagReadingChanged()
+{
+    m_mag_reader = m_mag_sensor->reading();
+    //    qDebug() << "Mag..." << m_mag_sensor->x();
+    mysocket->HX   = m_mag_reader->x();
+    mysocket->HY   = m_mag_reader->y();
+    mysocket->HZ   = m_mag_reader->z();
+}
+
+void MainWindow::onAccelerometerReadingChanged()
+{
+    m_accel_reader = m_accel_sensor->reading();
+    //    qDebug() << "Accelerometer..." << m_accel_sensor->x();
+    mysocket->AccX = m_accel_reader->x();
+    mysocket->AccY = -1*m_accel_reader->y();
+    mysocket->AccZ = m_accel_reader->z();
+}
+
+void MainWindow::onCompassReadingChanged()
+{
+    m_compass_reader = m_compass_sensor->reading();
+ //   mysocket->AngleZ = -m_compass_reader->azimuth();
+ //   qDebug() << "Compass..." << m_compass_reader->azimuth();
+}
+
+void MainWindow::onRotationReadingChanged()
+{
+    m_rotation_reader = m_rotation_sensor->reading();
+    mysocket->AngleX  = -m_rotation_reader->x();  // when rotated...
+    mysocket->AngleY  = -m_rotation_reader->y()-90; // TERJE
+    mysocket->AngleZ  = m_rotation_reader->z();
+
+    // 7594
+
+
+}
+
+void MainWindow::onPressureReadingChanged()
+{
+    //    qDebug() << "  onPressureReadingChanged  ";
+    static bool first = true;
+
+    m_pressure_reader = m_pressure_sensor->reading();
+    m_preasure =  m_pressure_reader->pressure()/100.0;
+
+    _widgetEADI->setPressure( m_preasure, qfi_EADI::PressureMode::MB );
+    _widgetEADI->redraw();
+
+    m_preasure = m_preasure + (1013.25 - ui->doubleSpinBox->text().toDouble());
+
+    m_preasure_alt = 145366.45 * (1.0 - std::pow(m_preasure / 1013.25,0.190284));
+
+    if(first){
+        first = false;
+        m_alt = m_preasure_alt;
+    }
+
+//    qDebug() << "Phone's 'Pa' sensor = " << m_preasure_alt;
+
+    // If more than 1mb change then we takeoff...
+    //    if( abs(m_alt-(m_pressure_reader->pressure())) > 100){
+    //        m_takeoff = true;
+    //    }
+
 }
 
 void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
@@ -393,11 +620,39 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         m_geopos = true;
         //locationDataSource->stopUpdates();
         QGeoCoordinate geoCoordinate = geoPositionInfo.coordinate();
-        this->m_speed     = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed)*3.6;
         this->m_latitude  = geoCoordinate.latitude();
         this->m_longitude = geoCoordinate.longitude();
         this->m_altitude  = geoCoordinate.altitude();
+        if(this->m_altitude != this->m_altitude){
+            this->m_altitude = 0;
+        }
+
+        double speed     = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
+        this->m_speed     = speed*3.6;
+
+        double bearing    = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+
+        if(!(isnan(speed) || isnan(bearing)))
+        {
+            this->m_vel_E  = sin(bearing*(3.141592/180.0))*speed;
+            this->m_vel_N  = cos(bearing*(3.141592/180.0))*speed;;
+            this->m_vel_D  = geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
+        }
+        else{
+            this->m_vel_E=this->m_vel_N=this->m_vel_D=0.0;
+        }
+
         //    this->m_head      = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+
+//        this->m_head_dir = geoCoordinate.azimuthTo(QGeoCoordinate(0,0));
+
+        if(this->m_speed >= 0 && this->m_speed < 200)
+            _widgetASI->setAirspeed(this->m_speed);
+        else
+            _widgetASI->setAirspeed(0);
+
+        _widgetASI->redraw();
+
 
         ui->quickWidget->rootObject()->setProperty("lat", this->m_latitude);
         ui->quickWidget->rootObject()->setProperty("lon", this->m_longitude);
@@ -416,373 +671,616 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
     }
 }
 
-void MainWindow::onPressureReadingChanged()
+void MainWindow::EKF(Vector3 gyro, Vector3 accel, Vector3 mag)
 {
-    //    qDebug() << "  onPressureReadingChanged  ";
-    static bool first = true;
+    if(m_mag_reader != nullptr && m_gyro_reader != nullptr && m_accel_reader != nullptr)
+    {
+        // Euler estimate using accelerometer and magnetometer...
+        // if(accel[0] > G) accel[0] = G-0.001; if(accel[0] < -G) accel[0] = -G-0.001;
+        // if(accel[1] > G) accel[1] = G-0.001; if(accel[1] < -G) accel[1] = -G-0.001;
+        // if(accel[2] > G) accel[2] = G-0.001; if(accel[2] < -G) accel[2] = -G-0.001;
 
-    m_pressure_reader = m_pressure_sensor->reading();
+        // Accel = 0 = Y = ROL , 1 = Z = PITCH  , 2 = X = TVERR
+ //1       Vector3 rotate= { 180 * DEG_TO_RAD, -(m_offset-90 % 180) * DEG_TO_RAD, 0 * DEG_TO_RAD};
+   //     Vector3 rotate= { 0 * DEG_TO_RAD, -90 * DEG_TO_RAD, 0 * DEG_TO_RAD};
+ //1       Matrix3x3 Matrix = createRotationMatrix(rotate);
+ //       rotateSensors(gyro, accel, mag, Matrix);
 
-    if(first){
-        first = false;
-        m_alt = m_pressure_reader->pressure();
+//        m_pitch+= gyro[1] * RAD_TO_DEG * 0.1;
+//        m_roll +=-gyro[0] * RAD_TO_DEG * 0.1;
+//        m_yaw  += gyro[2] * RAD_TO_DEG * 0.1;
+
+        std::tie(m_pitch,m_roll,m_yaw) = ekf.getPitchRollYaw(accel[1],accel[0],accel[2],mag[1],mag[0],mag[2],gyro[1],-gyro[0],gyro[2]);
+        m_pitch = m_pitch * RAD_TO_DEG;
+        m_roll  = m_roll  * RAD_TO_DEG;
+        m_yaw   = m_yaw   * RAD_TO_DEG;
+
+        // How to caulcate Euler Angles [Roll Φ(Phi) Gyro Z, Pitch θ(Theta) gyro Y, Yaw Ψ(Psi) Gyro X]
+        // calculate using ekf...
+
+        Eigen::Vector3d g = Eigen::Vector3d(gyro[0],gyro[1],gyro[2]);
+        Eigen::Vector3d a = Eigen::Vector3d(accel[0],accel[1],accel[2]);
+        Eigen::Vector3d m = Eigen::Vector3d(mag[0],mag[1],mag[2]);
+
+        kf.predict(g);
+        kf.update(a, m);
+        Eigen::Vector4d quaternion = kf.getQuaternion();
+        Eigen::Vector3d euler = kf.quaternionToEuler(quaternion);
+
+        ekf.setPitch_rad(euler[1] * DEG_TO_RAD);
+        ekf.setRoll_rad(euler[0] * DEG_TO_RAD);
+        ekf.setHeading_rad(euler[2] * DEG_TO_RAD);
+
+        // ekf.ekf_update(QDateTime::currentMSecsSinceEpoch(), //,gps.getTimeOfWeek(),
+        //                 0,//this->m_vel_N*1e-3,
+        //                 0,//this->m_vel_E*1e-3,
+        //                 0,//this->m_vel_D*1e-3,
+        //                 this->m_latitude * DEG_TO_RAD, // * 1e-7,
+        //                 this->m_longitude* DEG_TO_RAD, // * 1e-7,
+        //                 -0.100, //this->m_altitude, // * 1e-3,
+        //                 gyro[0],
+        //                 gyro[1],
+        //                 -gyro[2],
+        //                 accel[1],
+        //                 -accel[0],  // roll
+        //                 accel[2],
+        //                 -mag[1],
+        //                 mag[0],
+        //                 -mag[2]
+        // );
+
+        qDebug() << "------------------------- %ld -------------------------- \n" << time(NULL);
+        // qDebug() << "Roll      : " << m_roll << ekf.getRoll_rad()* RAD_TO_DEG << mysocket->AngleX;
+        // qDebug() << "Pitch     : " << m_pitch << ekf.getPitch_rad()* RAD_TO_DEG << mysocket->AngleY;
+        // qDebug() << "Yaw       : " << m_yaw << ekf.getHeading_rad()* RAD_TO_DEG << mysocket->AngleZ;
+
+        qDebug() << "Roll      : " << m_roll  << euler[0] << mysocket->AngleX;
+        qDebug() << "Pitch     : " << m_pitch << euler[1] << mysocket->AngleY;
+        qDebug() << "Yaw       : " << m_yaw   << euler[2] << mysocket->AngleZ;
+
+        // qDebug() << "-------------------------";
+        // qDebug() << "Latitude  : " <<  this->m_latitude << ekf.getLatitude_rad()*RAD_TO_DEG;
+        // qDebug() << "Longitute : " << this->m_longitude << ekf.getLongitude_rad()*RAD_TO_DEG;
+        // qDebug() << "Altitude  : " << this->m_altitude << ekf.getAltitude_m();
+        // qDebug() << "-------------------------";
+        // qDebug() << "Speed (N) : " << this->m_vel_N << ekf.getVelNorth_ms();
+        // qDebug() << "Speed (E) : " << this->m_vel_E << ekf.getVelEast_ms();
+        // qDebug() << "Speed (D) : " << this->m_vel_D << ekf.getVelDown_ms();
+        // qDebug() << "-------------------------";
+        // qDebug() << "Gyro X    : " << gyro[0] << ekf.getGyroBiasX_rads()* RAD_TO_DEG;
+        // qDebug() << "Gyro Y    : " << gyro[1] << ekf.getGyroBiasY_rads()* RAD_TO_DEG;
+        // qDebug() << "Gyro Z    : " << gyro[2] << ekf.getGyroBiasZ_rads()* RAD_TO_DEG;
+        // qDebug() << "-------------------------";
+        // qDebug() << "Accel 0   : " << accel[0] << ekf.getAccelBiasX_mss();
+        // qDebug() << "Accel 1   : " << accel[1] << ekf.getAccelBiasY_mss();
+        // qDebug() << "Accel 2   : " << accel[2] << ekf.getAccelBiasZ_mss();
+        // qDebug() << "-------------------------";
+        // qDebug() << "Mag X   : " << mag[0]; //<< ekf.getAccelBiasX_mss();
+        // qDebug() << "Mag Y   : " << mag[1]; //<< ekf.getAccelBiasY_mss();
+        // qDebug() << "Mag Z   : " << mag[2]; //<< ekf.getAccelBiasZ_mss();
+        // qDebug() << "-----------------------------------------------------------------\n";
+
     }
-    //   qDebug() << "Phone's 'Pa' sensor = " << m_pressure_reader->pressure();
-
-    // If more than 1mb change then we takeoff...
-    //    if( abs(m_alt-(m_pressure_reader->pressure())) > 100){
-    //        m_takeoff = true;
-    //    }
-
 }
 
-void MainWindow::onRotationReadingChanged()
+void MainWindow::onReadingChanged()
 {
 #define filterlength 15
     static double filter[filterlength]={0};
+#define rotfilterlength 10
+    static double rotfilter[rotfilterlength]={0};
+#define headfilterlength 10
+    static double headfilter[headfilterlength]={0};
+    double x_head = 0.0;
+    double slipp = 0.0;
+    static bool calib_required = true;
+    static bool running = false;
 
-    //    qDebug() << "  onRotationReadingChanged  ";
-    //    m_rotation_reader = m_rotation_sensor->reading();
+    // For angles...            AngleX = roll, AngleY = pitch,  AngleZ = Yaw...
+    // With 90 deg, Portrate... AngleZ = roll, AngleY = pitch, -AngleX = Yaw...
 
-    double x_att = mysocket->AngleX;
-    double y_att = mysocket->AngleY;
-    double z_att = mysocket->AngleZ;
+    // For Vector rotation...   Roll = 0, Pitch = 1, Yaw = 2  ....
+    // For Sensor rotation...   Roll = X, Pitch = Y, Yaw = Z  ....
 
-#ifdef Q_OS_MAC
-    static double angX = 1.0;
-    static double angY = 0.7;
-    static double angB = 0.05;
-    static double angZ = 2.0;
-    static double altX = 3.2;
-    static double speedX = 3.1;
+    // For Accel rotation...    Down = 0, East = 1,  North = 2  ....
+    // For Gyro rotation...     Roll = 0, Pitch = 1, Yaw = 2  ....
 
-    mysocket->AngleZ+= angZ;
-    mysocket->AngleX+= angX;
-    mysocket->AngleY+= angY;
-    m_altitude+= altX;
-    m_speed+=speedX;
+    if(calib_required == true && mysocket->AngleX != 0.0 && mysocket->AngleY != 0.0 && mysocket->AngleZ != 0.0){
+//        qDebug() << "R-> " << mysocket->AngleX << " -> " << mysocket->AngleZ << " -> " << mysocket->AngleY;
+//        Vector3 rotate= { 90 * DEG_TO_RAD, 0 * DEG_TO_RAD, 0 * DEG_TO_RAD};
+  //      Vector3 rotate= { 0 * DEG_TO_RAD, 0 * DEG_TO_RAD, -mysocket->AngleY * DEG_TO_RAD};
+//        Vector3 rotate= { -mysocket->AngleX * DEG_TO_RAD, -mysocket->AngleZ * DEG_TO_RAD, -mysocket->AngleY * DEG_TO_RAD};
 
-    if(m_speed >  200.0) speedX = -3.1;
-    if(m_speed < -0.0) speedX =  3.1;
-
-    if(mysocket->AngleX >  60.0) angX = -1.0;
-    if(mysocket->AngleX < -60.0) angX =  1.0;
-
-    if(mysocket->AngleY >  30.0) angY = -1.0;
-    if(mysocket->AngleY < -30.0) angY =  1.0;
-
-    if(m_altitude >  350.0) altX = -3.0;
-    if(m_altitude < -0.0) altX =  3.0;
-
-    if(mysocket->AngleZ >  357.0) angZ = -2.0;
-    if(mysocket->AngleZ <  2.0)   angZ =  2.0;
-
-    mysocket->AccY= mysocket->AngleX/-60.0;
-    mysocket->Temperature = 20.0;
-    mysocket->Electricity = 85.3;
-
-    m_geopos = true;
-
-#endif
-
-    double turnbank = 0;
-    for(int x=0; x < filterlength-1;x++){
-        filter[x] = filter[x+1];
-        turnbank+=filter[x];
-    }
-    double f = 4 * mysocket->AccY * -75.0;
-    if(f >  75.0)f =  75.0;
-    if(f < -75.0)f = -75.0;
-    filter[filterlength-1] = f;
-    turnbank+=filter[filterlength-1];
-    turnbank/=filterlength;
-
-    m_head = floor(180.0 - z_att - heading_offset);
-    if(m_head >= 360.0) m_head-=360.0;
-    if(m_head < 0.0) m_head+=360.0;
-
-    if(m_first){
-        m_first = false;
-        m_offset = mysocket->AngleY; // m_rotation_reader->y();
+        //        this->rotationMatrix = createRotationMatrix(rotate);
+        calib_required = false;
+    //    m_IMU->stop();
+    //    m_IMU->start(54);
     }
 
-    QGraphicsScene * m_graphScen = new QGraphicsScene;
-    QSize x = ui->graphicsView->size();
-
-    m_graphScen->setSceneRect(0,0,x.width(),x.height());
-    float x1 = cos(x_att/(180.0/3.1415));
-    float y1 = sin(x_att/(180.0/3.1415));
-    float z1 = sin(y_att/(180.0/3.1415));
-
-    int offset = (y_att)-(m_offset);
-    //    int offset = (y_att/2)-(m_offset/2);
-    if (offset > 180) offset = offset -180;
-    offset = offset * (x.height()/180.0);
-
-    // -----------------------------------------
-    // Artificial Horizon line...
-    m_graphScen->addLine((int)((x.width() /2)-(x1*200)),
-                         (int)((x.height()/2)-(y1*200))+offset,
-                         (int)((x.width() /2)+(x1*200)),
-                         (int)((x.height()/2)+(y1*200))+offset,
-                         QPen(QBrush(Qt::yellow),6));
-
-    // -----------------------------------------
-    // Horisontal center line...
-    m_graphScen->addLine((int)5,
-                         (int)((x.height()/2)-0),
-                         (int)x.width()-5,
-                         (int)((x.height()/2)+0),
-                         QPen(QBrush(Qt::green),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Vertical center line...
-    m_graphScen->addLine((int)(x.width() /2),
-                         (int) 5,
-                         (int)(x.width() /2),
-                         (int)x.height()-5,
-                         QPen(QBrush(Qt::green),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Horisontal bottom line...
-    m_graphScen->addLine((int)175,
-                         (int)((x.height()/1)-100),
-                         (int)x.width()-175,
-                         (int)((x.height()/1)-100),
-                         QPen(QBrush(Qt::darkMagenta),8));
-
-    m_graphScen->addLine((int)175,
-                         (int)((x.height()/1)-100),
-                         (int)x.width()-175,
-                         (int)((x.height()/1)-100),
-                         QPen(QBrush(Qt::white),1));
-
-    // Horisontal bottom line...
-    m_graphScen->addEllipse(turnbank+((x.width()/2)-11),x.height()-110,20,20,QPen(Qt::white),QBrush(Qt::cyan));
-
-    // -----------------------------------------
-    // Center main angle...
-    m_graphScen->addLine((int)((x.width() /2)-(x1*60)),
-                         (int)((x.height()/2)-(y1*60)),
-                         (int)((x.width() /2)+(x1*60)),
-                         (int)((x.height()/2)+(y1*60)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Center main angle...
-    float p_loc_A = (x.width() /2) + ((int)m_head % 60);//  - (y1*1.0);
-    float p_loc_B = (x.height() /2);// + (x1*1.0);
-    // qDebug() << y1 << "    " << x1 << "   " << z1 << "   " << y_att  <<  "    " << m_head;
-
-    m_graphScen->addLine((int)(p_loc_A),//-(x1*0)),
-                         (int)(p_loc_B-10),//+10+offset-(y1*abs(m_head*2))),
-                         (int)(p_loc_A),//+(x1*0)),
-                         (int)(p_loc_B+10),//-10+offset-(y1*abs(m_head*2))),
-                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
-
-    m_graphScen->addLine((int)(p_loc_A-60),//-(x1*0)),
-                         (int)(p_loc_B-10), //+offset-(y1*80)),
-                         (int)(p_loc_A-60),//+(x1*0)),
-                         (int)(p_loc_B+10), //+offset-(y1*80)),
-                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
-
-    m_graphScen->addLine((int)(p_loc_A+60),//-(x1*0)),
-                         (int)(p_loc_B-10),//-(y1*20)),
-                         (int)(p_loc_A+60),//+(x1*0)),
-                         (int)(p_loc_B+10),//+(y1*20)),
-                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
-
-    m_graphScen->addLine((int)(p_loc_A-120),//-(x1*0)),
-                         (int)(p_loc_B-10),//-(y1*20)),
-                         (int)(p_loc_A-120),//+(x1*0)),
-                         (int)(p_loc_B+10),//+(y1*20)),
-                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
-
-    m_graphScen->addLine((int)(p_loc_A+120),//-(x1*0)),
-                         (int)(p_loc_B-10),//-(y1*20)),
-                         (int)(p_loc_A+120),//+(x1*0)),
-                         (int)(p_loc_B+10),//+(y1*20)),
-                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
-
-    m_graphScen->addLine((int)(p_loc_A-180),//-(x1*0)),
-                         (int)(p_loc_B-10),//-(y1*20)),
-                         (int)(p_loc_A-180),//+(x1*0)),
-                         (int)(p_loc_B+10),//+(y1*20)),
-                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
-
-    m_graphScen->addLine((int)(p_loc_A+180),//-(x1*0)),
-                         (int)(p_loc_B-10),//-(y1*20)),
-                         (int)(p_loc_A+180),//+(x1*0)),
-                         (int)(p_loc_B+10),//+(y1*20)),
-                         QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
-
-    // First upper bar...
-    p_loc_A = (x.width() /2)  + (y1*15.0);
-    p_loc_B = (x.height() /2) - (x1*15.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*50)),
-                         (int)(p_loc_B-(y1*50)),
-                         (int)(p_loc_A+(x1*50)),
-                         (int)(p_loc_B+(y1*50)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Second upper bar...
-    p_loc_A = (x.width() /2)  + (y1*30.0);
-    p_loc_B = (x.height() /2) - (x1*30.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*40)),
-                         (int)(p_loc_B-(y1*40)),
-                         (int)(p_loc_A+(x1*40)),
-                         (int)(p_loc_B+(y1*40)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Third upper bar...
-    p_loc_A = (x.width() /2)  + (y1*45.0);
-    p_loc_B = (x.height() /2) - (x1*45.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*30)),
-                         (int)(p_loc_B-(y1*30)),
-                         (int)(p_loc_A+(x1*30)),
-                         (int)(p_loc_B+(y1*30)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Forth upper bar...
-    p_loc_A = (x.width() /2)  + (y1*60.0);
-    p_loc_B = (x.height() /2) - (x1*60.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*20)),
-                         (int)(p_loc_B-(y1*20)),
-                         (int)(p_loc_A+(x1*20)),
-                         (int)(p_loc_B+(y1*20)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // First lower bar...
-    p_loc_A = (x.width() /2)  - (y1*15.0);
-    p_loc_B = (x.height() /2) + (x1*15.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*50)),
-                         (int)(p_loc_B-(y1*50)),
-                         (int)(p_loc_A+(x1*50)),
-                         (int)(p_loc_B+(y1*50)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Second lower bar...
-    p_loc_A = (x.width() /2)  - (y1*30.0);
-    p_loc_B = (x.height() /2) + (x1*30.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*40)),
-                         (int)(p_loc_B-(y1*40)),
-                         (int)(p_loc_A+(x1*40)),
-                         (int)(p_loc_B+(y1*40)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // Third lower bar...
-    p_loc_A = (x.width() /2)  - (y1*45.0);
-    p_loc_B = (x.height() /2) + (x1*45.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*30)),
-                         (int)(p_loc_B-(y1*30)),
-                         (int)(p_loc_A+(x1*30)),
-                         (int)(p_loc_B+(y1*30)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-    // Forth lower bar...
-    p_loc_A = (x.width() /2)  - (y1*60.0);
-    p_loc_B = (x.height() /2) + (x1*60.0);
-
-    m_graphScen->addLine((int)(p_loc_A-(x1*20)),
-                         (int)(p_loc_B-(y1*20)),
-                         (int)(p_loc_A+(x1*20)),
-                         (int)(p_loc_B+(y1*20)),
-                         QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
-
-    // -----------------------------------------
-
-    m_graphScen->addLine((int)((x.width() /2)-100),
-                         (int)((x.height()/2)-19+offset),
-                         (int)((x.width() /2)-80),
-                         (int)((x.height()/2)-15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)+100),
-                         (int)((x.height()/2)-19+offset),
-                         (int)((x.width() /2)+80),
-                         (int)((x.height()/2)-15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)-100),
-                         (int)((x.height()/2)+19+offset),
-                         (int)((x.width() /2)-80),
-                         (int)((x.height()/2)+15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)+100),
-                         (int)((x.height()/2)+19+offset),
-                         (int)((x.width() /2)+80),
-                         (int)((x.height()/2)+15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-
-
-    m_graphScen->addLine((int)((x.width() /2)+80),
-                         (int)((x.height()/2)+40+offset),
-                         (int)((x.width() /2)+60),
-                         (int)((x.height()/2)+30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)-80),
-                         (int)((x.height()/2)+40+offset),
-                         (int)((x.width() /2)-60),
-                         (int)((x.height()/2)+30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)+80),
-                         (int)((x.height()/2)-40+offset),
-                         (int)((x.width() /2)+60),
-                         (int)((x.height()/2)-30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)-80),
-                         (int)((x.height()/2)-40+offset),
-                         (int)((x.width() /2)-60),
-                         (int)((x.height()/2)-30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-
-
-    m_graphScen->addLine((int)((x.width() /2)-60),
-                         (int)((x.height()/2)-60+offset),
-                         (int)((x.width() /2)-45),
-                         (int)((x.height()/2)-45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)+60),
-                         (int)((x.height()/2)-60+offset),
-                         (int)((x.width() /2)+45),
-                         (int)((x.height()/2)-45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)+60),
-                         (int)((x.height()/2)+60+offset),
-                         (int)((x.width() /2)+45),
-                         (int)((x.height()/2)+45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-    m_graphScen->addLine((int)((x.width() /2)-60),
-                         (int)((x.height()/2)+60+offset),
-                         (int)((x.width() /2)-45),
-                         (int)((x.height()/2)+45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
-
-    // -----------------------------------------
-    m_graphScen->addRect(QRect(1,1,x.width()-4,x.height()-4),QPen(QBrush(Qt::gray),1));
-
-    ui->graphicsView->setScene(m_graphScen);
-    ui->graphicsView->show();
-
-    if(m_speed < 300 && m_speed > 0){
-        ui->speed->setText(QString("%1").arg(abs(m_speed), 0, 'f', 1));
-    }
-
+    // Sensor rotation...
 #ifndef Q_OS_MAC
-    if(mysocket->IMUconnected == true)
+    if(calib_required == false)
 #endif
     {
-        ui->roll->setText(QString("%1").arg(abs(x_att), 0, 'f', 0));
-        ui->pitch->setText(QString("%1").arg(-1*(y_att-m_offset), 0, 'f', 0));
-        ui->temp->setText(QString("%1").arg(mysocket->Electricity, 0, 'f', 0));
-        ui->temperature->setText(QString("%1").arg(mysocket->Temperature, 0, 'f', 1));
-        ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
+        Vector3 gyro = {mysocket->AsZ,mysocket->AsY,mysocket->AsX};
+        Vector3 accel= {mysocket->AccY,mysocket->AccZ,mysocket->AccX};
+        Vector3 mag  = {mysocket->HY,mysocket->HZ,mysocket->HX};
+        Vector3 attitude  = {mysocket->AngleX,mysocket->AngleZ,mysocket->AngleY};
+
+        //Vector3 attitude  = {mysocket->AngleY,mysocket->AngleZ,mysocket->AngleX};
+        //rotateSensors(gyro, accel, mag, attitude, this->rotationMatrix);
+
+     //   qDebug() << "1-> " << mysocket->AngleY << " -> " << mysocket->AngleZ << " -> " << mysocket->AngleX;
+
+     //   mysocket->AngleX = attitude[0]; mysocket->AngleZ = attitude[1]; mysocket->AngleY = attitude[2];
+     //   qDebug() << "2-> " << mysocket->AngleX << " -> " << mysocket->AngleZ << " -> " << mysocket->AngleZ;
+
+
+        if(running == false){
+            m_acc_Y_calib = accel[0];
+            running = true;
+        }
+
+        x_head = attitude[1] - heading_offset;
+
+        if(m_use_ekf)
+        {
+            slipp = (accel[0]-m_acc_Y_calib)*-7.5;
+            EKF(gyro,accel,mag);
+        }
+        else{
+            slipp = (accel[0]-m_acc_Y_calib)*-9.5;
+        }
+
+        if(mysocket->Transponderstat == "false" &&  ui->radioButton->isCheckable()){
+            ui->radioButton->setChecked(false);
+            ui->radioButton->setCheckable(true);
+            ui->radioButton_3->setChecked(false);
+        }
+        else if(mysocket->Transponderstat == "true" &&  !ui->radioButton->isCheckable()){
+                ui->radioButton->setCheckable(true);
+        }
+
+        if( ui->radioButton_3->isChecked()){
+            _widgetALT->setAltitude(m_preasure_alt);
+            _widgetEADI->setAltitude( m_preasure_alt );
+        }else if( ui->radioButton_2->isChecked()){
+            _widgetALT->setAltitude(this->m_altitude*3.2808399);
+            _widgetEADI->setAltitude(this->m_altitude*3.2808399 );
+        }else{
+            ui->radioButton_2->setPalette(QColor(49,49,49));
+            _widgetALT->setAltitude(m_tansALT);
+            _widgetEADI->setAltitude( m_tansALT);
+        }
+        _widgetEADI->redraw();
+        _widgetALT->redraw();
+
+        if(m_first){
+            m_first = false;
+            m_offset = attitude[2];
+
+            if(m_compass_sensor){
+                //      m_compass_reader->setAzimuth(mysocket->AngleZ);
+            }
+        }
+
+        // Make compass...
+        double head_dir = 0;
+        for(int x=0; x < headfilterlength-1;x++){
+            headfilter[x] = headfilter[x+1];
+            head_dir+=headfilter[x];
+        }
+        headfilter[headfilterlength-1] = x_head;
+        head_dir+=x_head;
+        head_dir/=-headfilterlength;
+
+    //    if(head_dir >= 360.0) head_dir-=360.0;
+    //    if(head_dir < 0.0) head_dir+=360.0;
+      //  m_head = head_dir;
+        m_head = x_head; // asin(head_dir)*(180/3.141592);
+
+     //   qDebug() << x_head << "  " << head_dir << "  " << m_head;
+
+        // Store data in local registers...
+        double roll_att = 0;
+        double pitch_att = 0;
+
+        if(m_use_ekf)
+        {
+            roll_att = ekf.getRoll_rad()* RAD_TO_DEG;
+            pitch_att = ekf.getPitch_rad()* RAD_TO_DEG;
+        }
+        else
+        {
+            roll_att  = -attitude[0];
+            pitch_att =  attitude[2] - m_offset;
+        }
+
+        double r = 2*RAD_TO_DEG*gyro[2];//((sin(attitude[2]*DEG_TO_RAD)*gyro[0])+(cos(attitude[2]*DEG_TO_RAD)*gyro[2]));
+        if(r >  6.0)r =  6.0;
+        if(r < -6.0)r = -6.0;
+
+        double rot_speed = 0;
+        for(int x=0; x < rotfilterlength-1;x++){
+            rotfilter[x] = rotfilter[x+1];
+            rot_speed+=rotfilter[x];
+        }
+        rotfilter[rotfilterlength-1] = r;
+        rot_speed+=r;
+        rot_speed/=-rotfilterlength;
+
+        // Make the turn bank ...
+        double slippIndicator = 0;
+        if(slipp >  16.0)slipp =  16.0;
+        if(slipp < -16.0)slipp = -16.0;
+        for(int x=0; x < filterlength-1;x++){
+            filter[x] = filter[x+1];
+            slippIndicator+=filter[x];
+        }
+        filter[filterlength-1] = slipp;
+        slippIndicator+=filter[filterlength-1];
+        slippIndicator/=filterlength;
+
+        if( currentIndex == 2)
+        {
+            _widgetAI->setRoll ( roll_att );
+            _widgetAI->setPitch( pitch_att );
+            _widgetAI->redraw();
+
+            _widgetTC->setTurnRate(rot_speed);
+            _widgetTC->setSlipSkid(slippIndicator);
+            _widgetTC->redraw();
+        }
+
+        if( currentIndex == 3)
+        {
+            _widgetEADI->setSlipSkid( slippIndicator );
+            _widgetEADI->setTurnRate( rot_speed );
+            _widgetEADI->setRoll( roll_att );
+            _widgetEADI->setPitch(pitch_att );
+
+            _widgetEADI->setFltMode( qfi_EADI::FltMode::CMD);
+            _widgetEADI->setSpdMode( qfi_EADI::SpdMode::FMC_SPD);
+            _widgetEADI->setLNAV( qfi_EADI::LNAV::APR_ARM);
+            _widgetEADI->setVNAV( qfi_EADI::VNAV::ALT);
+            _widgetEADI->setFPM( 0.0, 0.0 );
+            _widgetEADI->setDots( 0.0,0.0,false,false);
+            _widgetEADI->setFD( 0.0,0.0,true);
+            _widgetEADI->setStall( false );
+    //        _widgetEADI->setPressure( 1024.13, qfi_EADI::PressureMode::MB );
+            _widgetEADI->setMachNo( 0.0 );
+            _widgetEADI->setAirspeedSel( 80.0 );
+            _widgetEADI->setAltitudeSel( 400 );
+            _widgetEADI->setHeadingSel( 80.0 );
+            _widgetEADI->setVfe( 120.0 );
+            _widgetEADI->setVne( 160.0 );
+            _widgetEADI->redraw();
+
+            _widgetEHSI->setCourse( -m_head );
+            _widgetEHSI->setBearing( m_head/2, true );
+            _widgetEHSI->setDeviation( 0.0, qfi_EHSI::CDI::FROM);
+            _widgetEHSI->setDistance( 200, true );
+            _widgetEHSI->setHeadingSel( m_head/1.5 );
+            _widgetEHSI->redraw();
+        }
+
+        if( currentIndex == 1)
+        {
+            QGraphicsScene * m_graphScen = new QGraphicsScene;
+            QSize x = ui->graphicsView->size();
+
+            m_graphScen->setSceneRect(0,0,x.width(),x.height());
+            float x1 = cos(-roll_att/(180.0/3.1415));
+            float y1 = sin(-roll_att/(180.0/3.1415));
+            float z1 = sin(pitch_att/(180.0/3.1415));
+
+            int offset = pitch_att;
+            if (offset > 40) offset = 40;
+            if (offset < -40) offset = -40;
+            offset = offset * (x.height()/180.0);
+
+            // -----------------------------------------
+            // Artificial Horizon line...
+            m_graphScen->addLine((int)((x.width() /2)-(x1*200)),
+                                 (int)((x.height()/2)-(y1*200))+offset,
+                                 (int)((x.width() /2)+(x1*200)),
+                                 (int)((x.height()/2)+(y1*200))+offset,
+                                 QPen(QBrush(Qt::yellow),6));
+
+            if( roll_att > 60 || roll_att < -60 || pitch_att > 30 || pitch_att < -30)
+            {
+                ui->graphicsView->setBackgroundBrush(QBrush(Qt::red));
+            }
+            else
+            {
+                ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
+            }
+
+            // -----------------------------------------
+            // Horisontal center line...
+            m_graphScen->addLine((int)5,
+                                 (int)((x.height()/2)-0),
+                                 (int)x.width()-5,
+                                 (int)((x.height()/2)+0),
+                                 QPen(QBrush(Qt::green),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Vertical center line...
+            m_graphScen->addLine((int)(x.width() /2),
+                                 (int) 5,
+                                 (int)(x.width() /2),
+                                 (int)x.height()-5,
+                                 QPen(QBrush(Qt::green),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Horisontal bottom line...
+            m_graphScen->addLine((int)175,
+                                 (int)((x.height()/1)-100),
+                                 (int)x.width()-175,
+                                 (int)((x.height()/1)-100),
+                                 QPen(QBrush(Qt::darkMagenta),8));
+
+            m_graphScen->addLine((int)175,
+                                 (int)((x.height()/1)-100),
+                                 (int)x.width()-175,
+                                 (int)((x.height()/1)-100),
+                                 QPen(QBrush(Qt::white),1));
+
+            // Horisontal bottom line...
+            m_graphScen->addEllipse((slippIndicator*4)+((x.width()/2)-11),x.height()-110,20,20,QPen(Qt::white),QBrush(Qt::cyan));
+
+            // -----------------------------------------
+            // Center main angle...
+            m_graphScen->addLine((int)((x.width() /2)-(x1*60)),
+                                 (int)((x.height()/2)-(y1*60)),
+                                 (int)((x.width() /2)+(x1*60)),
+                                 (int)((x.height()/2)+(y1*60)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Center main angle...
+            float p_loc_A = (x.width() /2) + ((int)m_head % 60);//  - (y1*1.0);
+            float p_loc_B = (x.height() /2);// + (x1*1.0);
+            // qDebug() << y1 << "    " << x1 << "   " << z1 << "   " << y_att  <<  "    " << m_head;
+
+            m_graphScen->addLine((int)(p_loc_A),//-(x1*0)),
+                                 (int)(p_loc_B-10),//+10+offset-(y1*abs(m_head*2))),
+                                 (int)(p_loc_A),//+(x1*0)),
+                                 (int)(p_loc_B+10),//-10+offset-(y1*abs(m_head*2))),
+                                 QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+            m_graphScen->addLine((int)(p_loc_A-60),//-(x1*0)),
+                                 (int)(p_loc_B-10), //+offset-(y1*80)),
+                                 (int)(p_loc_A-60),//+(x1*0)),
+                                 (int)(p_loc_B+10), //+offset-(y1*80)),
+                                 QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+            m_graphScen->addLine((int)(p_loc_A+60),//-(x1*0)),
+                                 (int)(p_loc_B-10),//-(y1*20)),
+                                 (int)(p_loc_A+60),//+(x1*0)),
+                                 (int)(p_loc_B+10),//+(y1*20)),
+                                 QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+            m_graphScen->addLine((int)(p_loc_A-120),//-(x1*0)),
+                                 (int)(p_loc_B-10),//-(y1*20)),
+                                 (int)(p_loc_A-120),//+(x1*0)),
+                                 (int)(p_loc_B+10),//+(y1*20)),
+                                 QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+            m_graphScen->addLine((int)(p_loc_A+120),//-(x1*0)),
+                                 (int)(p_loc_B-10),//-(y1*20)),
+                                 (int)(p_loc_A+120),//+(x1*0)),
+                                 (int)(p_loc_B+10),//+(y1*20)),
+                                 QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+            m_graphScen->addLine((int)(p_loc_A-180),//-(x1*0)),
+                                 (int)(p_loc_B-10),//-(y1*20)),
+                                 (int)(p_loc_A-180),//+(x1*0)),
+                                 (int)(p_loc_B+10),//+(y1*20)),
+                                 QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+            m_graphScen->addLine((int)(p_loc_A+180),//-(x1*0)),
+                                 (int)(p_loc_B-10),//-(y1*20)),
+                                 (int)(p_loc_A+180),//+(x1*0)),
+                                 (int)(p_loc_B+10),//+(y1*20)),
+                                 QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
+
+            // First upper bar...
+            p_loc_A = (x.width() /2)  + (y1*15.0);
+            p_loc_B = (x.height() /2) - (x1*15.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*50)),
+                                 (int)(p_loc_B-(y1*50)),
+                                 (int)(p_loc_A+(x1*50)),
+                                 (int)(p_loc_B+(y1*50)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Second upper bar...
+            p_loc_A = (x.width() /2)  + (y1*30.0);
+            p_loc_B = (x.height() /2) - (x1*30.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*40)),
+                                 (int)(p_loc_B-(y1*40)),
+                                 (int)(p_loc_A+(x1*40)),
+                                 (int)(p_loc_B+(y1*40)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Third upper bar...
+            p_loc_A = (x.width() /2)  + (y1*45.0);
+            p_loc_B = (x.height() /2) - (x1*45.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*30)),
+                                 (int)(p_loc_B-(y1*30)),
+                                 (int)(p_loc_A+(x1*30)),
+                                 (int)(p_loc_B+(y1*30)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Forth upper bar...
+            p_loc_A = (x.width() /2)  + (y1*60.0);
+            p_loc_B = (x.height() /2) - (x1*60.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*20)),
+                                 (int)(p_loc_B-(y1*20)),
+                                 (int)(p_loc_A+(x1*20)),
+                                 (int)(p_loc_B+(y1*20)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // First lower bar...
+            p_loc_A = (x.width() /2)  - (y1*15.0);
+            p_loc_B = (x.height() /2) + (x1*15.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*50)),
+                                 (int)(p_loc_B-(y1*50)),
+                                 (int)(p_loc_A+(x1*50)),
+                                 (int)(p_loc_B+(y1*50)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Second lower bar...
+            p_loc_A = (x.width() /2)  - (y1*30.0);
+            p_loc_B = (x.height() /2) + (x1*30.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*40)),
+                                 (int)(p_loc_B-(y1*40)),
+                                 (int)(p_loc_A+(x1*40)),
+                                 (int)(p_loc_B+(y1*40)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // Third lower bar...
+            p_loc_A = (x.width() /2)  - (y1*45.0);
+            p_loc_B = (x.height() /2) + (x1*45.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*30)),
+                                 (int)(p_loc_B-(y1*30)),
+                                 (int)(p_loc_A+(x1*30)),
+                                 (int)(p_loc_B+(y1*30)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+            // Forth lower bar...
+            p_loc_A = (x.width() /2)  - (y1*60.0);
+            p_loc_B = (x.height() /2) + (x1*60.0);
+
+            m_graphScen->addLine((int)(p_loc_A-(x1*20)),
+                                 (int)(p_loc_B-(y1*20)),
+                                 (int)(p_loc_A+(x1*20)),
+                                 (int)(p_loc_B+(y1*20)),
+                                 QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
+
+            // -----------------------------------------
+
+            m_graphScen->addLine((int)((x.width() /2)-100),
+                                 (int)((x.height()/2)-19+offset),
+                                 (int)((x.width() /2)-80),
+                                 (int)((x.height()/2)-15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)+100),
+                                 (int)((x.height()/2)-19+offset),
+                                 (int)((x.width() /2)+80),
+                                 (int)((x.height()/2)-15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)-100),
+                                 (int)((x.height()/2)+19+offset),
+                                 (int)((x.width() /2)-80),
+                                 (int)((x.height()/2)+15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)+100),
+                                 (int)((x.height()/2)+19+offset),
+                                 (int)((x.width() /2)+80),
+                                 (int)((x.height()/2)+15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+
+
+            m_graphScen->addLine((int)((x.width() /2)+80),
+                                 (int)((x.height()/2)+40+offset),
+                                 (int)((x.width() /2)+60),
+                                 (int)((x.height()/2)+30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)-80),
+                                 (int)((x.height()/2)+40+offset),
+                                 (int)((x.width() /2)-60),
+                                 (int)((x.height()/2)+30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)+80),
+                                 (int)((x.height()/2)-40+offset),
+                                 (int)((x.width() /2)+60),
+                                 (int)((x.height()/2)-30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)-80),
+                                 (int)((x.height()/2)-40+offset),
+                                 (int)((x.width() /2)-60),
+                                 (int)((x.height()/2)-30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+
+
+            m_graphScen->addLine((int)((x.width() /2)-60),
+                                 (int)((x.height()/2)-60+offset),
+                                 (int)((x.width() /2)-45),
+                                 (int)((x.height()/2)-45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)+60),
+                                 (int)((x.height()/2)-60+offset),
+                                 (int)((x.width() /2)+45),
+                                 (int)((x.height()/2)-45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)+60),
+                                 (int)((x.height()/2)+60+offset),
+                                 (int)((x.width() /2)+45),
+                                 (int)((x.height()/2)+45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+            m_graphScen->addLine((int)((x.width() /2)-60),
+                                 (int)((x.height()/2)+60+offset),
+                                 (int)((x.width() /2)-45),
+                                 (int)((x.height()/2)+45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
+
+
+            // -----------------------------------------
+            m_graphScen->addRect(QRect(1,1,x.width()-4,x.height()-4),QPen(QBrush(Qt::gray),1));
+
+            ui->graphicsView->setScene(m_graphScen);
+            ui->graphicsView->show();
+        }
+
+        if(m_speed < 300 && m_speed > 0){
+            ui->speed->setText(QString("%1").arg(abs(m_speed), 0, 'f', 1));
+        }
+
+    #ifndef Q_OS_MAC
+        if(mysocket->IMUconnected == true)
+        {
+            ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
+            ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
+            ui->temp->setText(QString("%1").arg(mysocket->Electricity, 0, 'f', 0));
+            ui->temperature->setText(QString("%1").arg(mysocket->Temperature, 0, 'f', 1));
+            ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
+
+            _widgetHI->setHeading(-m_head);
+            _widgetHI->redraw();
+
+            _widgetEADI->setHeading( -m_head );
+            _widgetEADI->redraw();
+
+            _widgetEHSI->setHeading( -m_head );
+            _widgetEHSI->redraw();
+
+
+        }
+        else if(m_rotation_sensor != nullptr)
+    #endif
+        {
+            ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
+            ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
+            ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
+
+            _widgetHI->setHeading( m_head );
+            _widgetHI->redraw();
+
+            _widgetEADI->setHeading( m_head );
+            _widgetEADI->redraw();
+
+            _widgetEHSI->setHeading( m_head );
+            _widgetEHSI->redraw();
+        }
+
+        if( m_geopos == true){
+            ui->altitude->setText(QString("%1").arg(m_altitude*3.2808399, 0, 'f', 0));
+        }
+        m_reading|=0x04;
     }
-    if( m_geopos == true){
-        ui->altitude->setText(QString("%1").arg(m_altitude*3.2808399, 0, 'f', 0));
-    }
-    m_reading|=0x04;
 }
 
 void MainWindow::reset_ping()
@@ -808,6 +1306,8 @@ void MainWindow::active_ping()
 void MainWindow::doCheck()
 {
     QString x;
+//    KeepAwakeHelper helper;
+
     x = ui->pushButton_11->styleSheet();
     if ( alt_receiced == false){
         x.replace(QString("1 #090"), QString("1 #900"));
@@ -825,21 +1325,12 @@ void MainWindow::setalt(int alt_mode)
     qDebug() << "Set ALT: " << alt_mode;
 }
 
-
-void MainWindow::getLidar(QByteArray array)
-{
-    Ui::SCREEN *local_ui = (Ui::SCREEN *)&saved_this->xxz3;
-
-    local_ui->plainTextEdit->appendPlainText(array);
-}
-
-void MainWindow::getVal(QByteArray array)
+void MainWindow::getVal(void *parent, QByteArray array)
 {
     static char buffer[30];
     static int pos = 0;
-    //    qDebug() << "Reseive: " << array;
-
-    Ui::SCREEN *local_ui = (Ui::SCREEN *)&saved_this->xxz3;
+    MainWindow* saved_this= (MainWindow*) parent;
+    Ui::SCREEN* local_ui  = saved_this->ui;
 
     for(int i=0; i < array.size();i++){
         if(array.at(i) == '*'){
@@ -963,7 +1454,6 @@ void MainWindow::getVal(QByteArray array)
                 {
                     float number;
                     char numout[20];
-                    int num;
                     sscanf(buffer,"a=%f",&number);
                     QString altType="Alt.Ft.";
 
@@ -973,7 +1463,7 @@ void MainWindow::getVal(QByteArray array)
                                 number*=3.2808399;
                                 break;
                             }
-                        num = round(number/100.0)*100;
+                        saved_this->m_tansALT = round(number/100.0)*100;
                     }
                     else{
                         for (unsigned long key=0; key < strlen(buffer); key++)
@@ -981,14 +1471,13 @@ void MainWindow::getVal(QByteArray array)
                                 number/=3.2808399;
                                 break;
                             }
-                        num = round(number);
+                        saved_this->m_tansALT = round(number);
                         altType="Alt.M.";
                     }
-                    snprintf(numout,20,"%.4d",num);
+                    snprintf(numout,20,"%.4d",(int)saved_this->m_tansALT);
                     local_ui->lcdNumber_3->display(numout);
                     local_ui->label_2->setText(altType);
                     local_ui->baro_alt->setText(numout);
-
                     saved_this->alt_receiced = true;
                     break;
 
@@ -1189,49 +1678,100 @@ void MainWindow::on_pushButton_off_clicked(){
 #endif
 }
 
-// Is 4
-void MainWindow::on_select_gyro_page_clicked()          {ui->stackedWidget->setCurrentIndex(0);}
-//void MainWindow::on_select_dumy_page_clicked()          {ui->viewfinder->show(); ui->stackedWidget->setCurrentIndex(3);}
-void MainWindow::on_select_dumy_page_clicked()          {setCamera(QMediaDevices::defaultVideoInput()); ui->stackedWidget->setCurrentIndex(3);}
+// Is 1 offset 0 Transponder
+void MainWindow::on_select_camera_from_transponder_clicked() {
+    setCamera(QMediaDevices::defaultVideoInput());
+    ui->stackedWidget->setCurrentIndex(6);
+    currentIndex = 6;
+    }
+void MainWindow::on_select_gyro_page_clicked()          {
+    ui->stackedWidget->setCurrentIndex(1);
+    currentIndex = 1;
+}
 
-// Is 0
-void MainWindow::on_select_dumy_page2_clicked()         {ui->stackedWidget->setCurrentIndex(1);}
+// Is 2 offset 1 Gyro eng
 void MainWindow::on_select_transponder_page_clicked()   {
-    if( mysocket->Transponderstat == "true"){
-        ui->stackedWidget->setCurrentIndex(4);
+    if( mysocket->Transponderstat == "true")            {
+        ui->stackedWidget->setCurrentIndex(0);
+        currentIndex = 0;
     }
     else{
         setCamera(QMediaDevices::defaultVideoInput());
-        ui->stackedWidget->setCurrentIndex(3);
+        ui->stackedWidget->setCurrentIndex(6);
+        currentIndex = 6;
     }
 }
+void MainWindow::on_select_dumy_page2_clicked()         {
+    ui->stackedWidget->setCurrentIndex(2);
+    currentIndex = 2;
+}
 
-// Is 1
-void MainWindow::on_select_transponder_page2_clicked()  {ui->stackedWidget->setCurrentIndex(2);}
-void MainWindow::on_select_gyro_page2_clicked()         {ui->stackedWidget->setCurrentIndex(0);}
+// Is 3 offset 2 gyro nice
+void MainWindow::on_select_transponder_page_2_clicked() {
+    ui->stackedWidget->setCurrentIndex(1);
+    currentIndex = 1;
+}
+void MainWindow::on_select_dumy_page2_2_clicked()       {
+    ui->stackedWidget->setCurrentIndex(3);
+    currentIndex = 3;
+}
 
-// Is 2
-//void MainWindow::on_select_transponder_page2_2_clicked(){ui->viewfinder->show(); ui->stackedWidget->setCurrentIndex(3);}
-void MainWindow::on_select_transponder_page2_2_clicked(){setCamera(QMediaDevices::defaultVideoInput()); ui->stackedWidget->setCurrentIndex(3);}
-void MainWindow::on_select_gyro_page2_2_clicked()       {ui->stackedWidget->setCurrentIndex(1);}
+// Is 4 offset 3 eadi
+void MainWindow::on_select_transponder_page_3_clicked() {
+    ui->stackedWidget->setCurrentIndex(2);
+    currentIndex = 2;
+}
+void MainWindow::on_select_from_4_to_5_clicked()        {
+    ui->stackedWidget->setCurrentIndex(5);
+    currentIndex = 5;
+}
 
-// Is 3
-//void MainWindow::on_select_transponder_page2_3_clicked(){ui->viewfinder->hide(); ui->stackedWidget->setCurrentIndex(4);}
-//void MainWindow::on_select_gyro_page2_3_clicked()       {ui->viewfinder->hide(); ui->stackedWidget->setCurrentIndex(2);}
+// Is 5 offset 4 map
+void MainWindow::on_select_gyro_page2_2_clicked()       {
+    ui->stackedWidget->setCurrentIndex(3);
+    currentIndex = 3;
+}
+void MainWindow::on_select_transponder_page2_2_clicked(){
+    ui->stackedWidget->setCurrentIndex(4);
+    currentIndex = 4;
+}
+
+// Is 6 offset 5 users
+void MainWindow::on_select_gyro_page2_clicked()         {
+    ui->stackedWidget->setCurrentIndex(5);
+    currentIndex = 5;
+}
+void MainWindow::on_select_transponder_page2_clicked()  {
+    setCamera(QMediaDevices::defaultVideoInput());
+    ui->stackedWidget->setCurrentIndex(6);
+    currentIndex = 6;
+}
+
+// Is 7 offset 6  camera
 void MainWindow::on_select_transponder_page2_3_clicked(){
     if( mysocket->Transponderstat == "true"){
-        hideCamera(); ui->stackedWidget->setCurrentIndex(4);
+        hideCamera();
+        ui->stackedWidget->setCurrentIndex(0);
+        currentIndex = 0;
     }
     else{
-        hideCamera(); ui->stackedWidget->setCurrentIndex(0);
+        hideCamera();
+        ui->stackedWidget->setCurrentIndex(1);
+        currentIndex = 1;
     }
 }
-void MainWindow::on_select_gyro_page2_3_clicked()
-{
+
+void MainWindow::on_select_gyro_page2_3_clicked(){
     hideCamera();
-    ui->stackedWidget->setCurrentIndex(2);
+    ui->stackedWidget->setCurrentIndex(4);
+    currentIndex = 4;
 }
 
+//-------------------------------------
+void MainWindow::on_reset_att_clicked(){
+ //   on_imu_reset_clicked();
+    m_use_ekf=!m_use_ekf;
+}
 void MainWindow::on_imu_reset_clicked()
 {
     m_first = true;
@@ -1311,8 +1851,8 @@ void MainWindow::set_default_planes()
     ui->textEdit_2->insertPlainText("LN-YYX\tAeros 2\t\tTerje\n");
     ui->textEdit_2->insertPlainText("LN-YXY\tDelta-jet TL22\tTerje\n");
     ui->textEdit_2->insertPlainText("LN-YPE\tAir Creation\tHarald\n");
-    ui->textEdit_2->insertPlainText("LN-YRI\tPeregrin\t\tRingerike\n");
-    ui->textEdit_2->insertPlainText("LN-YRM\tAeroprakt\tRingerike\n");
+    ui->textEdit_2->insertPlainText("LN-YRI\tPeregrin\tRingerike\n");
+    ui->textEdit_2->insertPlainText("LN-YRM\tAeroprak\tRingerike\n");
     ui->textEdit_2->insertPlainText("LN-YZG\tIcarus\t\tMorten\n");
     ui->textEdit_2->insertPlainText("LN-YYV\tIcarus\t\tTerje S.\n");
     ui->textEdit_2->insertPlainText("LN-YPL\tIcarus\t\tOlaf\n");
@@ -1340,200 +1880,13 @@ void MainWindow::on_pushButton_15_clicked()
 void MainWindow::on_reconnect_clicked()
 {
     delete(mysocket);
-    mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->getLidar);
+    mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->setIMU);
 }
 
 void MainWindow::on_pushButton_20_clicked()
 {
-    //   m_camera->stop();
-
-    qDebug() << "--------Take picture --------- " ;
-    QDateTime date = QDateTime::currentDateTime();
-    QString filename = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/"+date.toString("yyyy_dd_MM_hh_mm_ss").append(".jpg");
-    //   QString filename2 = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/terje.jpg";
-    QString filename2 = QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/"+date.toString("yyyy.dd.MM.hh.mm.ss").append(".mp4");
-
-    //    QPixmap qPixMap = QPixmap::grabWidget(this);  // *this* is window pointer, the snippet     is in the mainwindow.cpp file
-    //   QImage qImage = qPixMap.toImage();
-    /*
-    QScreen *screen = QGuiApplication::primaryScreen();
-    if(!screen){
-        m_camera->start();
-        qDebug() << "Screen error: " << filename;
-       // return;
-    }
-
-    QPixmap originalPixmap = screen->grabWindow(0);
-    if(!originalPixmap){
-        m_camera->start();
-        qDebug() << "Video error: " << filename;
-    //    return;
-    }
-
-    QImage *image = new QImage(originalPixmap.toImage());
-    image->save(filename);
-
-*/
-    /*
-    QCamera *camera = new QCamera(*m_cameraDevic);
-    QMediaPlayer *mediaPlayer = new QMediaPlayer(camera);
-    QMediaRecorder recorder = new QMediaRecorder(mediaPlayer); //camera);
-    QMediaCaptureSession session;
-    session.setRecorder(&recorder);
-    recorder.setQuality(QMediaRecorder::HighQuality);
-
-    QMediaFormat mediaFormat;
-    mediaFormat.setAudioCodec(QMediaFormat::AudioCodec::AAC);
-    mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H264);
-    mediaFormat.setFileFormat(QMediaFormat::MPEG4);
-    recorder.setMediaFormat(mediaFormat);
-    recorder.setOutputLocation(QUrl::fromLocalFile(filename2));
-    mediaPlayer->play();
-    recorder.record();
-    QThread::msleep(1500);
-    recorder.stop();
-    mediaPlayer->stop();
-    qDebug() << "Store file: " << filename2;
-
-    //    QScreen *screen = QGuiApplication::primaryScreen();
-    //  screen->grabWindow( 0 ).save(filename); // as 0 is the id of main screen
-*/
-
-    //    QGuiApplication::primaryScreen()->grabWindow(0).toImage().save(filename,"png",100);
-    /*
-    QCamera *camera = new QCamera(*m_cameraDevic);
-    auto vs = qobject_cast<QVideoSink*>(camera);
-    if(!vs){
-        m_camera->start();
-        qDebug() << "Video error: " << filename;
-        return;
-    }
-    QImage image{vs->videoFrame().toImage()};
-    image.save(filename);
-
-    */
-
-    /*
-    QMediaCaptureSession captureSession;
-    QCamera *camera = new QCamera(*m_cameraDevic);
-//    QCamera *camera = new QCamera;
-    captureSession.setCamera(camera);
-
-//    ui->viewfinder->show();
-    captureSession.setVideoOutput(ui->viewfinder);
-
-    QImageCapture *imageCapture = new QImageCapture();
-    captureSession.setImageCapture(imageCapture);
-
-    camera->start();
-    //on shutter button pressed
-    imageCapture->capture();
-
-    camera->stop();
-*/
-    //    QScreen *screen = QGuiApplication::primaryScreen();
-    //  screen->grabWindow( 0 ).save(filename); // as 0 is the id of main screen
-
-
-    //   QPixmap pixmap(ui->viewfinder->size());
-    //   ui->viewfinder->render(&pixmap);
-    //   pixmap.save(filename);
-    /*
-    QPixmap originalPixmap = QGuiApplication::primaryScreen()->grabWindow(0);
-    qDebug() << "------------" << originalPixmap.size();
-
-
-    QGuiApplication::primaryScreen()->grabWindow(0).toImage().save(filename,"png",100);
-
-
-    */
-
-    /*
-    auto vs = qobject_cast<QVideoSink*>(qmlPreview);
-    QPixmap originalPixmap = QGuiApplication::primaryScreen()->grabWindow(0);
-    QImage image{originalPixmap->videoFrame().toImage()};
-
-    QImage myScreen = qpx_pixmap.toImage();
-
-    //  save image
-    image.save("123.jpeg")
-
-
-    QScreen *screen = QGuiApplication::primaryScreen();
- //   QPixmap screenshot = screen->grabWindow(1);
-    QPixmap screenshot = screen->grabWindow(QApplication::desktop()->winId(), this->x(), this->y(), width(), height());
-    qDebug() << "------------" << screenshot.size();
-
-    if (screenshot.save(filename, nullptr, 100)) {
-//    if (screenshot.save(filename, "PNG")) {
-        qDebug() << "Screenshot saved to:" << filename;
-    } else {
-        qWarning() << "Failed to save screenshot!";
-    }
-
-
-*/
-    //    QImage myScreen = QGuiApplication::primaryScreen()->grabWindow(0).toImage().save(filename,"png",100);
-    // myScreen.save(filename);
-    //    myScreen.save(filename, "png", 100);
-    /*
-
-    auto geom = QGuiApplication::primaryScreen();->geometry();
-    QPixmap qpx_pixmap = screen->grabWindow(0, geom.x(), geom.y(), geom.width(), geom.height());
-    QImage myScreen = qpx_pixmap.toImage();
-    myScreen.save(&buffer, "JPEG");
-
-    qpx_pixmap.save(filename);
-
-//    QPixmap originalPixmap = QGuiApplication::primaryScreen()->grabWindow(0);
-  //  originalPixmap.save(filename);
-
-//  QWidget *widget= ui->viewfinder;
-  //  widget->render(&originalPixmap);
-    //widget->grab().save(filename);
-
-*/
-
-    /*
-
-    qDebug() << "Recording ";
-
-    QCamera *camera = new QCamera(*m_cameraDevic);
-    m_recorder = new QMediaRecorder(camera);
-//    m_recorder->setOutputLocation(QUrl(filename));
-    m_recorder->setOutputLocation(filename2);
-
-    camera->start();
-    m_recorder->record();
-    QThread::msleep(5000);
-    qDebug()<<m_recorder->error();
-    m_recorder->stop();
-    camera->stop();
-*/
-
-    /*
-    QWidget *widget= ui->viewfinder;
-    QPixmap pixmap(widget->size());
-    pixmap.fill(Qt::transparent);
-    widget->render(&pixmap);
-    widget->grab().save(filename);
-
-
-    QWidget *widget= ui->viewfinder;
-    QPixmap pixmap(widget->size());
-    pixmap.fill(Qt::transparent);
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    widget->render(&painter, QPoint(), QRegion(), QWidget::DrawWindowBackground | QWidget::IgnoreMask | QWidget::DrawChildren);
- //   pixmap.save(filename);
-  //  widget->grab().save(filename);
-
-    ui->page_5->grab().save(filename);
-//    ui->viewfinder->grab().save(filename);
-    */
-
-    //   m_camera->start();
-    qDebug() << "Store file: " << filename;
+    qDebug() << "--------Take picture --------- " ;   
+    m_capture->capture();
 }
 
 void MainWindow::takePicture()
@@ -1544,15 +1897,12 @@ void MainWindow::takePicture()
 void MainWindow::on_pushButton_21_clicked()
 {
     timertakePicture->start(3000);
-
 }
-
 
 void MainWindow::on_pushButton_22_clicked()
 {
     timertakePicture->start(10000);
 }
-
 
 void MainWindow::on_pushButton_23_clicked()
 {
@@ -1561,6 +1911,35 @@ void MainWindow::on_pushButton_23_clicked()
 
 void MainWindow::on_reset_heading_clicked()
 {
-    heading_offset = 180.0 - mysocket->AngleZ;
-    if(heading_offset<0.0) heading_offset+=360.0;
+    heading_offset = mysocket->AngleZ;
+//    heading_offset = 180.0 - mysocket->AngleZ;
+//    if(heading_offset<0.0) heading_offset+=360.0;
+
+    if(m_compass_sensor){
+  //      m_compass_reader->setAzimuth(heading_offset);
+    }
+}
+
+void MainWindow::on_use_hw_clicked()
+{
+    qDebug() << "Use IMU clicked... ";
+}
+
+void MainWindow::on_fly_home_clicked()
+{
+    qDebug() << "FlyHome... ";
+}
+
+void MainWindow::on_dial_valueChanged(int qnh)
+{
+    ui->doubleSpinBox->setText(QString("%1").arg(qnh/100.0));
+    ui->doubleSpinBox_2->setText(QString("%1").arg(qnh/100.0));
+    ui->dial_2->setSliderPosition(qnh);
+}
+
+void MainWindow::on_dial_2_valueChanged(int qnh)
+{
+    ui->doubleSpinBox_2->setText(QString("%1").arg(qnh/100.0));
+    ui->doubleSpinBox->setText(QString("%1").arg(qnh/100.0));
+    ui->dial->setSliderPosition(qnh);
 }

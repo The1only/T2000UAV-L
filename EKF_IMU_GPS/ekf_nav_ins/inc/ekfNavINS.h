@@ -23,14 +23,18 @@ Original Author: Adhika Lie
 */
 
 #pragma once
+#include <QCoreApplication>
 
 #include <stdint.h>
 #include <math.h>
-#include <Eigen/Core>
-#include <Eigen/Dense>
 #include <tuple>
 #include <mutex>
 #include <shared_mutex>
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+#define DEG_TO_RAD (3.141592/180)
+#define RAD_TO_DEG (180.0/3.141592765)
 
 constexpr float SIG_W_A = 0.05f;
 // Std dev of gyro output noise (rad/s)
@@ -57,7 +61,8 @@ constexpr float P_HDG_INIT = 3.14159f;
 constexpr float P_AB_INIT = 0.9810f;
 constexpr float P_GB_INIT = 0.01745f;
 // acceleration due to gravity
-constexpr float G = 9.807f;
+constexpr float G = 9.808f;
+//constexpr float G = 9.807f;
 // major eccentricity squared
 constexpr double ECC2 = 0.0066943799901;
 // earth semi-major axis radius (m)
@@ -101,6 +106,16 @@ class ekfNavINS {
                     float hx, float hy, float hz        /* Magnetometer HX, HY, HZ */ );
     // returns whether the INS has been initialized
     bool initialized()          { return initialized_; }
+
+    // returns the pitch angle, rad
+    void setPitch_rad(float x) { theta = x ;}
+    // returns the roll angle, rad
+    void setRoll_rad(float x) { phi = x ;}
+    // returns the heading angle, rad
+    void setHeading_rad(float x) { psi = x ;}
+    // returns the INS latitude, rad
+
+
     // returns the pitch angle, rad
     float getPitch_rad()        { return theta; }
     // returns the roll angle, rad
@@ -135,7 +150,8 @@ class ekfNavINS {
     // returns the accel bias estimate in the z direction, m/s/s
     float getAccelBiasZ_mss()   { return abz; }
     // return pitch, roll and yaw
-    std::tuple<float,float,float> getPitchRollYaw(float ax, float ay, float az, float hx, float hy, float hz);
+    std::tuple<float,float,float> getPitchRollYaw(float ax, float ay, float az, float hx, float hy, float hz, float gx, float gy, float gz); //
+//    std::tuple<float,float,float> getPitchRollYaw(float ax, float ay, float az, float hx, float hy, float hz);
     void imuUpdateEKF(uint64_t time, imuData imu);
     void gpsCoordinateUpdateEKF(gpsCoordinate coor);
     void gpsVelocityUpdateEKF(gpsVelocity vel);
@@ -150,6 +166,10 @@ class ekfNavINS {
     mutable std::shared_mutex shMutex;
     // initialized
     bool initialized_ = false;
+
+    bool m_use_gpt = true;
+
+    double m_dt = 0.1;
     // timing
     uint64_t _tprev;
     //float _dt;
@@ -235,6 +255,13 @@ class ekfNavINS {
                  float p,float q,float r,
                  float ax,float ay,float az,
                  float hx,float hy, float hz);
+
+    void ekf_initGPT(uint64_t time,
+                  double vn,double ve,double vd,
+                  double lat,double lon,double alt,
+                  float p,float q,float r,
+                  float ax,float ay,float az,
+                  float hx,float hy, float hz);
     // lla rate
     Eigen::Matrix<double,3,1> llarate(Eigen::Matrix<double,3,1> V, Eigen::Matrix<double,3,1> lla);
     Eigen::Matrix<double,3,1> llarate(Eigen::Matrix<double,3,1> V, double lat, double alt);
@@ -269,3 +296,140 @@ class ekfNavINS {
     void ekf_update(uint64_t time);
     void updateINS();
 };
+
+
+class KalmanFilterIMU {
+private:
+    Eigen::VectorXd x;  // State vector  [x, y, z, vx, vy, vz, qw, qx, qy, qz, bx, by, bz, gbx, gby, gbz]
+    Eigen::MatrixXd P;  // State covariance
+    Eigen::MatrixXd Q;  // Process noise covariance
+    Eigen::MatrixXd R;  // Measurement noise covariance
+    double dt;
+
+public:
+    KalmanFilterIMU(double delta_t = 0.1) : dt(delta_t) {
+        x.resize(16);
+        x.setZero();
+        x(6) = 1.0; // Quaternion w component
+
+        P.resize(16, 16);
+        Q.resize(16, 16);
+        R.resize(6, 6);
+
+        P.setIdentity();
+        Q.setIdentity() *= 0.01;  // Process noise covariance
+        R.setIdentity() *= 0.1;   // Measurement noise covariance
+    }
+
+    Eigen::Matrix3d quaternionToRotation(const Eigen::Vector4d& q) {
+        Eigen::Matrix3d R;
+        double qw = q(0), qx = q(1), qy = q(2), qz = q(3);
+
+        R << 1 - 2*qy*qy - 2*qz*qz,     2*qx*qy - 2*qz*qw,      2*qx*qz + 2*qy*qw,
+            2*qx*qy + 2*qz*qw,         1 - 2*qx*qx - 2*qz*qz,  2*qy*qz - 2*qx*qw,
+            2*qx*qz - 2*qy*qw,         2*qy*qz + 2*qx*qw,      1 - 2*qx*qx - 2*qy*qy;
+        return R;
+    }
+
+    void predict(const Eigen::Vector3d& gyro) {
+        Eigen::Vector4d q(x(6), x(7), x(8), x(9));
+        Eigen::Vector3d gyro_bias(x(13), x(14), x(15));
+        Eigen::Vector3d omega = gyro - gyro_bias;
+
+        // Evolve rotation quaternion
+        Eigen::Matrix4d Omega;
+        Omega << 0,         -omega(0),      -omega(1),      -omega(2),
+            omega(0),   0,              omega(2),       -omega(1),
+            omega(1),   -omega(2),      0,              omega(0),
+            omega(2),   omega(1),       -omega(0),      0;
+
+        q += 0.5 * dt * (Omega * q);
+        q.normalize();
+
+        // Update state...
+        Eigen::Vector3d pos = x.segment<3>(0);
+        Eigen::Vector3d vel = x.segment<3>(3);
+        pos += vel * dt;
+
+        x.segment<3>(0) = pos;
+        x.segment<4>(6) = q;
+
+        Eigen::MatrixXd F = Eigen::MatrixXd::Identity(16, 16);
+        F.block<3,3>(0,3) = Eigen::Matrix3d::Identity() * dt;
+
+        // Covariance update
+        P = F * P * F.transpose() + Q;
+    }
+
+    void update(const Eigen::Vector3d& accel, const Eigen::Vector3d& mag) {
+        Eigen::Vector3d g(0, 0, -9.81);
+        // These specific magnetic field reference values (0.22, 0, -0.44) are chosen to approximate the Earth's typical magnetic field vector
+        // at a specific location, likely near the surface at mid-latitudes.
+        Eigen::Vector3d m_ref(0.22, 0, -0.44);
+
+        Eigen::Vector4d q(x(6), x(7), x(8), x(9));
+        Eigen::Matrix3d rot = quaternionToRotation(q);
+
+        Eigen::Vector3d accel_pred = rot.transpose() * g;
+        Eigen::Vector3d mag_pred = rot.transpose() * m_ref;
+
+        Eigen::VectorXd z(6), z_pred(6);
+        z << accel, mag;
+        z_pred << accel_pred, mag_pred;
+
+        Eigen::MatrixXd H = Eigen::MatrixXd::Zero(6, 16);
+        H.block<3,3>(0,6) = Eigen::Matrix3d::Identity();
+        H.block<3,3>(3,6) = Eigen::Matrix3d::Identity();
+
+        Eigen::MatrixXd S = H * P * H.transpose() + R;
+        Eigen::MatrixXd K = P * H.transpose() * S.inverse();
+
+        x += K * (z - z_pred);
+        P = (Eigen::MatrixXd::Identity(16, 16) - K * H) * P;
+
+        q = x.segment<4>(6);
+        q.normalize();
+        x.segment<4>(6) = q;
+    }
+
+    // Utility function to convert quaternion to Euler angles
+    Eigen::Vector3d quaternionToEuler(const Eigen::Vector4d& q) {
+        double qw = q(0), qx = q(1), qy = q(2), qz = q(3);
+
+        // Roll (x-axis rotation)
+        double sinr_cosp = 2 * (qw * qx + qy * qz);
+        double cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
+        double roll = std::atan2(sinr_cosp, cosr_cosp);
+
+        // Pitch (y-axis rotation)
+        double sinp = 2 * (qw * qy - qz * qx);
+        double pitch;
+        if (std::abs(sinp) >= 1)
+            pitch = std::copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+        else
+            pitch = std::asin(sinp);
+
+        // Yaw (z-axis rotation)
+        double siny_cosp = 2 * (qw * qz + qx * qy);
+        double cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
+        double yaw = std::atan2(siny_cosp, cosy_cosp);
+
+        // Convert to degrees
+        return Eigen::Vector3d(
+            roll * 180.0 / M_PI,
+            pitch * 180.0 / M_PI,
+            yaw * 180.0 / M_PI
+            );
+    }
+
+
+    Eigen::Vector3d getPosition() const { return x.segment<3>(0); }
+    Eigen::Vector3d getVelocity() const { return x.segment<3>(3); }
+    Eigen::Vector4d getQuaternion() const { return x.segment<4>(6); }
+    void getQuaternion(Eigen::Vector4d q){
+        q.normalize();
+        x.segment<4>(6) = q;
+    }
+};
+
+

@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     // EKF
     ekfNavINS ekf;
 
-    float ax, ay, az, hx, hy, hz, pitch, roll, yaw;
+    float pitch, roll, yaw, ax, ay, az, hx, hy, hz;
 
 	// parse arguments
 	opterr = 0;

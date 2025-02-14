@@ -9,6 +9,8 @@
 #include <QTimer>
 #include <QPlainTextEdit>
 
+// #define USE_BT_IMU
+
 #if not defined(Q_OS_ANDROID) && not defined(Q_OS_IOS)
 #include <QSerialPort>
 #include <QSerialPortInfo>
@@ -17,15 +19,27 @@
 #include <QList>
 
 #ifdef Q_OS_ANDROID
-#include "ui_mainwindow_port_new.h"
+#define SCREEN MainWindow_port_vertical
+#include "ui_mainwindow_port_vertical.h"
+
+//#define SCREEN MainWindow_port_new
+//#include "ui_mainwindow_port_new.h"
+
+//#define SCREEN MainWindow_port_small
+//#include "ui_mainwindow_port_small.h"
+#include "lockhelper.h"
 #endif
 
 #ifdef Q_OS_IOS
+#define SCREEN MainWindow_port_iPhone
 #include "ui_mainwindow_port_iPhone.h"
 #endif
 
 #ifdef Q_OS_MAC
 #include "ui_mainwindow_port_new.h"
+#define SCREEN MainWindow_port_new
+//#define SCREEN MainWindow_port_small
+//#include "ui_mainwindow_port_small.h"
 #endif
 
 //#include "ui_mainwindow_phone.h"
@@ -33,19 +47,23 @@
 //#include "ui_mainwindow_small.h"
 //#include "ui_mainwindow.h"
 
+#include "ekfNavINS.h"
+#include "rotation_matrix.h"
+
 class MyTcpSocket : public QObject
 {
     Q_OBJECT
 public:
-    explicit MyTcpSocket(QObject *parent = 0, QPlainTextEdit *s=NULL, void(*)(QByteArray) = NULL, void(*)(QByteArray) = NULL);
+    explicit MyTcpSocket(QObject *parent = 0, QPlainTextEdit *s=NULL, void(*)(void *, QByteArray) = NULL, void(*)(void *, bool use_imu) = NULL);
     ~MyTcpSocket();
 
     void readyWrite(char *data);
     void doConnect();
-    void (*ret_lidar)(QByteArray);
-    void (*ret)(QByteArray);
+    void (*ret_imu)(void *, bool use_imu);
+    void (*ret)(void *,QByteArray);
     void connected();
     void connectedIMU();
+    void setbacklit();
 
 #if not defined(Q_OS_ANDROID) && not defined(Q_OS_IOS)
     int com_setup(QSerialPort *com_port, QString sport);
@@ -59,8 +77,8 @@ public:
     bool isconnected = false;
 
 #ifdef Q_OS_ANDROID
-    QJniObject *someJavaObject;
-    QJniObject *imuJavaObject;
+    QJniObject *someJavaObject = nullptr;
+    QJniObject *imuJavaObject  = nullptr;
 #else
     //In file CApi.cpp
     typedef struct Callbacks
@@ -91,7 +109,9 @@ public:
     QString Transponderstat = "false";
 #endif
 
-    bool    IMUconnected = false;
+    bool IMUconnected = false;
+    bool m_external = true;
+    bool m_imu_setup_done = false;
 
     /*  Return IMU elements....*/
     QString FromID = "";
@@ -126,6 +146,7 @@ private:
     QTimer* timerIMU;
     QTimer* java;
     QTimer* timerStart;
+    QObject *parent;
 
     int adapterFromUserSelection() const;
     int currentAdapterIndex = 0;

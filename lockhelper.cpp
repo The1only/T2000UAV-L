@@ -7,10 +7,18 @@
 #include "lockhelper.h"
 
 KeepAwakeHelper::KeepAwakeHelper()
-{
+{    
     QJniObject activity = QJniObject::callStaticObjectMethod("org/qtproject/qt/android/QtNative", "activity", "()Landroid/app/Activity;");
     if ( activity.isValid() )
     {
+
+        QJniObject window= activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+        if (window.isValid()) {
+            const int FLAG_KEEP_SCREEN_ON= 128;
+            window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+            qDebug() << "-------------------Always ON -------------";
+        }
+
         QJniObject serviceName = QJniObject::getStaticObjectField<jstring>("android/content/Context","POWER_SERVICE");
         if ( serviceName.isValid() )
         {

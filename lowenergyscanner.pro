@@ -1,9 +1,11 @@
 TARGET = Transponder
 INCLUDEPATH += .
+INCLUDEPATH += /Users/terjenilsen/Dropbox/Sportsfly/transponder/eigen-3.4.0
+INCLUDEPATH += ./EKF_IMU_GPS/ekf_nav_ins/inc/
+INCLUDEPATH += ./EKF_IMU_GPS/ekf_nav_ins/src/
+INCLUDEPATH += ./WitBluetooth_BWT901BLE5_0/IOS_swift/WitSDK/Sensor/Modular/Processor/Roles/
 
-QT += quick widgets charts quickwidgets sensors positioning multimedia multimediawidgets
-
-#chatserver.cpp \
+QT += quick widgets charts quickwidgets sensors positioning multimedia multimediawidgets svgwidgets
 
 android: QT += serialport
 android: QT += core-private
@@ -16,13 +18,15 @@ ios: CONFIG+=sdk_no_version_check
 macx {
     SOURCES += main.cpp \
     mainwindow.cpp \
-    mytcpsocket.cpp
+    mytcpsocket.cpp \
+    ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp
 
     HEADERS += \
     QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
-    IOS_swift/WitSDK/Sensor/Modular/Processor/Roles/BWT901BLE5_0DataProcessor.swift \
+    IBWT901BLE5_0DataProcessor.swift \
+    ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
 
 }
 
@@ -44,13 +48,16 @@ android {
     SOURCES += main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
-    lockhelper.cpp
+    lockhelper.cpp \
+    ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp
 
     HEADERS += \
     QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
-    lockhelper.h
+    lockhelper.h \
+    ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
+
 
     ANDROID_PERMISSIONS += android.permission.WAKE_LOCK
     ANDROID_PERMISSIONS += android.permission.READ_EXTERNAL_STORAGE
@@ -97,13 +104,12 @@ INSTALLS += target
 
 FORMS += \
     mainwindow_port_new.ui \
+    mainwindow_port_small.ui \
+    mainwindow_port_vertical.ui \
     remoteselector.ui \
     mainwindow_phone.ui \
     mainwindow_port_iPhone.ui \
     mainwindow_small.ui \
-    mainwindow_port_small.ui \
-
-#    mainwindow.ui \
 
 ios | macx{
 DISTFILES += \
@@ -203,6 +209,7 @@ DISTFILES += \
     android/src/main/java/com/wit/witsdk/UI/ListItem.java \
 }
 
+#android/src/main/java/com/hoho/android/usbserial/driver/NmeaActivity.java \
 
 contains(ANDROID_TARGET_ARCH,arm64-v8a) {
     ANDROID_PACKAGE_SOURCE_DIR = \
@@ -215,4 +222,17 @@ SUBDIRS += \
     android/imu/proguard-rules.pro
 
 
+include($$PWD/qfi/qfi.pri)
+include($$PWD/example/example.pri)
+
+HEADERS += \
+    rotation_matrix.h
+
+#MicroQiskitCpp.h \
+
+
+SOURCES += \
+    rotation_matrix.cpp
+
+#MicroQiskitCpp.cpp \
 

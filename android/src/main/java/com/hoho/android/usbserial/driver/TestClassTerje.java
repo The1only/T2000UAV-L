@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ContextWrapper;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -18,12 +19,17 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.method.ScrollingMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.net.Uri;
+import android.provider.Settings;
+
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -44,6 +50,7 @@ import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.CustomProber;
 import com.hoho.android.usbserial.util.HexDump;
 //import com.hoho.android.usbserial.examples;
+//import com.hoho.android.usbserial.driver.NmeaActivity;
 
 import java.net.InetAddress;
 import java.net.DatagramPacket;
@@ -73,6 +80,8 @@ public class TestClassTerje implements SerialInputOutputManager.Listener
     private boolean withIoManager = false;
     private TextView receiveText;
 
+ //   private NmeaActivity nmea;
+
     private BroadcastReceiver broadcastReceiver;
     private Handler mainLooper;
     private Context mcontext;
@@ -100,27 +109,66 @@ public class TestClassTerje implements SerialInputOutputManager.Listener
         baudRate = 9600; //dx115200;
         withIoManager = false;
 
-        status("********* TestClassTerje **********");
         Intent intent = new Intent(UsbManager.EXTRA_PERMISSION_GRANTED);
-/*
-        broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            */
-            status("############# TERJE : Received..." + INTENT_ACTION_GRANT_USB.equals(intent.getAction()));
-            if(INTENT_ACTION_GRANT_USB.equals(intent.getAction())) {
-                usbPermission = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) ? UsbPermission.Granted : UsbPermission.Denied;
-                status("############# TERJE x: " + usbPermission);
-             //   connect();
-     //           }
-            }
-   //     };
-
+        if(INTENT_ACTION_GRANT_USB.equals(intent.getAction())) {
+            usbPermission = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) ? UsbPermission.Granted : UsbPermission.Denied;
+        }
         mainLooper = new Handler(Looper.getMainLooper());
 
-        status("############# TERJE: Constructor completed...");
+     //   ((Activity) mcontext).getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+      //  getActivity(mcontext).getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+       // getActivity().getWindow().requestFeature((WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         connect();
+
+  //      nmea = new NmeaActivity(contextIn);
+
     }
+
+    /**
+     * Get activity instance from desired context.
+     */
+/*
+     public static Activity getActivity(Context context) {
+        if (context == null) return null;
+        if (context instanceof Activity) return (Activity) context;
+        if (context instanceof ContextWrapper) return getActivity(((ContextWrapper)context).getBaseContext());
+        return null;
+    }
+*/
+    public int change(int n)
+    {
+        int r = setScreenBrightness( mcontext, n);
+        return r;
+    }
+
+    //  finally use below method for set brightness
+    public int setScreenBrightness(Context xContext,int brightnessValue){
+        // Make sure brightness value between 0 to 255
+
+        if (!Settings.System.canWrite(xContext))
+        {
+          showBrightnessPermissionDialog(xContext);
+          return -1;
+        }
+
+        if(brightnessValue >= 0 && brightnessValue <= 255){
+            Settings.System.putInt(
+                xContext.getContentResolver(),
+                Settings.System.SCREEN_BRIGHTNESS,
+                brightnessValue
+            );
+        }
+        return brightnessValue;
+    }
+
+    private  static  void showBrightnessPermissionDialog(final Context context) {
+
+        Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
+        intent.setData(Uri.parse("package:" + context.getPackageName()));
+       // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+    }
+
 
     public String disconn() {
         disconnect();
