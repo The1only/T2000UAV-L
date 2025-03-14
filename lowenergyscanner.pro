@@ -11,6 +11,7 @@ android: QT += serialport
 android: QT += core-private
 android: QT += core
 
+
 macx: QT += serialport
 
 ios: CONFIG+=sdk_no_version_check
@@ -19,7 +20,8 @@ macx {
     SOURCES += main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
-    ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp
+    ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
+    rotation_matrix.cpp
 
     HEADERS += \
     QuickWidget.h \
@@ -27,6 +29,8 @@ macx {
     mytcpsocket.h \
     IBWT901BLE5_0DataProcessor.swift \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
+    myNativeWrapperFunctions.h \
+    rotation_matrix.h
 
 }
 
@@ -34,13 +38,21 @@ ios{
     SOURCES += main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
-
+    ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
+    myNativeWrapperFunctions.mm \
+    rotation_matrix.cpp
 
     HEADERS += \
     QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
+    ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
     IOS_swift/WitSDK/Sensor/Modular/Processor/Roles/BWT901BLE5_0DataProcessor.swift \
+    myNativeWrapperFunctions.h \
+    rotation_matrix.h
+
+ #   QMAKE_TARGET_BUNDLE_PREFIX = teni@9tek.no
+ #   QMAKE_BUNDLE = Transponder
 
 }
 
@@ -49,7 +61,8 @@ android {
     mainwindow.cpp \
     mytcpsocket.cpp \
     lockhelper.cpp \
-    ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp
+    ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
+    rotation_matrix.cpp
 
     HEADERS += \
     QuickWidget.h \
@@ -57,6 +70,7 @@ android {
     mytcpsocket.h \
     lockhelper.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
+    rotation_matrix.h
 
 
     ANDROID_PERMISSIONS += android.permission.WAKE_LOCK
@@ -225,14 +239,6 @@ SUBDIRS += \
 include($$PWD/qfi/qfi.pri)
 include($$PWD/example/example.pri)
 
-HEADERS += \
-    rotation_matrix.h
-
 #MicroQiskitCpp.h \
-
-
-SOURCES += \
-    rotation_matrix.cpp
-
 #MicroQiskitCpp.cpp \
 
