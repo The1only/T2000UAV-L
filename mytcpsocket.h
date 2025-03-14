@@ -9,7 +9,8 @@
 #include <QTimer>
 #include <QPlainTextEdit>
 
-// #define USE_BT_IMU
+// Look for an external IMU...
+#define USE_BT_IMU
 
 #if not defined(Q_OS_ANDROID) && not defined(Q_OS_IOS)
 #include <QSerialPort>
@@ -19,28 +20,34 @@
 #include <QList>
 
 #ifdef Q_OS_ANDROID
-#define SCREEN MainWindow_port_vertical
-#include "ui_mainwindow_port_vertical.h"
+//    #define SCREEN MainWindow_port_vertical
+//    #include "ui_mainwindow_port_vertical.h"
 
-//#define SCREEN MainWindow_port_new
-//#include "ui_mainwindow_port_new.h"
+ //   #define SCREEN MainWindow_port_iPhone
+ //   #include "ui_mainwindow_port_iPhone.h"
 
-//#define SCREEN MainWindow_port_small
-//#include "ui_mainwindow_port_small.h"
-#include "lockhelper.h"
-#endif
 
-#ifdef Q_OS_IOS
-#define SCREEN MainWindow_port_iPhone
-#include "ui_mainwindow_port_iPhone.h"
+    #define SCREEN MainWindow_port_new
+    #include "ui_mainwindow_port_new.h"
+
+    //#define SCREEN MainWindow_port_small
+    //#include "ui_mainwindow_port_small.h"
+    #include "lockhelper.h"
 #endif
 
 #ifdef Q_OS_MAC
-#include "ui_mainwindow_port_new.h"
-#define SCREEN MainWindow_port_new
-//#define SCREEN MainWindow_port_small
-//#include "ui_mainwindow_port_small.h"
+    #ifdef Q_OS_IOS
+        #define SCREEN MainWindow_port_iPhone
+        #include "ui_mainwindow_port_iPhone.h"
+    #else
+        #include "ui_mainwindow_port_new.h"
+        #define SCREEN MainWindow_port_new
+        //#define SCREEN MainWindow_port_small
+        //#include "ui_mainwindow_port_small.h"
+    #endif
 #endif
+
+
 
 //#include "ui_mainwindow_phone.h"
 //#include "ui_mainwindow_port_small.h"
@@ -118,17 +125,19 @@ public:
     double AccX = 0.0;
     double AccY = 0.0;
     double AccZ = 0.0;
+    double G    = Gfix;
     double AsX = 0.0;
     double AsY = 0.0;
     double AsZ = 0.0;
     double AngleX = 0.0;
     double AngleY = 0.0;
-    double AngleZ = 0.0;
+    double AngleZ = 0.001;
     double HX = 0.0;
     double HY = 0.0;
     double HZ = 0.0;
     double Electricity = 0.0;
     double Temperature = 0.0;
+    int Orient = 0;
 
 signals:
     void sendMessage(const QString &message);

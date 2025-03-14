@@ -19,5 +19,11 @@
         <file>places_map.qml</file>
         <file>marker.qml</file>
         <file>plane.png</file>
+        <file>compass.png</file>
+        <file>config.svg</file>
+        <file>arrow-right.svg</file>
+        <file>backwards.svg</file>
+        <file>forwards.svg</file>
+        <file>podcast.svg</file>
     </qresource>
 </RCC>

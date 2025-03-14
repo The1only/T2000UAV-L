@@ -24,6 +24,9 @@
 #include <QMagnetometerReading>
 #include <QMagnetometer>
 
+#include <QOrientationSensor>
+#include <QOrientationReading>
+
 #include <QRotationSensor>
 #include <QPressureReading>
 #include <QGeoPositionInfo>
@@ -33,13 +36,20 @@
 #include "mytcpsocket.h"
 #include "ekfNavINS.h"
 
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class SCREEN; }
 QT_END_NAMESPACE
 
-#define RADIO "/setup_radio_b.txt"
-#define AIRPLANE "/setup_ln_b.txt"
+#ifdef Q_OS_IOS
+    #define IMAGES_DIR "file:assets-library:/asset/"
+    #define LOG_DIR "file:assets-library:/asset/"
+#else
+    #define IMAGES_DIR "/storage/emulated/0/DCIM/Camera/"
+    #define LOG_DIR "/storage/emulated/0/Documents/"
+#endif
+
+#define RADIO "setup_radio_b.txt"
+#define AIRPLANE "setup_ln_b.txt"
 
 // Define the Qiskit interface...
 //void Qiskit(void);
@@ -63,13 +73,12 @@ public:
     void updateCameras();
     void hideCamera();
     void setCamera(const QCameraDevice &cameraDevice);
-    //    void updateCameraActive(bool active);
-    void EKF(Vector3 gyro, Vector3 accel, Vector3 mag);
-
-    KalmanFilterIMU kf;
-
     void permissionUpdated(const QPermission &permission);
+    void setButtonIcon(QString iconPath, QPushButton* button);
 
+
+    //    void updateCameraActive(bool active);
+    Vector3x m_attitude;
 
     Matrix3x3 rotationMatrix;
 
@@ -80,8 +89,10 @@ public:
     int mode=0;
 
     double m_altitude      = 0;
+
     double m_latitude      = 0;
     double m_longitude     = 0;
+
     double m_preasure_alt  = 0;
     double m_preasure      = 0;
 
@@ -92,16 +103,19 @@ public:
     double m_vel_N  = 0;
     double m_vel_E  = 0;
     double m_vel_D  = 0;
+    bool m_vel_active = false;
 
     double m_tansALT       = 0;
      double m_pitch,m_roll,m_yaw;
 
     bool m_use_imu = false;
-    bool m_use_ekf = false;
 
     double m_speed=0;
     double m_head =9999;
     qreal m_temp =9999;
+
+    double m_var_speed = 0;
+    double m_ms = 0;
 
     QDateTime m_takeoffTime;
     QDateTime m_landedTime;
@@ -153,22 +167,29 @@ private:
     QTimer* timerpaint;
     QTimer *timertakePicture;
     QTimer *m_IMU;
+    QTimer *m_Display;
 
     ekfNavINS ekf;
 
-    int alt_mode = 1;
+    int alt_mode     = 1;
     // const QRect *m_vsize;
     QSize *m_size;
     void setalt(int alt_mode);
 
-    int m_reading = 0;
-    bool m_first = true;
-    bool m_armed = false;
-    bool m_takeoff = false;
+    int m_reading    = 0;
+    int m_first      = 75;        // Count down to recalibrate...
+    int m_calibrate  = 0;
+    bool m_armed     = false;
+    bool m_takeoff   = false;
+    double m_bearing = 999;
+    double m_heading = 0;
 
     //   QAltimeterSensor*  m_altimeter_sensor;
     QPressureSensor*    m_pressure_sensor = NULL;
     QPressureReading*   m_pressure_reader = NULL;
+
+    QOrientationSensor*  m_orientation_sensor  = nullptr;
+    QOrientationReading*  m_orientation_reader = nullptr;
 
     //   QAltimeterSensor*  m_altimeter_sensor;
     QRotationSensor*    m_rotation_sensor = nullptr;
@@ -184,18 +205,20 @@ private:
     QGyroscope*         m_gyro_sensor     = nullptr;
     QGyroscopeReading*  m_gyro_reader     = nullptr;
 
-    QMagnetometer*        m_mag_sensor     = nullptr;
-    QMagnetometerReading* m_mag_reader     = nullptr;
+    QMagnetometer*        m_mag_sensor    = nullptr;
+    QMagnetometerReading* m_mag_reader    = nullptr;
 
     QGeoPositionInfoSource* m_geoPositionInfo = NULL;
 
-    qreal m_offset  = 0.0;
-    qreal m_alt     = 0.0;
-    double heading_offset=0.0;
-    bool m_geopos = false;
-    double m_head_dir = 0.0;
+    qreal m_offset      = 0.0;
+    qreal m_alt         = 0.0;
+    double heading_offset = 0.0;
+    bool m_geopos       = false;
+    double m_head_dir   = 0.0;
+    double m_dt;
 
     QMessageBox *m_msgBox = nullptr;
+    QMessageBox *m_msgBoxCalibrating = nullptr;
 
     // Q_SIGNALS:
     void accepted();
@@ -222,7 +245,7 @@ private slots:
     void on_pushButton_alt_clicked();
     void on_pushButton_12_clicked();
     void on_pushButton_13_clicked();
-    void on_reconnect_clicked();
+    void on_reconnect_now_clicked();
     void on_pushButton_20_clicked();
     void on_reset_heading_clicked();
     void on_select_transponder_page_3_clicked();
@@ -243,6 +266,7 @@ private slots:
     void onAccelerometerReadingChanged();
     void onGyroReadingChanged();
     void onMagReadingChanged();
+    void onOrientationReadingChanged();
 
     void on_select_gyro_page_clicked();
     void on_select_gyro_page2_clicked();
@@ -272,6 +296,8 @@ private slots:
     void on_fly_home_clicked();
     void on_dial_valueChanged(int value);
     void on_dial_2_valueChanged(int value);
+    void EKF();
+
 
 public:
     int screen_index;

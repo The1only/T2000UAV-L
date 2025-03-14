@@ -51,7 +51,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="page_2">
      <widget class="QPushButton" name="pushButton">
@@ -463,7 +463,7 @@ selection-color: rgb(253, 255, 135);
 </string>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -703,7 +703,7 @@ QPushButton:pressed {
          <string>Feet</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="reconnect">
+       <widget class="QPushButton" name="reconnect_now">
         <property name="geometry">
          <rect>
           <x>70</x>
@@ -1178,7 +1178,7 @@ QPushButton:pressed {
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>3</hour>
+        <hour>1</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>

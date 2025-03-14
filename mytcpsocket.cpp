@@ -83,8 +83,9 @@ void MyTcpSocket::connectedIMU()
 
 //    BWT901BLE5_0DataProcessor::SomeFunc();
 
-//#else
-#elif USE_BT_IMU
+#endif
+#if defined(USE_BT_IMU) && defined(Q_OS_ANDROID)
+
     QJniEnvironment env;
     // C++ code
 
@@ -114,7 +115,7 @@ void MyTcpSocket::connectedIMU()
             timerIMU = new QTimer(this);
             timerIMU->setSingleShot(false);
             connect(timerIMU, SIGNAL(timeout()), this, SLOT(doIMU()));
-            timerIMU->start(100);
+            timerIMU->start(10);
             IMUconnected = true;
         }
         else{
@@ -151,11 +152,6 @@ void MyTcpSocket::connected()
         Transponderstat = someJavaObject->callMethod<jstring>("getconnected").toString();
         //    qDebug() << "Serial port status= " + Transponderstat;
 
-        // For debug...
-#ifdef QT_DEBUG
-    //    Transponderstat = "true";
-#endif
-
         if( Transponderstat == "true"){
             this->isconnected = true;
             QJniObject _text = QJniObject::fromString("v=?");
@@ -176,6 +172,12 @@ void MyTcpSocket::connected()
             connect(timerAlt, SIGNAL(timeout()), this, SLOT(doAlt()));
             timerAlt->start(150);
         }
+
+// For debug...
+#ifdef QT_DEBUG
+        Transponderstat = "true";
+#endif
+
     }
     else {
         qDebug() << "SOME JAVA CLASS UNAVAIABLE!";
@@ -222,13 +224,13 @@ void MyTcpSocket::doIMU()
                 this->AccZ = element.at(1).toDouble()*G;
             }
             if(element.at(0) == "AsX"){
-                this->AsX = element.at(1).toDouble();
+                this->AsZ = element.at(1).toDouble();
             }
             if(element.at(0) == "AsY"){
                 this->AsY = element.at(1).toDouble();
             }
             if(element.at(0) == "AsZ"){
-                this->AsZ = element.at(1).toDouble();
+                this->AsX = element.at(1).toDouble();
             }
             if(element.at(0) == "AngleX"){
                 this->AngleX = element.at(1).toDouble();
@@ -237,7 +239,7 @@ void MyTcpSocket::doIMU()
                 this->AngleY = element.at(1).toDouble();
             }
             if(element.at(0) == "AngleZ"){
-                this->AngleZ = element.at(1).toDouble();
+                this->AngleZ = -element.at(1).toDouble();
             }
             if(element.at(0) == "HX"){
                 this->HX = element.at(1).toDouble();
@@ -255,8 +257,6 @@ void MyTcpSocket::doIMU()
                 this->Temperature = element.at(1).toDouble();
             }
         }
-        //        qDebug() <<  AccX << " " << AccY << " " << AccZ << " " << AsX << " " << AsY << " " << AsZ << " " <<
-        //       AngleX << " " << AngleY << " " << AngleZ << " " << HX << " " << HY << " " << HZ << " " << Electricity ;
     }
 }
 

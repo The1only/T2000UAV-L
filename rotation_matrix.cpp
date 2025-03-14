@@ -1,6 +1,5 @@
 #include "rotation_matrix.h"
 
-
 Matrix3x3 createRotationMatrixZ(double theta) {
     Matrix3x3 rotationMatrix = {{
         {cos(theta), -sin(theta), 0.0f},
@@ -10,7 +9,7 @@ Matrix3x3 createRotationMatrixZ(double theta) {
     return rotationMatrix;
 }
 
-Matrix3x3 createRotationMatrix(Vector3 theta){
+Matrix3x3 createRotationMatrix(Vector3x theta){
     double roll =theta[0];
     double pitch=theta[1];
     double yaw  =theta[2];
@@ -48,8 +47,8 @@ Matrix3x3 multiplyMatrix(const Matrix3x3& mat1, const Matrix3x3& mat2) {
     return result;
 }
 
-Vector3 rotateVector(const Matrix3x3& rotationMatrix, const Vector3& vector) {
-    Vector3 result = {0.0f, 0.0f, 0.0f};
+Vector3x rotateVector(const Matrix3x3& rotationMatrix, const Vector3x& vector) {
+    Vector3x result = {0.0f, 0.0f, 0.0f};
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             result[i] += rotationMatrix[i][j] * vector[j];
@@ -58,7 +57,7 @@ Vector3 rotateVector(const Matrix3x3& rotationMatrix, const Vector3& vector) {
     return result;
 }
 
-void rotateSensors(Vector3& gyro, Vector3& accel, Vector3& mag, Vector3 theta) {
+void rotateSensors(Vector3x& gyro, Vector3x& accel, Vector3x& mag, Vector3x theta) {
     Matrix3x3 rotationMatrix = createRotationMatrix(theta);
 
     gyro = rotateVector(rotationMatrix, gyro);
@@ -66,7 +65,7 @@ void rotateSensors(Vector3& gyro, Vector3& accel, Vector3& mag, Vector3 theta) {
     mag = rotateVector(rotationMatrix, mag);
 }
 
-void rotateSensors(Vector3& gyro, Vector3& accel, Vector3& mag,  Vector3& attitude, Matrix3x3 rotationMatrix) {
+void rotateSensors(Vector3x& gyro, Vector3x& accel, Vector3x& mag,  Vector3x& attitude, Matrix3x3 rotationMatrix) {
     gyro = rotateVector(rotationMatrix, gyro);
     accel = rotateVector(rotationMatrix, accel);
     mag = rotateVector(rotationMatrix, mag);
@@ -74,51 +73,13 @@ void rotateSensors(Vector3& gyro, Vector3& accel, Vector3& mag,  Vector3& attitu
 }
 
 
-void rotateSensors(Vector3& gyro, Vector3& accel, Vector3& mag, Matrix3x3 rotationMatrix) {
+void rotateSensors(Vector3x& gyro, Vector3x& accel, Vector3x& mag, Matrix3x3 rotationMatrix) {
     gyro = rotateVector(rotationMatrix, gyro);
     accel = rotateVector(rotationMatrix, accel);
     mag = rotateVector(rotationMatrix, mag);
 }
 
-void printVector(const Vector3& vector) {
+void printVector(const Vector3x& vector) {
     std::cout << "[" << vector[0] << ", " << vector[1] << ", " << vector[2] << "]\n";
 }
 
-/*
-int main() {
-    double pitch =  90.0 * DEG_TO_RAD;  // 90-degree rotation in radians
-    double roll  =  0.0 * DEG_TO_RAD;  // 90-degree rotation in radians
-    double yaw   =  0.0 * DEG_TO_RAD;  // 90-degree rotation in radians
-
-    // Define sensor vectors
-    Vector3 rotate= { pitch, roll, yaw};
-    Vector3 gyro  = { 1.0f, 2.0f, 3.0f };   // Gyroscope vector
-
-    //                up    hor   right
-    Vector3 accel = { 1.0f, 2.0f, 3.0f };   // Accelerometer vector
-    Vector3 mag   = { 1.0f, 2.0f, 3.0f };   // Magnetometer vector
-
-    std::cout << "Original Gyro Vector: ";
-    printVector(gyro);
-
-    std::cout << "Original Accel Vector: ";
-    printVector(accel);
-
-    std::cout << "Original Mag Vector: ";
-    printVector(mag);
-
-    // NED Rotate all sensor vectors
-    rotateSensors(gyro, accel, mag, rotate);
-
-    std::cout << "\nRotated Gyro Vector: ";
-    printVector(gyro);
-
-    std::cout << "Rotated Accel Vector: ";
-    printVector(accel);
-
-    std::cout << "Rotated Mag Vector: ";
-    printVector(mag);
-
-    return 0;
-}
-*/

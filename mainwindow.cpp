@@ -20,8 +20,13 @@
 #include <QImageCapture>
 #include <QMediaFormat>
 #include <QMediaPlayer>
-//#include <QCameraImageCapture>
+#include <QOrientationSensor>
 #include <QImageCapture>
+
+//***C++11 Style:***
+#include <chrono>
+
+//#include <QCameraImageCapture>
 
 
 #include <QtCharts/QChartView>
@@ -33,6 +38,7 @@
 #include "mytcpsocket.h"
 
 using namespace std;
+using namespace std::chrono;
 
 //static MainWindow *saved_this;
 
@@ -56,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
     static KeepAwakeHelper helper;
 #endif
 
-    if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
+    //   if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
 
     ui->setupUi(this);
 
@@ -66,13 +72,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
     ui->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
     ui->plainTextEdit->appendPlainText("Transponder 200-UAV v1.01a");
+    //ui->listView->
+    ui->listView->appendPlainText("Transponder 200-UAV v1.01a");
     ui->listView->raise();
     ui->listView->setHidden(true);
 
+    m_msgBox = new QMessageBox(QMessageBox::Information,tr("Software is booting"),tr("Please wait for the system to connect!"));
+    m_msgBox->setStandardButtons(QMessageBox::NoButton);
+    m_msgBox->show();
+
     mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->setIMU);
 
-// Whenever the location data source signals that the current
-// position is updated, the positionUpdated function is called.
+    // Whenever the location data source signals that the current
+    // position is updated, the positionUpdated function is called.
     this->m_geoPositionInfo = QGeoPositionInfoSource::createDefaultSource(this);
     if (this->m_geoPositionInfo)
     {
@@ -84,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Setup the parameters...
     {
-        QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + RADIO);
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(RADIO));
         if (l_file->open(QIODevice::ReadOnly)){
             QString blob = l_file->readAll();
             l_file->close();
@@ -97,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
     }
     {
-        QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + AIRPLANE);
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(AIRPLANE));
         if (l_file->open(QIODevice::ReadOnly)){
             QString blob = l_file->readAll();
             l_file->close();
@@ -142,12 +154,13 @@ MainWindow::MainWindow(QWidget *parent)
     timertakePicture->setSingleShot(false);
     connect(timertakePicture, SIGNAL(timeout()), this, SLOT(takePicture()));
 
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/flightlog.txt");
+    QString data = "System booted at: "+QDateTime::currentDateTime().toString();
+    ui->listView->appendPlainText(data);
+
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-        QString data = "System booted at: "+QDateTime::currentDateTime().toString();
         l_file->write(data.toLocal8Bit()+"\n");
         l_file->close();
-        ui->listView->appendPlainText(data);
     }
     else{
         qDebug() << "Log file error...  ";
@@ -227,23 +240,29 @@ MainWindow::MainWindow(QWidget *parent)
     _widgetEHSI->setHeading(0);
     _widgetEHSI->redraw();
 
-
-    m_msgBox = new QMessageBox(QMessageBox::Information,tr("Software is booting"),tr("Please wait for the system to connect!"));
-    m_msgBox->setStandardButtons(QMessageBox::NoButton);
-    m_msgBox->show();
-
     // Save the current index page...
     currentIndex = ui->stackedWidget->currentIndex();
+
     qDebug() << "  Booted...  " << currentIndex << " Index";
 
     // Quantum computer test, just to see if it would work...
-//    Qiskit();
+    //    Qiskit();
 }
 
 MainWindow::~MainWindow()
 {
     qDebug() << "Exiting...";
     qApp->closeAllWindows();
+}
+
+void MainWindow::setButtonIcon(QString iconPath, QPushButton* button)
+{
+    QString str("Test");
+    qApp->applicationDirPath().append(iconPath);
+    QPixmap pixmap(str);
+    QIcon buttonIcon(pixmap);
+    button->setIcon(buttonIcon);
+    button->setIconSize(pixmap.rect().size());
 }
 
 // Call back funtion from the sensor handler...
@@ -268,31 +287,40 @@ void MainWindow::setIMU(void *parent, bool use_imu)
             local->m_pressure_sensor = new QPressureSensor();
             connect(local->m_pressure_sensor, SIGNAL(readingChanged()), local, SLOT(onPressureReadingChanged()));
             local->m_pressure_sensor->start();
-            local->m_pressure_sensor->setDataRate(100);
+            local->m_pressure_sensor->setDataRate(4);
             qDebug() << "Found a sensor QPressureSensor";
+            local->ui->radioButton_3->setChecked(true);
         }
 
+        // If we do not have an external IMU...
         if(use_imu  == false)
         {
             if(!strncmp(type,"QRotationSensor",strlen("QRotationSensor"))){
                 local->m_rotation_sensor = new QRotationSensor();
-                local->m_rotation_sensor->setDataRate(50);
+                local->m_rotation_sensor->setDataRate(40);
                 connect(local->m_rotation_sensor, SIGNAL(readingChanged()), local, SLOT(onRotationReadingChanged()));
                 local->m_rotation_sensor->start();
                 qDebug() << "Found a sensor QRotationSensor";
             }
 
+            if(!strncmp(type,"QOrientationSensor",strlen("QOrientationSensor"))){
+                local->m_orientation_sensor = new QOrientationSensor();
+                connect(local->m_orientation_sensor, SIGNAL(readingChanged()), local, SLOT(onOrientationReadingChanged()));
+                local->m_orientation_sensor->start();
+                qDebug() << "Found a sensor QRotationSensor";
+            }
+
             if(!strncmp(type,"QCompass",strlen("QCompass"))){
                 local->m_compass_sensor = new QCompass();
-                local->m_compass_sensor->setDataRate(100);
                 connect(local->m_compass_sensor, SIGNAL(readingChanged()), local, SLOT(onCompassReadingChanged()));
                 local->m_compass_sensor->start();
+                local->m_compass_sensor->setDataRate(4);
                 qDebug() << "Found a sensor QCompass";
             }
 
             if(!strncmp(type,"QAccelerometer",strlen("QAccelerometer"))){
                 local->m_accel_sensor = new QAccelerometer();
-                local->m_accel_sensor->setDataRate(50);
+                local->m_accel_sensor->setDataRate(40);
                 connect(local->m_accel_sensor, SIGNAL(readingChanged()), local, SLOT(onAccelerometerReadingChanged()));
                 local->m_accel_sensor->start();
                 qDebug() << "Found a sensor QAccelerometerReading";
@@ -300,7 +328,7 @@ void MainWindow::setIMU(void *parent, bool use_imu)
 
             if(!strncmp(type,"QGyroscope",strlen("QGyroscope"))){
                 local->m_gyro_sensor = new QGyroscope();
-                local->m_gyro_sensor->setDataRate(50);
+                local->m_gyro_sensor->setDataRate(40);
                 connect(local->m_gyro_sensor, SIGNAL(readingChanged()), local, SLOT(onGyroReadingChanged()));
                 local->m_gyro_sensor->start();
                 qDebug() << "Found a sensor QGyroscopeReading";
@@ -308,43 +336,80 @@ void MainWindow::setIMU(void *parent, bool use_imu)
 
             if(!strncmp(type,"QMagnetometer",strlen("QMagnetometer"))){
                 local->m_mag_sensor = new QMagnetometer();
-                local->m_mag_sensor->setDataRate(50);
+                local->m_mag_sensor->setDataRate(40);
                 connect(local->m_mag_sensor, SIGNAL(readingChanged()), local, SLOT(onMagReadingChanged()));
                 local->m_mag_sensor->start();
                 qDebug() << "Found a sensor QMagnetometerReading";
             }
         }
     }
+    // If we do not have an external IMU...
+    if(use_imu  == false)
+    {
+        QString data = "IMU NOT found...";
+        local->ui->listView->appendPlainText(data);
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+        if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
+            l_file->write(data.toLocal8Bit()+"\n");
+            l_file->close();
+        }
+    }
+    else{
+        QString data = "IMU found and connected...";
+        local->ui->listView->appendPlainText(data);
+        local->ekf.m_use_gpt = true;
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+        if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
+            l_file->write(data.toLocal8Bit()+"\n");
+            l_file->close();
+        }
+    }
+
     qDebug() << mySensorList;
+
+    if(local->ui->radioButton_3->isChecked() == false){
+        local->ui->radioButton_3->setCheckable(false);
+        local->ui->dial->hide();
+        local->ui->dial_2->hide();
+        local->ui->doubleSpinBox->hide();
+        local->ui->doubleSpinBox_2->hide();
+
+        QString x = local->ui->label_18->styleSheet();
+        x.replace(QString("135"), QString("80"));
+        local->ui->label_18->setStyleSheet(x);
+        local->ui->label_18->update();
+
+    }
+
+    local->m_Display = new QTimer(local);
+    local->m_Display->setSingleShot(false);
+    connect(local->m_Display, SIGNAL(timeout()), local, SLOT(onReadingChanged()));
+    local->m_Display->start(100);
 
     local->m_IMU = new QTimer(local);
     local->m_IMU->setSingleShot(false);
-    connect(local->m_IMU, SIGNAL(timeout()), local, SLOT(onReadingChanged()));
-    local->m_IMU->start(105);
-    qDebug() << "Found a sensor EXTERNAL QRotationSensor";
+    connect(local->m_IMU, SIGNAL(timeout()), local, SLOT(EKF()));
+    local->m_IMU->start(40);
 
-    local->m_msgBox->hide();
+    local->m_dt = QDateTime::currentMSecsSinceEpoch();
 }
 
 void MainWindow::permissionUpdated(const QPermission &permission)
 {
     if (permission.status() != Qt::PermissionStatus::Granted){
-        qDebug() << "Precise location premission denied";
+        qDebug() << "Precise location permission denied";
         return;
     }
     auto locationPermission = permission.value<QLocationPermission>();
     if (!locationPermission || locationPermission->accuracy() != QLocationPermission::Precise){
-        qDebug() << "Precise location premission error";
+        qDebug() << "Precise location permission error";
         return;
     }
     qDebug() << "Precise location OK";
-
-//        QUpdatePreciseLocation();
 }
 
 void MainWindow::init()
 {
-
 #if QT_CONFIG(permissions)
     // camera
     QCameraPermission cameraPermission;
@@ -371,9 +436,7 @@ void MainWindow::init()
     connect(&m_devices, &QMediaDevices::videoInputsChanged, this, &MainWindow::updateCameras);
     const QRect *m_vsize = &ui->viewfinder->geometry();
     m_size = new QSize( m_vsize->width(),m_vsize->height());
-    qDebug() << "TERJE:::::::" <<  m_vsize->height() << "    "  <<  m_vsize->width();
-
-    //   setCamera(QMediaDevices::defaultVideoInput());
+    //    qDebug() << "TERJE:::::::" <<  m_vsize->height() << "    "  <<  m_vsize->width();
 }
 
 
@@ -403,15 +466,20 @@ void MainWindow::setCamera(const QCameraDevice &cameraDevice)
     m_capture = new QImageCapture;
     m_captureSession.setImageCapture(m_capture);
 
+    QDir dir(IMAGES_DIR);
+    if (!dir.exists()){
+        dir.mkpath(".");
+    }
+
     /*Initialize a QImageCapture instance*/
     connect(m_capture, &QImageCapture::imageCaptured,[this](int id, const QImage &preview) {
         qDebug() << "Image Captured...";
         ui->plainTextEdit->appendPlainText(QString("Image Captured:%1").arg(id));
         QDateTime date = QDateTime::currentDateTime();
-        QString filename2 = "/storage/emulated/0/Pictures/"+date.toString("yyyy_dd_MM_hh_mm_ss").append(".png");
+        QString filename2 = IMAGES_DIR+date.toString("yyyy_dd_MM_hh_mm_ss").append(".jpg");
         QPixmap pixmap(QPixmap::fromImage(preview));
         QImage *imagex = new QImage(pixmap.toImage());
-        imagex->save(filename2, "png", 100);
+        imagex->save(filename2, "jpg", 100);
     });
 
     m_camera->start();
@@ -429,35 +497,33 @@ void MainWindow::hideCamera()
 
 void MainWindow::logTakeoff()
 {
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/flightlog.txt");
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+    m_takeoffTime = QDateTime::currentDateTime();
+    QString data = "Takeoff at: "+m_takeoffTime.toString();
+    ui->listView->appendPlainText(data);
+
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-        m_takeoffTime = QDateTime::currentDateTime();
-        QString data = "Takeoff at: "+m_takeoffTime.toString();
         l_file->write(data.toLocal8Bit()+"\n");
         l_file->close();
-        ui->listView->appendPlainText(data);
     }
 }
 
 void MainWindow::logLanded()
-{
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/flightlog.txt");
+{ 
+    m_landedTime = QDateTime::currentDateTime();
+    QString data = "Landed at: "+m_landedTime.toString();
+    QTime dif(0,0,0,0);
+    QTime t=dif.addMSecs(m_landedTime.toMSecsSinceEpoch()-m_takeoffTime.toMSecsSinceEpoch());
+    QString result=t.toString("hh:mm:ss.zzz");
+    QString dtime = "Duration: "+result;
+    ui->listView->appendPlainText(data);
+    ui->listView->appendPlainText(dtime);
+
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-
-        m_landedTime = QDateTime::currentDateTime();
-        QString data = "Landed at: "+m_landedTime.toString();
         l_file->write(data.toLocal8Bit()+"\n");
-
-        QTime dif(0,0,0,0);
-        QTime t=dif.addMSecs(m_landedTime.toMSecsSinceEpoch()-m_takeoffTime.toMSecsSinceEpoch());
-        QString result=t.toString("hh:mm:ss.zzz");
-
-        QString dtime = "Duration: "+result;
         l_file->write(dtime.toLocal8Bit()+"\n");
-
         l_file->close();
-        ui->listView->appendPlainText(data);
-        ui->listView->appendPlainText(dtime);
     }
 }
 
@@ -468,7 +534,7 @@ void MainWindow::doClock()
     if(!(++tim % 10)){
         static int lastPower = -1;
         if(lastPower != mysocket->Electricity){
-            ui->plainTextEdit->appendPlainText("IMU Power: "+  QString::number(mysocket->Electricity));
+            ui->plainTextEdit->appendPlainText(QDateTime::currentDateTime().toString() + "IMU Power: "+  QString::number(mysocket->Electricity));
             lastPower = mysocket->Electricity;
         }
     }
@@ -486,8 +552,15 @@ void MainWindow::doClock()
     }
     else{
         // If more than 30Km/t we are taking off...
-        if( this->m_speed > 30.0 && this->m_altitude > (m_alt + 5) ){
+        double alt = m_preasure_alt;
+        if(this->ui->radioButton_2->isChecked()){
+            alt = this->m_altitude*3.2808399;
+        }
+
+        if( this->m_speed > 20.0 && alt > (m_alt + 5) ){
             m_takeoff = true;
+
+            qDebug() << "takeoff...";
 
             this->takeoff_latitude  = this->m_latitude;
             this->takeoff_longitude = this->m_longitude;
@@ -514,11 +587,6 @@ void MainWindow::doClock()
         var=ms*3.2808399*60;  // Feet/m...
     }
 
-    /*
-    double var = (mysocket->AccZ-1) - vario;
-    vario = mysocket->AccZ-1;
-    var*=9.80665*3.2808399*60;  // Feet/m...
-    */
     static double varfilter[varfilterlength]={0};
     double var_speed = 0;
     for(int x=0; x < varfilterlength-1;x++){
@@ -527,47 +595,62 @@ void MainWindow::doClock()
     }
     varfilter[varfilterlength-1] = var;
     var_speed+=var;
-    var_speed/=varfilterlength;
-
-    _widgetVSI->setClimbRate(var_speed);
-    _widgetVSI->redraw();
-
-    _widgetEADI->setClimbRate( ms);
-    _widgetEADI->redraw();
+    m_var_speed=var_speed/varfilterlength;
 }
 
 void MainWindow::onGyroReadingChanged()
 {
     m_gyro_reader = m_gyro_sensor->reading();
-    //    qDebug() << "Gyro..." << m_gyro_sensor->x();
-    mysocket->AsX  = m_gyro_reader->x()*DEG_TO_RAD;
-    mysocket->AsY  = m_gyro_reader->y()*DEG_TO_RAD;
-    mysocket->AsZ  = m_gyro_reader->z()*DEG_TO_RAD;
+    mysocket->AsX  = m_gyro_reader->x();
+    mysocket->AsY  = m_gyro_reader->y();
+    mysocket->AsZ  = m_gyro_reader->z();
 }
 
 void MainWindow::onMagReadingChanged()
 {
     m_mag_reader = m_mag_sensor->reading();
-    //    qDebug() << "Mag..." << m_mag_sensor->x();
-    mysocket->HX   = m_mag_reader->x();
-    mysocket->HY   = m_mag_reader->y();
-    mysocket->HZ   = m_mag_reader->z();
+    mysocket->HX   = m_mag_reader->x()*2*M_PI;
+    mysocket->HY   = m_mag_reader->y()*2*M_PI;
+    mysocket->HZ   = m_mag_reader->z()*2*M_PI;
 }
 
 void MainWindow::onAccelerometerReadingChanged()
 {
+#define GFILTER 100
+    static double avg=0;
+    double tmp=0;
+
     m_accel_reader = m_accel_sensor->reading();
-    //    qDebug() << "Accelerometer..." << m_accel_sensor->x();
     mysocket->AccX = m_accel_reader->x();
-    mysocket->AccY = -1*m_accel_reader->y();
-    mysocket->AccZ = m_accel_reader->z();
+    mysocket->AccY = -m_accel_reader->y();
+    mysocket->AccZ = -m_accel_reader->z();
+    tmp = sqrt(m_accel_reader->x()*m_accel_reader->x() +
+               m_accel_reader->y()*m_accel_reader->y() +
+               m_accel_reader->z()*m_accel_reader->z());
+    avg -= avg/GFILTER;
+    avg += tmp/GFILTER;
+
+    if(m_calibrate > 0){
+        if(m_calibrate == 1){
+            m_first = 20;
+            mysocket->G = avg;
+            ekf.ekf->Gval = avg;
+            ekf.Gval = avg;
+        }
+        m_calibrate--;
+    }
 }
 
 void MainWindow::onCompassReadingChanged()
 {
     m_compass_reader = m_compass_sensor->reading();
- //   mysocket->AngleZ = -m_compass_reader->azimuth();
- //   qDebug() << "Compass..." << m_compass_reader->azimuth();
+    m_heading = m_compass_reader->azimuth();
+}
+
+void MainWindow::onOrientationReadingChanged()
+{
+    m_orientation_reader = m_orientation_sensor->reading();
+    mysocket->Orient  = m_orientation_reader->orientation();// x();  // when rotated...
 }
 
 void MainWindow::onRotationReadingChanged()
@@ -575,11 +658,7 @@ void MainWindow::onRotationReadingChanged()
     m_rotation_reader = m_rotation_sensor->reading();
     mysocket->AngleX  = -m_rotation_reader->x();  // when rotated...
     mysocket->AngleY  = -m_rotation_reader->y()-90; // TERJE
-    mysocket->AngleZ  = m_rotation_reader->z();
-
-    // 7594
-
-
+    mysocket->AngleZ  = m_rotation_reader->z()+0.00001;
 }
 
 void MainWindow::onPressureReadingChanged()
@@ -588,27 +667,19 @@ void MainWindow::onPressureReadingChanged()
     static bool first = true;
 
     m_pressure_reader = m_pressure_sensor->reading();
-    m_preasure =  m_pressure_reader->pressure()/100.0;
-
-    _widgetEADI->setPressure( m_preasure, qfi_EADI::PressureMode::MB );
-    _widgetEADI->redraw();
-
+    m_preasure = m_pressure_reader->pressure()/100.0;
     m_preasure = m_preasure + (1013.25 - ui->doubleSpinBox->text().toDouble());
 
     m_preasure_alt = 145366.45 * (1.0 - std::pow(m_preasure / 1013.25,0.190284));
 
+    if( this->m_speed < 1.0){ first = true; }
+    // Sett takeoff altitude...
     if(first){
         first = false;
         m_alt = m_preasure_alt;
+        qDebug() << "set takeoff baroalt";
+
     }
-
-//    qDebug() << "Phone's 'Pa' sensor = " << m_preasure_alt;
-
-    // If more than 1mb change then we takeoff...
-    //    if( abs(m_alt-(m_pressure_reader->pressure())) > 100){
-    //        m_takeoff = true;
-    //    }
-
 }
 
 void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
@@ -623,36 +694,34 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         this->m_latitude  = geoCoordinate.latitude();
         this->m_longitude = geoCoordinate.longitude();
         this->m_altitude  = geoCoordinate.altitude();
-        if(this->m_altitude != this->m_altitude){
-            this->m_altitude = 0;
-        }
 
         double speed     = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
-        this->m_speed     = speed*3.6;
+        double bearing   = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+        this->m_speed    = speed*3.6;
+        double vel_D     = -geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
 
-        double bearing    = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
-
-        if(!(isnan(speed) || isnan(bearing)))
+        if(this->m_speed > 10.0 && !isnan(bearing)){
+            m_bearing    = bearing;
+        }
+        else{
+            m_bearing    = 999;
+        }
+        // Get velocity vector...
+        if(!(isnan(speed) || isnan(bearing) || isnan(vel_D)))
         {
-            this->m_vel_E  = sin(bearing*(3.141592/180.0))*speed;
-            this->m_vel_N  = cos(bearing*(3.141592/180.0))*speed;;
-            this->m_vel_D  = geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
+            this->m_vel_E  = sin(bearing*DEG_TO_RAD)*speed;
+            this->m_vel_N  = cos(bearing*DEG_TO_RAD)*speed;
+            this->m_vel_D  = -geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
+            this->m_vel_active = true;
         }
         else{
             this->m_vel_E=this->m_vel_N=this->m_vel_D=0.0;
+            this->m_vel_active = false;
         }
 
         //    this->m_head      = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
 
-//        this->m_head_dir = geoCoordinate.azimuthTo(QGeoCoordinate(0,0));
-
-        if(this->m_speed >= 0 && this->m_speed < 200)
-            _widgetASI->setAirspeed(this->m_speed);
-        else
-            _widgetASI->setAirspeed(0);
-
-        _widgetASI->redraw();
-
+        //        this->m_head_dir = geoCoordinate.azimuthTo(QGeoCoordinate(0,0));
 
         ui->quickWidget->rootObject()->setProperty("lat", this->m_latitude);
         ui->quickWidget->rootObject()->setProperty("lon", this->m_longitude);
@@ -664,173 +733,168 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         qDebug() << "m_altitude  = " << m_altitude << Qt::endl;
         qDebug() << "m_head      = " << m_head << Qt::endl;
 */
-        if(first){
-            first = false;
-            m_alt = this->m_altitude;
+        // set ground altitude...
+        if(isnan(this->m_altitude)){
+            this->m_altitude = 0;
+        }else{
+            // Set takeoff altitude...
+            if(first && this->ui->radioButton_2->isChecked())
+            {
+                first = false;
+                m_alt = this->m_altitude*3.2808399;
+                // qDebug() << "set takeoff alt";
+            }
+            // As long as we do not move, but got altitude...
+            if(speed < 0.5){
+                first = true;
+                // qDebug() << "reset takeoff alt";
+            }
         }
     }
 }
 
-void MainWindow::EKF(Vector3 gyro, Vector3 accel, Vector3 mag)
+void MainWindow::EKF()
 {
-    if(m_mag_reader != nullptr && m_gyro_reader != nullptr && m_accel_reader != nullptr)
+//    qDebug() << mysocket->AngleX << mysocket->AngleY << mysocket->AngleZ;
+
+    if((m_gyro_reader != nullptr && m_accel_reader != nullptr) || (ekf.m_use_gpt == true))
     {
-        // Euler estimate using accelerometer and magnetometer...
-        // if(accel[0] > G) accel[0] = G-0.001; if(accel[0] < -G) accel[0] = -G-0.001;
-        // if(accel[1] > G) accel[1] = G-0.001; if(accel[1] < -G) accel[1] = -G-0.001;
-        // if(accel[2] > G) accel[2] = G-0.001; if(accel[2] < -G) accel[2] = -G-0.001;
-
-        // Accel = 0 = Y = ROL , 1 = Z = PITCH  , 2 = X = TVERR
- //1       Vector3 rotate= { 180 * DEG_TO_RAD, -(m_offset-90 % 180) * DEG_TO_RAD, 0 * DEG_TO_RAD};
-   //     Vector3 rotate= { 0 * DEG_TO_RAD, -90 * DEG_TO_RAD, 0 * DEG_TO_RAD};
- //1       Matrix3x3 Matrix = createRotationMatrix(rotate);
- //       rotateSensors(gyro, accel, mag, Matrix);
-
-//        m_pitch+= gyro[1] * RAD_TO_DEG * 0.1;
-//        m_roll +=-gyro[0] * RAD_TO_DEG * 0.1;
-//        m_yaw  += gyro[2] * RAD_TO_DEG * 0.1;
-
-        std::tie(m_pitch,m_roll,m_yaw) = ekf.getPitchRollYaw(accel[1],accel[0],accel[2],mag[1],mag[0],mag[2],gyro[1],-gyro[0],gyro[2]);
-        m_pitch = m_pitch * RAD_TO_DEG;
-        m_roll  = m_roll  * RAD_TO_DEG;
-        m_yaw   = m_yaw   * RAD_TO_DEG;
+        static steady_clock::time_point clock_begin = steady_clock::now();
+        steady_clock::time_point clock_end = steady_clock::now();
+        steady_clock::duration time_span = clock_end - clock_begin;
+        m_dt = double(time_span.count()) / 1000000000L;
+        clock_begin=clock_end;
 
         // How to caulcate Euler Angles [Roll Φ(Phi) Gyro Z, Pitch θ(Theta) gyro Y, Yaw Ψ(Psi) Gyro X]
-        // calculate using ekf...
+        if(ekf.m_use_gpt == false)
+        {
+            if(m_mag_reader == nullptr){
+                mysocket->HX=mysocket->HY=mysocket->HZ=0;
+            }
+            Vector3x gyro = {mysocket->AsZ,mysocket->AsY,mysocket->AsX};
+            Vector3x accel= {-mysocket->AccY,-mysocket->AccZ,mysocket->AccX};
+            Vector3x mag  = {mysocket->HX,mysocket->HY,mysocket->HZ};
 
-        Eigen::Vector3d g = Eigen::Vector3d(gyro[0],gyro[1],gyro[2]);
-        Eigen::Vector3d a = Eigen::Vector3d(accel[0],accel[1],accel[2]);
-        Eigen::Vector3d m = Eigen::Vector3d(mag[0],mag[1],mag[2]);
+            // Rotate the roll axis with respect to pitch...
+            double y = (gyro[2] * sin(ekf.getPitch_rad())) + (gyro[0] * cos(ekf.getPitch_rad())) ;
+            double z = (gyro[2] * cos(ekf.getPitch_rad())) + (gyro[0] * sin(ekf.getPitch_rad())) ;
 
-        kf.predict(g);
-        kf.update(a, m);
-        Eigen::Vector4d quaternion = kf.getQuaternion();
-        Eigen::Vector3d euler = kf.quaternionToEuler(quaternion);
+            //            double ay = (accel[0]* DEG_TO_RAD * sin(ekf.getPitch_rad())) + (accel[2]* DEG_TO_RAD * cos(ekf.getPitch_rad())) ;
+            //          double az = (accel[0]* DEG_TO_RAD * cos(ekf.getPitch_rad())) + (accel[2]* DEG_TO_RAD * sin(ekf.getPitch_rad())) ;
 
-        ekf.setPitch_rad(euler[1] * DEG_TO_RAD);
-        ekf.setRoll_rad(euler[0] * DEG_TO_RAD);
-        ekf.setHeading_rad(euler[2] * DEG_TO_RAD);
+            // Estimate using accelerometers...
+            std::tie(m_pitch,m_roll,m_yaw) = ekf.getPitchRollYaw(accel[1],accel[0],accel[2],mag[0],mag[1],mag[2],ekf.Gval);
+            if(isnan(m_pitch)) m_pitch = 0;
+            if(isnan(m_roll)) m_roll = 0;
+            if(isnan(m_yaw)) m_yaw = 0;
 
-        // ekf.ekf_update(QDateTime::currentMSecsSinceEpoch(), //,gps.getTimeOfWeek(),
-        //                 0,//this->m_vel_N*1e-3,
-        //                 0,//this->m_vel_E*1e-3,
-        //                 0,//this->m_vel_D*1e-3,
-        //                 this->m_latitude * DEG_TO_RAD, // * 1e-7,
-        //                 this->m_longitude* DEG_TO_RAD, // * 1e-7,
-        //                 -0.100, //this->m_altitude, // * 1e-3,
-        //                 gyro[0],
-        //                 gyro[1],
-        //                 -gyro[2],
-        //                 accel[1],
-        //                 -accel[0],  // roll
-        //                 accel[2],
-        //                 -mag[1],
-        //                 mag[0],
-        //                 -mag[2]
-        // );
+            // Calculates X and Y relative distances in meters.
+            double ypos = 0;
+            double xpos = 0;
+            if(!(isnan(this->m_latitude) || isnan(this->m_longitude))){
+                double deltaLatitude = this->m_latitude - this->takeoff_latitude;
+                double deltaLongitude = this->m_longitude - this->takeoff_longitude;
+                double latitudeCircumference = 40075160 * cos(this->takeoff_latitude*DEG_TO_RAD);
+                ypos = deltaLongitude * latitudeCircumference / 360;
+                xpos = deltaLatitude * 40008000 / 360;
+            }
 
-        qDebug() << "------------------------- %ld -------------------------- \n" << time(NULL);
-        // qDebug() << "Roll      : " << m_roll << ekf.getRoll_rad()* RAD_TO_DEG << mysocket->AngleX;
-        // qDebug() << "Pitch     : " << m_pitch << ekf.getPitch_rad()* RAD_TO_DEG << mysocket->AngleY;
-        // qDebug() << "Yaw       : " << m_yaw << ekf.getHeading_rad()* RAD_TO_DEG << mysocket->AngleZ;
+            // get speed vector...
+            double vel_N = 0.0;
+            double vel_E = 0.0;
+            double vel_D = 0.0;
+            if (this->m_vel_active == true){
+                vel_N = this->m_vel_N;
+                vel_E = this->m_vel_E;
+                vel_D = this->m_vel_D;
+            }
 
-        qDebug() << "Roll      : " << m_roll  << euler[0] << mysocket->AngleX;
-        qDebug() << "Pitch     : " << m_pitch << euler[1] << mysocket->AngleY;
-        qDebug() << "Yaw       : " << m_yaw   << euler[2] << mysocket->AngleZ;
+            // update kalmanfilter
+            ekf.ekf_update( m_dt,
+                           vel_N,
+                           vel_E,
+                           vel_D,
+                           xpos, //this->m_latitude, //xpos, // * 1e-7,
+                           ypos, //this->m_longitude, //ypos, // * 1e-7,
+                           -m_altitude, // * 1e-3,
+                           -m_preasure_alt*0.3048, // Meter NED...
+                           -gyro[1]* DEG_TO_RAD,
+                           y* DEG_TO_RAD, //gyro[0] * DEG_TO_RAD,
+                           z* DEG_TO_RAD, // gyro[2] * DEG_TO_RAD,
+                           m_pitch,
+                           m_roll,
+                           m_yaw,
+                           mag[0], // Z
+                           mag[1], // Y
+                           mag[2]  // X
+                           );
 
-        // qDebug() << "-------------------------";
-        // qDebug() << "Latitude  : " <<  this->m_latitude << ekf.getLatitude_rad()*RAD_TO_DEG;
-        // qDebug() << "Longitute : " << this->m_longitude << ekf.getLongitude_rad()*RAD_TO_DEG;
-        // qDebug() << "Altitude  : " << this->m_altitude << ekf.getAltitude_m();
-        // qDebug() << "-------------------------";
-        // qDebug() << "Speed (N) : " << this->m_vel_N << ekf.getVelNorth_ms();
-        // qDebug() << "Speed (E) : " << this->m_vel_E << ekf.getVelEast_ms();
-        // qDebug() << "Speed (D) : " << this->m_vel_D << ekf.getVelDown_ms();
-        // qDebug() << "-------------------------";
-        // qDebug() << "Gyro X    : " << gyro[0] << ekf.getGyroBiasX_rads()* RAD_TO_DEG;
-        // qDebug() << "Gyro Y    : " << gyro[1] << ekf.getGyroBiasY_rads()* RAD_TO_DEG;
-        // qDebug() << "Gyro Z    : " << gyro[2] << ekf.getGyroBiasZ_rads()* RAD_TO_DEG;
-        // qDebug() << "-------------------------";
-        // qDebug() << "Accel 0   : " << accel[0] << ekf.getAccelBiasX_mss();
-        // qDebug() << "Accel 1   : " << accel[1] << ekf.getAccelBiasY_mss();
-        // qDebug() << "Accel 2   : " << accel[2] << ekf.getAccelBiasZ_mss();
-        // qDebug() << "-------------------------";
-        // qDebug() << "Mag X   : " << mag[0]; //<< ekf.getAccelBiasX_mss();
-        // qDebug() << "Mag Y   : " << mag[1]; //<< ekf.getAccelBiasY_mss();
-        // qDebug() << "Mag Z   : " << mag[2]; //<< ekf.getAccelBiasZ_mss();
-        // qDebug() << "-----------------------------------------------------------------\n";
-
+#define SCALE 1.00
+            double roll = (ekf.getRoll_rad() * RAD_TO_DEG) + (SCALE * z * m_dt);
+            m_attitude = {roll,ekf.getPitch_rad()* RAD_TO_DEG,ekf.getHeading_rad()* RAD_TO_DEG};
+        }
+        else{
+            m_attitude =  {mysocket->AngleX,mysocket->AngleY,mysocket->AngleZ};
+            m_heading = mysocket->AngleZ;
+        }
     }
 }
+
+#include <chrono>
 
 void MainWindow::onReadingChanged()
 {
-#define filterlength 15
+#define filterlength 30
     static double filter[filterlength]={0};
-#define rotfilterlength 10
+#define rotfilterlength 20
     static double rotfilter[rotfilterlength]={0};
-#define headfilterlength 10
+#define headfilterlength 3
     static double headfilter[headfilterlength]={0};
     double x_head = 0.0;
     double slipp = 0.0;
-    static bool calib_required = true;
+    static int calib_required = 0;
     static bool running = false;
 
-    // For angles...            AngleX = roll, AngleY = pitch,  AngleZ = Yaw...
-    // With 90 deg, Portrate... AngleZ = roll, AngleY = pitch, -AngleX = Yaw...
-
-    // For Vector rotation...   Roll = 0, Pitch = 1, Yaw = 2  ....
-    // For Sensor rotation...   Roll = X, Pitch = Y, Yaw = Z  ....
-
-    // For Accel rotation...    Down = 0, East = 1,  North = 2  ....
-    // For Gyro rotation...     Roll = 0, Pitch = 1, Yaw = 2  ....
-
-    if(calib_required == true && mysocket->AngleX != 0.0 && mysocket->AngleY != 0.0 && mysocket->AngleZ != 0.0){
-//        qDebug() << "R-> " << mysocket->AngleX << " -> " << mysocket->AngleZ << " -> " << mysocket->AngleY;
-//        Vector3 rotate= { 90 * DEG_TO_RAD, 0 * DEG_TO_RAD, 0 * DEG_TO_RAD};
-  //      Vector3 rotate= { 0 * DEG_TO_RAD, 0 * DEG_TO_RAD, -mysocket->AngleY * DEG_TO_RAD};
-//        Vector3 rotate= { -mysocket->AngleX * DEG_TO_RAD, -mysocket->AngleZ * DEG_TO_RAD, -mysocket->AngleY * DEG_TO_RAD};
-
-        //        this->rotationMatrix = createRotationMatrix(rotate);
-        calib_required = false;
-    //    m_IMU->stop();
-    //    m_IMU->start(54);
-    }
+ //   if(calib_required > 0 && mysocket->AngleX != 0.0 && mysocket->AngleY != 0.0 && mysocket->AngleZ != 0.0)
+ //   {
+ //       calib_required--;
+ //   }
 
     // Sensor rotation...
-#ifndef Q_OS_MAC
-    if(calib_required == false)
-#endif
+    if(calib_required == 0)
     {
-        Vector3 gyro = {mysocket->AsZ,mysocket->AsY,mysocket->AsX};
-        Vector3 accel= {mysocket->AccY,mysocket->AccZ,mysocket->AccX};
-        Vector3 mag  = {mysocket->HY,mysocket->HZ,mysocket->HX};
-        Vector3 attitude  = {mysocket->AngleX,mysocket->AngleZ,mysocket->AngleY};
+        Vector3x gyro = {mysocket->AsZ,mysocket->AsY,mysocket->AsX};
+        Vector3x accel= {-mysocket->AccY,-mysocket->AccZ,mysocket->AccX};
+        Vector3x attitude  = m_attitude;
 
-        //Vector3 attitude  = {mysocket->AngleY,mysocket->AngleZ,mysocket->AngleX};
-        //rotateSensors(gyro, accel, mag, attitude, this->rotationMatrix);
+        if(m_first > 0){
+            m_first--;
 
-     //   qDebug() << "1-> " << mysocket->AngleY << " -> " << mysocket->AngleZ << " -> " << mysocket->AngleX;
+            if(m_first == 1){
+                if(!this->m_msgBox->isHidden()){
+                    this->m_msgBox->hide();
+                }
 
-     //   mysocket->AngleX = attitude[0]; mysocket->AngleZ = attitude[1]; mysocket->AngleY = attitude[2];
-     //   qDebug() << "2-> " << mysocket->AngleX << " -> " << mysocket->AngleZ << " -> " << mysocket->AngleZ;
+                if(!(this->m_msgBoxCalibrating == nullptr))
+                {
+                    this->m_msgBoxCalibrating->hide();
+                    delete(this->m_msgBoxCalibrating);
+                    this->m_msgBoxCalibrating = nullptr;
+                }
 
-
-        if(running == false){
-            m_acc_Y_calib = accel[0];
-            running = true;
+                m_offset = attitude[1];
+                m_acc_Y_calib = accel[0];
+            }
         }
 
-        x_head = attitude[1] - heading_offset;
 
-        if(m_use_ekf)
-        {
-            slipp = (accel[0]-m_acc_Y_calib)*-7.5;
-            EKF(gyro,accel,mag);
+        if(m_bearing != 999){
+            x_head = m_bearing;
         }
         else{
-            slipp = (accel[0]-m_acc_Y_calib)*-9.5;
+            x_head = m_heading - heading_offset;
         }
+        slipp = (accel[0]-m_acc_Y_calib)*9.5;
 
         if(mysocket->Transponderstat == "false" &&  ui->radioButton->isCheckable()){
             ui->radioButton->setChecked(false);
@@ -838,30 +902,7 @@ void MainWindow::onReadingChanged()
             ui->radioButton_3->setChecked(false);
         }
         else if(mysocket->Transponderstat == "true" &&  !ui->radioButton->isCheckable()){
-                ui->radioButton->setCheckable(true);
-        }
-
-        if( ui->radioButton_3->isChecked()){
-            _widgetALT->setAltitude(m_preasure_alt);
-            _widgetEADI->setAltitude( m_preasure_alt );
-        }else if( ui->radioButton_2->isChecked()){
-            _widgetALT->setAltitude(this->m_altitude*3.2808399);
-            _widgetEADI->setAltitude(this->m_altitude*3.2808399 );
-        }else{
-            ui->radioButton_2->setPalette(QColor(49,49,49));
-            _widgetALT->setAltitude(m_tansALT);
-            _widgetEADI->setAltitude( m_tansALT);
-        }
-        _widgetEADI->redraw();
-        _widgetALT->redraw();
-
-        if(m_first){
-            m_first = false;
-            m_offset = attitude[2];
-
-            if(m_compass_sensor){
-                //      m_compass_reader->setAzimuth(mysocket->AngleZ);
-            }
+            ui->radioButton->setCheckable(true);
         }
 
         // Make compass...
@@ -872,31 +913,18 @@ void MainWindow::onReadingChanged()
         }
         headfilter[headfilterlength-1] = x_head;
         head_dir+=x_head;
-        head_dir/=-headfilterlength;
+        head_dir/=headfilterlength;
 
-    //    if(head_dir >= 360.0) head_dir-=360.0;
-    //    if(head_dir < 0.0) head_dir+=360.0;
-      //  m_head = head_dir;
-        m_head = x_head; // asin(head_dir)*(180/3.141592);
-
-     //   qDebug() << x_head << "  " << head_dir << "  " << m_head;
+        m_head = head_dir;
 
         // Store data in local registers...
         double roll_att = 0;
         double pitch_att = 0;
 
-        if(m_use_ekf)
-        {
-            roll_att = ekf.getRoll_rad()* RAD_TO_DEG;
-            pitch_att = ekf.getPitch_rad()* RAD_TO_DEG;
-        }
-        else
-        {
-            roll_att  = -attitude[0];
-            pitch_att =  attitude[2] - m_offset;
-        }
+        roll_att  = -attitude[0];
+        pitch_att = 1 * (attitude[1] - m_offset);
 
-        double r = 2*RAD_TO_DEG*gyro[2];//((sin(attitude[2]*DEG_TO_RAD)*gyro[0])+(cos(attitude[2]*DEG_TO_RAD)*gyro[2]));
+        double r = gyro[2];//*2;//((sin(attitude[2]*DEG_TO_RAD)*gyro[0])+(cos(attitude[2]*DEG_TO_RAD)*gyro[2]));
         if(r >  6.0)r =  6.0;
         if(r < -6.0)r = -6.0;
 
@@ -921,20 +949,60 @@ void MainWindow::onReadingChanged()
         slippIndicator+=filter[filterlength-1];
         slippIndicator/=filterlength;
 
+
         if( currentIndex == 2)
         {
+            static int xtimer=0;
+
+            if(++xtimer%3 == 0){
+                if( ui->radioButton_3->isChecked()){
+                    _widgetALT->setAltitude(m_preasure_alt);
+                }else if( ui->radioButton_2->isChecked()){
+                    _widgetALT->setAltitude(this->m_altitude*3.2808399);
+                }else{
+                    _widgetALT->setAltitude(m_tansALT);
+                }
+                _widgetALT->redraw();
+
+                if(this->m_speed >= 0 && this->m_speed < 300)
+                    _widgetASI->setAirspeed(this->m_speed);
+                else
+                    _widgetASI->setAirspeed(0);
+
+                _widgetASI->redraw();
+
+                _widgetHI->setHeading(-m_head );
+                _widgetHI->redraw();
+            }
+
             _widgetAI->setRoll ( roll_att );
             _widgetAI->setPitch( pitch_att );
             _widgetAI->redraw();
 
-            _widgetTC->setTurnRate(rot_speed);
-            _widgetTC->setSlipSkid(slippIndicator);
-            _widgetTC->redraw();
+            if(xtimer%5 == 0){
+                _widgetTC->setTurnRate(rot_speed);
+                _widgetTC->setSlipSkid(slippIndicator);
+                _widgetTC->redraw();
+
+                _widgetVSI->setClimbRate(m_var_speed);
+                _widgetVSI->redraw();
+            }
         }
 
         if( currentIndex == 3)
         {
-            _widgetEADI->setSlipSkid( slippIndicator );
+            if( ui->radioButton_3->isChecked()){
+                _widgetEADI->setAltitude( m_preasure_alt );
+            }else if( ui->radioButton_2->isChecked()){
+                _widgetEADI->setAltitude(this->m_altitude*3.2808399 );
+            }else{
+                _widgetEADI->setAltitude( m_tansALT);
+            }
+            _widgetEADI->setClimbRate(m_var_speed);
+            _widgetEADI->setPressure( m_preasure, qfi_EADI::PressureMode::MB );
+
+            _widgetEADI->setHeading( m_head );
+            _widgetEADI->setSlipSkid( slippIndicator/57 );
             _widgetEADI->setTurnRate( rot_speed );
             _widgetEADI->setRoll( roll_att );
             _widgetEADI->setPitch(pitch_att );
@@ -947,7 +1015,6 @@ void MainWindow::onReadingChanged()
             _widgetEADI->setDots( 0.0,0.0,false,false);
             _widgetEADI->setFD( 0.0,0.0,true);
             _widgetEADI->setStall( false );
-    //        _widgetEADI->setPressure( 1024.13, qfi_EADI::PressureMode::MB );
             _widgetEADI->setMachNo( 0.0 );
             _widgetEADI->setAirspeedSel( 80.0 );
             _widgetEADI->setAltitudeSel( 400 );
@@ -956,11 +1023,12 @@ void MainWindow::onReadingChanged()
             _widgetEADI->setVne( 160.0 );
             _widgetEADI->redraw();
 
-            _widgetEHSI->setCourse( -m_head );
-            _widgetEHSI->setBearing( m_head/2, true );
+            _widgetEHSI->setHeading( 0 );
+            _widgetEHSI->setCourse( m_head );
+            _widgetEHSI->setBearing( m_head, true );
             _widgetEHSI->setDeviation( 0.0, qfi_EHSI::CDI::FROM);
             _widgetEHSI->setDistance( 200, true );
-            _widgetEHSI->setHeadingSel( m_head/1.5 );
+            _widgetEHSI->setHeadingSel( m_head );
             _widgetEHSI->redraw();
         }
 
@@ -1036,50 +1104,49 @@ void MainWindow::onReadingChanged()
                                  QPen(QBrush(Qt::white),2,Qt::PenStyle(Qt::DashLine)));
 
             // Center main angle...
-            float p_loc_A = (x.width() /2) + ((int)m_head % 60);//  - (y1*1.0);
-            float p_loc_B = (x.height() /2);// + (x1*1.0);
-            // qDebug() << y1 << "    " << x1 << "   " << z1 << "   " << y_att  <<  "    " << m_head;
+            float p_loc_A = (x.width() /2) + ((int)m_head % 60);
+            float p_loc_B = (x.height() /2);
 
-            m_graphScen->addLine((int)(p_loc_A),//-(x1*0)),
-                                 (int)(p_loc_B-10),//+10+offset-(y1*abs(m_head*2))),
-                                 (int)(p_loc_A),//+(x1*0)),
-                                 (int)(p_loc_B+10),//-10+offset-(y1*abs(m_head*2))),
+            m_graphScen->addLine((int)(p_loc_A),
+                                 (int)(p_loc_B-10),
+                                 (int)(p_loc_A),
+                                 (int)(p_loc_B+10),
                                  QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
 
-            m_graphScen->addLine((int)(p_loc_A-60),//-(x1*0)),
-                                 (int)(p_loc_B-10), //+offset-(y1*80)),
-                                 (int)(p_loc_A-60),//+(x1*0)),
-                                 (int)(p_loc_B+10), //+offset-(y1*80)),
+            m_graphScen->addLine((int)(p_loc_A-60),
+                                 (int)(p_loc_B-10),
+                                 (int)(p_loc_A-60),
+                                 (int)(p_loc_B+10),
                                  QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
 
-            m_graphScen->addLine((int)(p_loc_A+60),//-(x1*0)),
-                                 (int)(p_loc_B-10),//-(y1*20)),
-                                 (int)(p_loc_A+60),//+(x1*0)),
-                                 (int)(p_loc_B+10),//+(y1*20)),
+            m_graphScen->addLine((int)(p_loc_A+60),
+                                 (int)(p_loc_B-10),
+                                 (int)(p_loc_A+60),
+                                 (int)(p_loc_B+10),
                                  QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
 
-            m_graphScen->addLine((int)(p_loc_A-120),//-(x1*0)),
-                                 (int)(p_loc_B-10),//-(y1*20)),
-                                 (int)(p_loc_A-120),//+(x1*0)),
-                                 (int)(p_loc_B+10),//+(y1*20)),
+            m_graphScen->addLine((int)(p_loc_A-120),
+                                 (int)(p_loc_B-10),
+                                 (int)(p_loc_A-120),
+                                 (int)(p_loc_B+10),
                                  QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
 
-            m_graphScen->addLine((int)(p_loc_A+120),//-(x1*0)),
-                                 (int)(p_loc_B-10),//-(y1*20)),
-                                 (int)(p_loc_A+120),//+(x1*0)),
-                                 (int)(p_loc_B+10),//+(y1*20)),
+            m_graphScen->addLine((int)(p_loc_A+120),
+                                 (int)(p_loc_B-10),
+                                 (int)(p_loc_A+120),
+                                 (int)(p_loc_B+10),
                                  QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
 
-            m_graphScen->addLine((int)(p_loc_A-180),//-(x1*0)),
-                                 (int)(p_loc_B-10),//-(y1*20)),
-                                 (int)(p_loc_A-180),//+(x1*0)),
-                                 (int)(p_loc_B+10),//+(y1*20)),
+            m_graphScen->addLine((int)(p_loc_A-180),
+                                 (int)(p_loc_B-10),
+                                 (int)(p_loc_A-180),
+                                 (int)(p_loc_B+10),
                                  QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
 
-            m_graphScen->addLine((int)(p_loc_A+180),//-(x1*0)),
-                                 (int)(p_loc_B-10),//-(y1*20)),
-                                 (int)(p_loc_A+180),//+(x1*0)),
-                                 (int)(p_loc_B+10),//+(y1*20)),
+            m_graphScen->addLine((int)(p_loc_A+180),
+                                 (int)(p_loc_B-10),
+                                 (int)(p_loc_A+180),
+                                 (int)(p_loc_B+10),
                                  QPen(QBrush(Qt::white),3,Qt::PenStyle(Qt::SolidLine)));
 
             // First upper bar...
@@ -1184,7 +1251,6 @@ void MainWindow::onReadingChanged()
                                  (int)((x.height()/2)+15+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
 
 
-
             m_graphScen->addLine((int)((x.width() /2)+80),
                                  (int)((x.height()/2)+40+offset),
                                  (int)((x.width() /2)+60),
@@ -1206,7 +1272,6 @@ void MainWindow::onReadingChanged()
                                  (int)((x.height()/2)-30+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
 
 
-
             m_graphScen->addLine((int)((x.width() /2)-60),
                                  (int)((x.height()/2)-60+offset),
                                  (int)((x.width() /2)-45),
@@ -1226,62 +1291,42 @@ void MainWindow::onReadingChanged()
                                  (int)((x.height()/2)+60+offset),
                                  (int)((x.width() /2)-45),
                                  (int)((x.height()/2)+45+offset), QPen(QBrush(Qt::red),2,Qt::PenStyle(Qt::DashLine)));
-
 
             // -----------------------------------------
             m_graphScen->addRect(QRect(1,1,x.width()-4,x.height()-4),QPen(QBrush(Qt::gray),1));
 
             ui->graphicsView->setScene(m_graphScen);
             ui->graphicsView->show();
-        }
 
-        if(m_speed < 300 && m_speed > 0){
-            ui->speed->setText(QString("%1").arg(abs(m_speed), 0, 'f', 1));
-        }
+            if(m_speed < 300 && m_speed > 0){
+                ui->speed->setText(QString("%1").arg(abs(m_speed), 0, 'f', 1));
+            }
 
-    #ifndef Q_OS_MAC
-        if(mysocket->IMUconnected == true)
-        {
-            ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
-            ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
-            ui->temp->setText(QString("%1").arg(mysocket->Electricity, 0, 'f', 0));
-            ui->temperature->setText(QString("%1").arg(mysocket->Temperature, 0, 'f', 1));
-            ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
+#ifndef Q_OS_MAC
+            if(mysocket->IMUconnected == true)
+            {
+                ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
+                ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
+                ui->temp->setText(QString("%1").arg(mysocket->Electricity, 0, 'f', 0));
+                ui->temperature->setText(QString("%1").arg(mysocket->Temperature, 0, 'f', 1));
+                ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
+            }
+            else if(m_rotation_sensor != nullptr)
+#endif
+            {
+                ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
+                ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
+                ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
+            }
 
-            _widgetHI->setHeading(-m_head);
-            _widgetHI->redraw();
-
-            _widgetEADI->setHeading( -m_head );
-            _widgetEADI->redraw();
-
-            _widgetEHSI->setHeading( -m_head );
-            _widgetEHSI->redraw();
-
-
-        }
-        else if(m_rotation_sensor != nullptr)
-    #endif
-        {
-            ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
-            ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
-            ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
-
-            _widgetHI->setHeading( m_head );
-            _widgetHI->redraw();
-
-            _widgetEADI->setHeading( m_head );
-            _widgetEADI->redraw();
-
-            _widgetEHSI->setHeading( m_head );
-            _widgetEHSI->redraw();
-        }
-
-        if( m_geopos == true){
-            ui->altitude->setText(QString("%1").arg(m_altitude*3.2808399, 0, 'f', 0));
+            if( m_geopos == true){
+                ui->altitude->setText(QString("%1").arg(m_altitude*3.2808399, 0, 'f', 0));
+            }
         }
         m_reading|=0x04;
     }
 }
+
 
 void MainWindow::reset_ping()
 {
@@ -1305,10 +1350,7 @@ void MainWindow::active_ping()
 
 void MainWindow::doCheck()
 {
-    QString x;
-//    KeepAwakeHelper helper;
-
-    x = ui->pushButton_11->styleSheet();
+    QString x = ui->pushButton_11->styleSheet();
     if ( alt_receiced == false){
         x.replace(QString("1 #090"), QString("1 #900"));
     }else{
@@ -1332,8 +1374,10 @@ void MainWindow::getVal(void *parent, QByteArray array)
     MainWindow* saved_this= (MainWindow*) parent;
     Ui::SCREEN* local_ui  = saved_this->ui;
 
-    for(int i=0; i < array.size();i++){
-        if(array.at(i) == '*'){
+    for(int i=0; i < array.size();i++)
+    {
+        if(array.at(i) == '*')
+        {
             QString x;
             x = local_ui->pushButton_10->styleSheet();
             x.replace(QString("1 #900"), QString("1 #090"));
@@ -1342,18 +1386,17 @@ void MainWindow::getVal(void *parent, QByteArray array)
             saved_this->timerPing->start(10000); // Turn off in 10 sec...
         }
 
-        if(array.at(i) < 0x1F || pos >= (int)sizeof(buffer)){
-            //    qDebug() << "R: >>buffer;  //m_message);
-
-            if(pos >= 3){
-
+        if(array.at(i) < 0x1F || pos >= (int)sizeof(buffer))
+        {
+            if(pos >= 3)
+            {
                 // Log all commands... This might be slow... will look at a timed write...
-                QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + "/log.txt");
-                if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
+                QFile *l_file = new QFile(QString(LOG_DIR)+ QString("log.txt"));
+                if( l_file->open(QIODevice::ReadWrite | QIODevice::Append ))
+                {
                     QString data = QDateTime::currentDateTime().toString()+": "+buffer;
                     l_file->write(data.toLocal8Bit());
                     l_file->close();
-                    //     local_ui->listView->appendPlainText(data+"\n");
                 }
 
                 // Make the flash activity...
@@ -1365,169 +1408,167 @@ void MainWindow::getVal(void *parent, QByteArray array)
                     saved_this->timerActive->start(10000); // Turn off in 10 sec...
                 }
 
-                switch (buffer[0]){
-                case 's':
+                switch (buffer[0])
                 {
-                    QString x;
-                    x = local_ui->pushButton_off->styleSheet();
-                    x.replace(QString("1 #2A0"), QString("1 #888"));
-                    local_ui->pushButton_off->setStyleSheet(x);
-                    local_ui->pushButton_norm->setStyleSheet(x);
-                    local_ui->pushButton_stby->setStyleSheet(x);
-                    local_ui->pushButton_alt->setStyleSheet(x);
-                    x.replace(QString("1 #888"), QString("1 #2A0"));
-
-                    switch(buffer[2]){
-                    case 'o':
+                    case 's':
+                    {
+                        QString x;
+                        x = local_ui->pushButton_off->styleSheet();
+                        x.replace(QString("1 #2A0"), QString("1 #888"));
                         local_ui->pushButton_off->setStyleSheet(x);
-                        saved_this->mode = 0;
-                        break;
-
-                    case 't':
-                        local_ui->pushButton_stby->setStyleSheet(x);
-                        saved_this->mode = 1;
-                        break;
-
-                    case 'a':
                         local_ui->pushButton_norm->setStyleSheet(x);
-                        saved_this->mode = 2;
+                        local_ui->pushButton_stby->setStyleSheet(x);
+                        local_ui->pushButton_alt->setStyleSheet(x);
+                        x.replace(QString("1 #888"), QString("1 #2A0"));
+
+                        switch(buffer[2]){
+                        case 'o':
+                            local_ui->pushButton_off->setStyleSheet(x);
+                            saved_this->mode = 0;
+                            break;
+
+                        case 't':
+                            local_ui->pushButton_stby->setStyleSheet(x);
+                            saved_this->mode = 1;
+                            break;
+
+                        case 'a':
+                            local_ui->pushButton_norm->setStyleSheet(x);
+                            saved_this->mode = 2;
+                            break;
+
+                        case 'c':
+                            local_ui->pushButton_alt->setStyleSheet(x);
+                            saved_this->mode = 3;
+                            break;
+
+                        }
                         break;
+                    }
+                    case 'r':
+                    {
+                        bool state=true;
+                        if (buffer[2] == 'N') state = false;
+
+                        QString x = tr("Annunciator %1").arg(state);
+                        break;
+                    }
+                    case 'i':
+                    {
+                        bool state;
+                        if (buffer[2] == '0') state = false;
+                        else state = true;
+
+                        QString x = local_ui->pushButton_Ident->styleSheet();
+
+                        if ( state == false){
+                            x.replace(QString("1 #900"), QString("1 #888"));
+                        }else{
+                            x.replace(QString("1 #888"), QString("1 #900"));
+                        }
+                        local_ui->pushButton_Ident->setStyleSheet(x);
+                        local_ui->pushButton_Ident->update();
+                        break;
+                    }
 
                     case 'c':
-                        local_ui->pushButton_alt->setStyleSheet(x);
-                        saved_this->mode = 3;
+                    {
+                        int number;
+                        char numout[5];
+                        sscanf(buffer,"c=%d",&number);
+                        snprintf(numout,5,"%.4d",number);
+
+                        saved_this->current[3]=numout[3]-0x30;
+                        saved_this->current[2]=numout[2]-0x30;
+                        saved_this->current[1]=numout[1]-0x30;
+                        saved_this->current[0]=numout[0]-0x30;
+
+                        local_ui->lcdNumber->display(QString::number( saved_this->current[0]*1000+
+                                                                     saved_this->current[1]*100+
+                                                                     saved_this->current[2]*10+
+                                                                     saved_this->current[3]).rightJustified(4, '0'));
                         break;
-
                     }
-                    break;
-                }
-                case 'r':
-                {
-                    bool state=true;
-                    if (buffer[2] == 'N') state = false;
-
-                    QString x = tr("Annunciator %1").arg(state);
-
-                    // ... Annunciator
-                    // local_ui->plainTextEdit->appendPlainText(x);
-                    break;
-                }
-                case 'i':
-                {
-                    bool state;
-                    if (buffer[2] == '0') state = false;
-                    else state = true;
-
-                    QString x = local_ui->pushButton_Ident->styleSheet();
-
-                    if ( state == false){
-                        x.replace(QString("1 #900"), QString("1 #888"));
-                    }else{
-                        x.replace(QString("1 #888"), QString("1 #900"));
-                    }
-                    local_ui->pushButton_Ident->setStyleSheet(x);
-                    local_ui->pushButton_Ident->update();
-                    break;
-                }
-
-                case 'c':
-                {
-                    int number;
-                    char numout[5];
-                    sscanf(buffer,"c=%d",&number);
-                    snprintf(numout,5,"%.4d",number);
-
-                    saved_this->current[3]=numout[3]-0x30;
-                    saved_this->current[2]=numout[2]-0x30;
-                    saved_this->current[1]=numout[1]-0x30;
-                    saved_this->current[0]=numout[0]-0x30;
-
-                    local_ui->lcdNumber->display(QString::number( saved_this->current[0]*1000+
-                                                                 saved_this->current[1]*100+
-                                                                 saved_this->current[2]*10+
-                                                                 saved_this->current[3]).rightJustified(4, '0'));
-
-                    break;
-
-                }
-                case 'a':
-                {
-                    float number;
-                    char numout[20];
-                    sscanf(buffer,"a=%f",&number);
-                    QString altType="Alt.Ft.";
-
-                    if(saved_this->alt_mode == 1){
-                        for (unsigned long key=0; key < strlen(buffer); key++)
-                            if(buffer[key]=='M') {
-                                number*=3.2808399;
-                                break;
-                            }
-                        saved_this->m_tansALT = round(number/100.0)*100;
-                    }
-                    else{
-                        for (unsigned long key=0; key < strlen(buffer); key++)
-                            if(buffer[key]=='F') {
-                                number/=3.2808399;
-                                break;
-                            }
-                        saved_this->m_tansALT = round(number);
-                        altType="Alt.M.";
-                    }
-                    snprintf(numout,20,"%.4d",(int)saved_this->m_tansALT);
-                    local_ui->lcdNumber_3->display(numout);
-                    local_ui->label_2->setText(altType);
-                    local_ui->baro_alt->setText(numout);
-                    saved_this->alt_receiced = true;
-                    break;
-
-                }
-                case 'z':
-                {
-                    qDebug() << "T: %s\r\n" << &buffer[2];
-                    local_ui->plainTextEdit->appendPlainText(&buffer[2]);
-                    break;
-                }
-
-                case 'p':
-                {
-                    qDebug() << "P: %s\r\n" << &buffer[2];
-
-                    bool state=true;
-                    if (buffer[2] == '1') state = false;
-
-                    QString x = tr("Hardware test status: %1").arg(state);
-                    local_ui->plainTextEdit->appendPlainText(x);
-
-                    // ...
-                    if(state == true)
+                    case 'a':
                     {
-                        x = local_ui->pushButton_10->styleSheet();
-                        x.replace(QString("1 #900"), QString("1 #090"));
-                        local_ui->pushButton_10->setStyleSheet(x);
-                        local_ui->pushButton_10->update();
-                        saved_this->timerPing->start(5000); // Turn off in 5 sec...
-                    }
-                    else
-                    {
-                        x = local_ui->pushButton_10->styleSheet();
-                        x.replace(QString("1 #090"), QString("1 #900"));
-                        local_ui->pushButton_10->setStyleSheet(x);
-                        local_ui->pushButton_10->update();
-                    }
-                    break;
-                }
+                        float number;
+                        char numout[20];
+                        sscanf(buffer,"a=%f",&number);
+                        QString altType="Alt.Ft.";
 
+                        if(saved_this->alt_mode == 1)
+                        {
+                            for (unsigned long key=0; key < strlen(buffer); key++)
+                                if(buffer[key]=='M')
+                                {
+                                    number*=3.2808399;
+                                    break;
+                                }
+                            saved_this->m_tansALT = round(number/100.0)*100;
+                        }
+                        else{
+                            for (unsigned long key=0; key < strlen(buffer); key++)
+                                if(buffer[key]=='F')
+                                {
+                                    number/=3.2808399;
+                                    break;
+                                }
+                            saved_this->m_tansALT = round(number);
+                            altType="Alt.M.";
+                        }
+                        snprintf(numout,20,"%.4d",(int)saved_this->m_tansALT);
+                        local_ui->lcdNumber_3->display(numout);
+                        local_ui->label_2->setText(altType);
+                        local_ui->baro_alt->setText(numout);
+                        saved_this->alt_receiced = true;
+                        break;
+                    }
+
+                    case 'z':
+                    {
+                        qDebug() << "T: %s\r\n" << &buffer[2];
+                        local_ui->plainTextEdit->appendPlainText(&buffer[2]);
+                        break;
+                    }
+
+                    case 'p':
+                    {
+                        qDebug() << "P: %s\r\n" << &buffer[2];
+
+                        bool state=true;
+                        if (buffer[2] == '1') state = false;
+
+                        QString x = tr("Hardware test status: %1").arg(state);
+                        local_ui->plainTextEdit->appendPlainText(x);
+
+                        // ...
+                        if(state == true)
+                        {
+                            x = local_ui->pushButton_10->styleSheet();
+                            x.replace(QString("1 #900"), QString("1 #090"));
+                            local_ui->pushButton_10->setStyleSheet(x);
+                            local_ui->pushButton_10->update();
+                            saved_this->timerPing->start(5000); // Turn off in 5 sec...
+                        }
+                        else
+                        {
+                            x = local_ui->pushButton_10->styleSheet();
+                            x.replace(QString("1 #090"), QString("1 #900"));
+                            local_ui->pushButton_10->setStyleSheet(x);
+                            local_ui->pushButton_10->update();
+                        }
+                        break;
+                    }
                 }
             }
             pos = 0;
 
         }
         else{
-            if(array.at(i) >= 0x1F){
+            if(array.at(i) >= 0x1F)
+            {
                 buffer[pos++]=array.at(i);
                 buffer[pos]=0;
-                //               std::fprintf(stderr,"T: %s\r\n",buffer);  //m_message);
             }
         }
     }
@@ -1576,11 +1617,6 @@ void MainWindow::setmode(int m)
         case 2: mysocket->readyWrite((char*)"s=a\r\n"); break;
         case 3: mysocket->readyWrite((char*)"s=c\r\n"); break;
         }
-
-        // This is sendt by the micro controller...
-        //        if(m==2 || m==3){
-        //            mysocket->readyWrite("r=y\r\n");
-        //        }
     }
 #endif
     mode = m;
@@ -1617,27 +1653,10 @@ void MainWindow::on_pushButton_16_clicked()
     mysocket->readyWrite(data);
 #endif
 
-    /*
-    this->next[3]=7;
-    this->next[2]=0;
-    this->next[1]=0;
-    this->next[0]=0;
-    */
 }
 
 void MainWindow::on_pushButton_18_clicked()
 {
-    //   device.startDeviceDiscovery();
-    //    view.show();
-    /*
-    const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
-    for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost){
-            qDebug() << address.toString();
-            ui->plainTextEdit->appendPlainText(address.toString());
-        }
-    }
-*/
     this->next[3]=0;
     this->next[2]=0;
     this->next[1]=0;
@@ -1683,7 +1702,7 @@ void MainWindow::on_select_camera_from_transponder_clicked() {
     setCamera(QMediaDevices::defaultVideoInput());
     ui->stackedWidget->setCurrentIndex(6);
     currentIndex = 6;
-    }
+}
 void MainWindow::on_select_gyro_page_clicked()          {
     ui->stackedWidget->setCurrentIndex(1);
     currentIndex = 1;
@@ -1768,17 +1787,22 @@ void MainWindow::on_select_gyro_page2_3_clicked(){
 }
 
 //-------------------------------------
-void MainWindow::on_reset_att_clicked(){
- //   on_imu_reset_clicked();
-    m_use_ekf=!m_use_ekf;
-}
+
 void MainWindow::on_imu_reset_clicked()
 {
-    m_first = true;
-    ui->imu_reset->setIcon(QIcon(":/icons/..."));
-    ui->imu_reset->setIconSize(QSize(65, 65));
+    m_calibrate = 500;
+    m_msgBoxCalibrating = new QMessageBox(QMessageBox::Information,tr("Full Calibrating!"),tr("Please make sure the equipment is still and wait!"));
+    m_msgBoxCalibrating->setStandardButtons(QMessageBox::NoButton);
+    m_msgBoxCalibrating->show();
 }
 
+void MainWindow::on_use_hw_clicked()
+{
+    m_first = 10;
+    m_msgBoxCalibrating = new QMessageBox(QMessageBox::Information,tr("Fast Calibrating!"),tr("Please make sure the equipment is still and wait!"));
+    m_msgBoxCalibrating->setStandardButtons(QMessageBox::NoButton);
+    m_msgBoxCalibrating->show();
+}
 
 void MainWindow::on_timer_start_clicked()
 {
@@ -1804,7 +1828,7 @@ void MainWindow::on_timer_start_clicked()
 
 void MainWindow::on_textEdit_textChanged()
 {
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + RADIO);
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(RADIO));
     if( l_file->open(QIODevice::ReadWrite )){
         QString data = ui->textEdit->toPlainText();
         l_file->write(data.toLocal8Bit());
@@ -1815,7 +1839,7 @@ void MainWindow::on_textEdit_textChanged()
 
 void MainWindow::on_textEdit_2_textChanged()
 {
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[0] + AIRPLANE);
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(AIRPLANE));
     if( l_file->open(QIODevice::ReadWrite )){
         QString data = ui->textEdit_2->toPlainText();
         l_file->write(data.toLocal8Bit());
@@ -1835,7 +1859,7 @@ void MainWindow::set_default_radio()
     ui->textEdit->insertPlainText("118.470\tOslo Approache\n");
 
 
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[QStandardPaths::LocateFile] + RADIO);
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(RADIO));
     if( l_file->open(QIODevice::WriteOnly | QIODevice::Truncate)){
         QString data = ui->textEdit->toPlainText();
         qDebug() << data;
@@ -1851,7 +1875,7 @@ void MainWindow::set_default_planes()
     ui->textEdit_2->insertPlainText("LN-YYX\tAeros 2\t\tTerje\n");
     ui->textEdit_2->insertPlainText("LN-YXY\tDelta-jet TL22\tTerje\n");
     ui->textEdit_2->insertPlainText("LN-YPE\tAir Creation\tHarald\n");
-    ui->textEdit_2->insertPlainText("LN-YRI\tPeregrin\tRingerike\n");
+    ui->textEdit_2->insertPlainText("LN-YRI\tPeregrin__\tRingerike\n");
     ui->textEdit_2->insertPlainText("LN-YRM\tAeroprak\tRingerike\n");
     ui->textEdit_2->insertPlainText("LN-YZG\tIcarus\t\tMorten\n");
     ui->textEdit_2->insertPlainText("LN-YYV\tIcarus\t\tTerje S.\n");
@@ -1859,8 +1883,7 @@ void MainWindow::set_default_planes()
     ui->textEdit_2->insertPlainText("LN-YOG\tSamba\t\tJan Ove\n");
     ui->textEdit_2->insertPlainText("LN-YRY\tRans S6S\tAlf Nipe\n");
 
-
-    QFile *l_file = new QFile(QStandardPaths::standardLocations(QStandardPaths::DownloadLocation)[QStandardPaths::LocateFile] + AIRPLANE);
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(AIRPLANE));
     if( l_file->open(QIODevice::WriteOnly | QIODevice::Truncate)){
         QString data = ui->textEdit_2->toPlainText();
         qDebug() << data;
@@ -1877,7 +1900,7 @@ void MainWindow::on_pushButton_15_clicked()
 
 }
 
-void MainWindow::on_reconnect_clicked()
+void MainWindow::on_reconnect_now_clicked()
 {
     delete(mysocket);
     mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->setIMU);
@@ -1912,17 +1935,31 @@ void MainWindow::on_pushButton_23_clicked()
 void MainWindow::on_reset_heading_clicked()
 {
     heading_offset = mysocket->AngleZ;
-//    heading_offset = 180.0 - mysocket->AngleZ;
-//    if(heading_offset<0.0) heading_offset+=360.0;
+    //    heading_offset = 180.0 - mysocket->AngleZ;
+    //    if(heading_offset<0.0) heading_offset+=360.0;
 
     if(m_compass_sensor){
-  //      m_compass_reader->setAzimuth(heading_offset);
+        //      m_compass_reader->setAzimuth(heading_offset);
     }
 }
 
-void MainWindow::on_use_hw_clicked()
+void MainWindow::on_reset_att_clicked()
 {
     qDebug() << "Use IMU clicked... ";
+    if(ekf.m_use_gpt == true){
+        ekf.m_use_gpt = false;
+        QString x = ui->reset_att->styleSheet();
+        x.replace(QString("1 #f00"), QString("1 #888"));
+        ui->reset_att->setStyleSheet(x);
+        ui->reset_att->update();
+    }
+    else{
+        ekf.m_use_gpt = true;
+        QString x = ui->reset_att->styleSheet();
+        x.replace(QString("1 #888"), QString("1 #f00"));
+        ui->reset_att->setStyleSheet(x);
+        ui->reset_att->update();
+    }
 }
 
 void MainWindow::on_fly_home_clicked()
