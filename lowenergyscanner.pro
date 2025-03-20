@@ -1,4 +1,4 @@
-TARGET = Transponder
+TARGET = Glasscockpit
 INCLUDEPATH += .
 INCLUDEPATH += /Users/terjenilsen/Dropbox/Sportsfly/transponder/eigen-3.4.0
 INCLUDEPATH += ./EKF_IMU_GPS/ekf_nav_ins/inc/
@@ -11,7 +11,6 @@ android: QT += serialport
 android: QT += core-private
 android: QT += core
 
-
 macx: QT += serialport
 
 ios: CONFIG+=sdk_no_version_check
@@ -20,6 +19,7 @@ macx {
     SOURCES += main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
+    MicroQiskitCpp.cpp \
     ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
     rotation_matrix.cpp
 
@@ -27,10 +27,16 @@ macx {
     QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
+    MicroQiskitCpp.h \
     IBWT901BLE5_0DataProcessor.swift \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
+    ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
     myNativeWrapperFunctions.h \
     rotation_matrix.h
+
+
+#MicroQiskitCpp.h \
+#MicroQiskitCpp.cpp \
 
 }
 
@@ -38,6 +44,7 @@ ios{
     SOURCES += main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
+    MicroQiskitCpp.cpp \
     ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
     myNativeWrapperFunctions.mm \
     rotation_matrix.cpp
@@ -46,13 +53,12 @@ ios{
     QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
+    MicroQiskitCpp.h \
+    ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
     IOS_swift/WitSDK/Sensor/Modular/Processor/Roles/BWT901BLE5_0DataProcessor.swift \
     myNativeWrapperFunctions.h \
     rotation_matrix.h
-
- #   QMAKE_TARGET_BUNDLE_PREFIX = teni@9tek.no
- #   QMAKE_BUNDLE = Transponder
 
 }
 
@@ -61,6 +67,7 @@ android {
     mainwindow.cpp \
     mytcpsocket.cpp \
     lockhelper.cpp \
+    MicroQiskitCpp.cpp \
     ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
     rotation_matrix.cpp
 
@@ -69,9 +76,10 @@ android {
     mainwindow.h \
     mytcpsocket.h \
     lockhelper.h \
+    MicroQiskitCpp.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
+    ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
     rotation_matrix.h
-
 
     ANDROID_PERMISSIONS += android.permission.WAKE_LOCK
     ANDROID_PERMISSIONS += android.permission.READ_EXTERNAL_STORAGE
@@ -241,4 +249,7 @@ include($$PWD/example/example.pri)
 
 #MicroQiskitCpp.h \
 #MicroQiskitCpp.cpp \
+
+HEADERS += \
+    EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart_9dof.h
 
