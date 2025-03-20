@@ -1178,7 +1178,7 @@ QPushButton:pressed {
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>1</hour>
+        <hour>0</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -2009,18 +2009,14 @@ border-radius: 15px;
 border-style: outset;
 background: qradialgradient(
 cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #888
+radius: 1.35, stop: 0 #fff, stop: 1 #00f
 );
 padding: 5px;
 }
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}</string>
+</string>
       </property>
       <property name="text">
-       <string/>
+       <string>EKF_1</string>
       </property>
      </widget>
      <zorder>listView</zorder>

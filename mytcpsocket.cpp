@@ -125,8 +125,8 @@ void MyTcpSocket::connectedIMU()
     else {
         qDebug() << "SOME JAVA CLASS UNAVAIABLE!";
     }
-#endif
     qDebug() << "connectedIMU done ...";
+#endif
     this->ret_imu(this->parent, IMUconnected);
 }
 

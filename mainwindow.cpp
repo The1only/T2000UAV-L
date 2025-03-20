@@ -23,24 +23,19 @@
 #include <QOrientationSensor>
 #include <QImageCapture>
 
+#include <QSplashScreen>
+
 //***C++11 Style:***
 #include <chrono>
 
-//#include <QCameraImageCapture>
-
-
 #include <QtCharts/QChartView>
 #include <QtCharts/QSplineSeries>
-
-// Q_IMPORT_PLUGIN(QDarwinLocationPermissionPlugin)
 
 #include "mainwindow.h"
 #include "mytcpsocket.h"
 
 using namespace std;
 using namespace std::chrono;
-
-//static MainWindow *saved_this;
 
 #undef USE_KeepAwakeHelper
 
@@ -57,31 +52,90 @@ MainWindow::MainWindow(QWidget *parent)
     _widgetEADI ( Q_NULLPTR ),
     _widgetEHSI ( Q_NULLPTR )
 {
-//    saved_this = this;
 #if defined(Q_OS_ANDROID) && defined(USE_KeepAwakeHelper)
     static KeepAwakeHelper helper;
 #endif
 
-    //   if (ScreenMode == Qt::InvertedPortraitOrientation) ScreenMode = Qt::PortraitOrientation;
+#ifdef Q_OS_IOS
+    // Documents directory (user-visible, backed up)
+    QString documentsPath = LOG_DIR;
+    QDir dir(documentsPath);
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+#endif
 
     ui->setupUi(this);
+
+    // --------------------------------
+    // Setup the Radio List...
+    double temp_g=0.0;
+    qDebug() << "Reading files...";
+    QString blob1;
+    {
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(RADIO));
+        if (l_file->open(QIODevice::ReadOnly)){
+            blob1 = l_file->readAll();
+            l_file->close();
+        }
+        else{
+            set_default_radio();
+        }
+    }
+    // Setup the Airplane List...
+    QString blob2;
+    {
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(AIRPLANE));
+        if (l_file->open(QIODevice::ReadOnly)){
+            QString blob2 = l_file->readAll();
+            l_file->close();
+        }
+        else{
+            set_default_planes();
+        }
+    }
+    // Setup the Config List...
+    {
+        Matrix3x6 config;
+        memset(&config,0,sizeof(Matrix3x6));
+        if(get_default_config(config) != 0)
+        {
+            // 9.04559, 9.85962, 9.92187
+            // 0 ,0 -10.8796
+            config[0][2] = (double)Gfix;
+            set_default_config(config);
+        }
+        qDebug() << "AccValue" << config[0][2];
+        temp_g = config[0][2];
+        ekf.ekf->Gval       = temp_g;
+        ekf.ekf_quart->Gval = temp_g;
+        ekf.Gval            = temp_g;
+    }
+    ui->textEdit->insertPlainText(blob1);
+    ui->textEdit_2->insertPlainText(blob2);
+
+    // --------------------------
 
     ui->quickWidget->setSource(QUrl("qrc:/places_map.qml"));
     ui->quickWidget->rootObject()->setProperty("zoomLevel", 18);
 
     ui->lcdNumber->display(QString::number(this->current[0]*1000+this->current[1]*100+this->current[2]*10+this->current[3]).rightJustified(4, '0'));
     ui->lcdNumber_2->display(QString::number(this->next[0]*1000+this->next[1]*100+this->next[2]*10+this->next[3]).rightJustified(4, '0'));
-    ui->plainTextEdit->appendPlainText("Transponder 200-UAV v1.01a");
-    //ui->listView->
-    ui->listView->appendPlainText("Transponder 200-UAV v1.01a");
+    ui->plainTextEdit->appendPlainText("Glasscockpit 200-UAV v1.02a");
+    ui->listView->appendPlainText("Glasscockpit 200-UAV v1.02a");
     ui->listView->raise();
     ui->listView->setHidden(true);
 
-    m_msgBox = new QMessageBox(QMessageBox::Information,tr("Software is booting"),tr("Please wait for the system to connect!"));
-    m_msgBox->setStandardButtons(QMessageBox::NoButton);
+    m_msgBox = new NoButtonMessageBox(tr("Please wait for the system to boot!"));
     m_msgBox->show();
 
+
+//    m_msgBox = new QMessageBox(QMessageBox::Information,tr("Software is loading"),tr("Please wait for the system to boot!"));
+//    m_msgBox->setStandardButtons(QMessageBox::NoButton);
+//    m_msgBox->show();
+
     mysocket = new MyTcpSocket(this, ui->plainTextEdit, &this->getVal, &this->setIMU);
+    mysocket->G   = temp_g;
 
     // Whenever the location data source signals that the current
     // position is updated, the positionUpdated function is called.
@@ -93,34 +147,7 @@ MainWindow::MainWindow(QWidget *parent)
         m_geoPositionInfo->setUpdateInterval(200);
         m_geoPositionInfo->startUpdates();
     }
-
-    // Setup the parameters...
-    {
-        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(RADIO));
-        if (l_file->open(QIODevice::ReadOnly)){
-            QString blob = l_file->readAll();
-            l_file->close();
-            qDebug() << blob;
-            ui->textEdit->insertPlainText(blob);
-
-        }
-        else{
-            set_default_radio();
-        }
-    }
-    {
-        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(AIRPLANE));
-        if (l_file->open(QIODevice::ReadOnly)){
-            QString blob = l_file->readAll();
-            l_file->close();
-            qDebug() << blob;
-            ui->textEdit_2->insertPlainText(blob);
-
-        }
-        else{
-            set_default_planes();
-        }
-    }
+    // ------------------------------
 
     qDebug() << "  setmode  ";
     setmode(0);
@@ -157,7 +184,7 @@ MainWindow::MainWindow(QWidget *parent)
     QString data = "System booted at: "+QDateTime::currentDateTime().toString();
     ui->listView->appendPlainText(data);
 
-    QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
         l_file->write(data.toLocal8Bit()+"\n");
         l_file->close();
@@ -246,7 +273,9 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "  Booted...  " << currentIndex << " Index";
 
     // Quantum computer test, just to see if it would work...
-    //    Qiskit();
+//    qDebug() << "  Running Quantum-computing problem to test device speed...  ";
+//    Qiskit();
+
 }
 
 MainWindow::~MainWindow()
@@ -341,6 +370,14 @@ void MainWindow::setIMU(void *parent, bool use_imu)
                 local->m_mag_sensor->start();
                 qDebug() << "Found a sensor QMagnetometerReading";
             }
+
+            if(!strncmp(type,"QAmbientTemperatureSensor",strlen("QAmbientTemperatureSensor"))){
+                local->m_temp_sensor = new QAmbientTemperatureSensor();
+                local->m_temp_sensor->setDataRate(1);
+                connect(local->m_temp_sensor, SIGNAL(readingChanged()), local, SLOT(onTempReadingChanged()));
+                local->m_temp_sensor->start();
+                qDebug() << "Found a sensor QAmbientTemperatureReading";
+            }
         }
     }
     // If we do not have an external IMU...
@@ -348,7 +385,7 @@ void MainWindow::setIMU(void *parent, bool use_imu)
     {
         QString data = "IMU NOT found...";
         local->ui->listView->appendPlainText(data);
-        QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
         if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
             l_file->write(data.toLocal8Bit()+"\n");
             l_file->close();
@@ -357,8 +394,13 @@ void MainWindow::setIMU(void *parent, bool use_imu)
     else{
         QString data = "IMU found and connected...";
         local->ui->listView->appendPlainText(data);
-        local->ekf.m_use_gpt = true;
-        QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+        local->ekf.m_use_gpt = 0;
+        QString x = local->ui->reset_att->styleSheet();
+        x.replace(QString("1 ##888"), QString("1 #f00"));
+        x.replace(QString("1 #0F0"),  QString("1 #f00"));
+        local->ui->reset_att->setStyleSheet(x);
+        local->ui->reset_att->update();
+        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
         if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
             l_file->write(data.toLocal8Bit()+"\n");
             l_file->close();
@@ -476,10 +518,23 @@ void MainWindow::setCamera(const QCameraDevice &cameraDevice)
         qDebug() << "Image Captured...";
         ui->plainTextEdit->appendPlainText(QString("Image Captured:%1").arg(id));
         QDateTime date = QDateTime::currentDateTime();
-        QString filename2 = IMAGES_DIR+date.toString("yyyy_dd_MM_hh_mm_ss").append(".jpg");
+        QString filename2 = IMAGES_DIR+QString("/")+date.toString("yyyy_dd_MM_hh_mm_ss").append(".jpg");
         QPixmap pixmap(QPixmap::fromImage(preview));
         QImage *imagex = new QImage(pixmap.toImage());
         imagex->save(filename2, "jpg", 100);
+/*
+        vector<int> compression_params;
+        compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+*/
+        /*
+        QString filename1 = IMAGES_DIR+QString("/")+date.toString("yyyy_dd_MM_hh_mm_ss").append(".avi");
+        imwrite("alpha2.png", frame, compression_params);
+        VideoWriter video(filename1, CV_FOURCC('M','J','P','G'), 10, Size(qImageSingle.width(), qImageSingle.height()), true);
+        for(int i=0; i<100; i++){
+            video.write(frame); // Write frame to VideoWriter
+        }
+        */
     });
 
     m_camera->start();
@@ -497,7 +552,7 @@ void MainWindow::hideCamera()
 
 void MainWindow::logTakeoff()
 {
-    QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
     m_takeoffTime = QDateTime::currentDateTime();
     QString data = "Takeoff at: "+m_takeoffTime.toString();
     ui->listView->appendPlainText(data);
@@ -519,7 +574,7 @@ void MainWindow::logLanded()
     ui->listView->appendPlainText(data);
     ui->listView->appendPlainText(dtime);
 
-    QFile *l_file = new QFile(QString(LOG_DIR)+ QString("flightlog.txt"));
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
     if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
         l_file->write(data.toLocal8Bit()+"\n");
         l_file->write(dtime.toLocal8Bit()+"\n");
@@ -609,9 +664,23 @@ void MainWindow::onGyroReadingChanged()
 void MainWindow::onMagReadingChanged()
 {
     m_mag_reader = m_mag_sensor->reading();
-    mysocket->HX   = m_mag_reader->x()*2*M_PI;
-    mysocket->HY   = m_mag_reader->y()*2*M_PI;
-    mysocket->HZ   = m_mag_reader->z()*2*M_PI;
+    mysocket->HX   = m_mag_reader->x();
+    mysocket->HY   = m_mag_reader->y();
+    mysocket->HZ   = m_mag_reader->z();
+
+    if(mysocket->HX > m_m_max_x) m_m_max_x = mysocket->HX;
+    if(mysocket->HX < m_m_min_x) m_m_min_x = mysocket->HX;
+    if(mysocket->HY > m_m_max_y) m_m_max_y = mysocket->HY;
+    if(mysocket->HY > m_m_max_y) m_m_max_y = mysocket->HY;
+    if(mysocket->HZ < m_m_min_z) m_m_min_z = mysocket->HZ;
+    if(mysocket->HZ > m_m_max_z) m_m_max_z = mysocket->HZ;
+}
+
+void MainWindow::onTempReadingChanged()
+{
+    m_temp_reader = m_temp_sensor->reading();
+    m_temp = m_temp_reader->temperature();
+
 }
 
 void MainWindow::onAccelerometerReadingChanged()
@@ -624,6 +693,14 @@ void MainWindow::onAccelerometerReadingChanged()
     mysocket->AccX = m_accel_reader->x();
     mysocket->AccY = -m_accel_reader->y();
     mysocket->AccZ = -m_accel_reader->z();
+
+    if(mysocket->AccX < m_a_min_x) m_a_min_x = mysocket->AccX;
+    if(mysocket->AccX > m_a_max_x) m_a_max_x = mysocket->AccX;
+    if(mysocket->AccY < m_a_min_y) m_a_min_y = mysocket->AccY;
+    if(mysocket->AccY > m_a_max_y) m_a_max_y = mysocket->AccY;
+    if(mysocket->AccZ < m_a_min_z) m_a_min_z = mysocket->AccZ;
+    if(mysocket->AccZ > m_a_max_z) m_a_max_z = mysocket->AccZ;
+
     tmp = sqrt(m_accel_reader->x()*m_accel_reader->x() +
                m_accel_reader->y()*m_accel_reader->y() +
                m_accel_reader->z()*m_accel_reader->z());
@@ -633,9 +710,18 @@ void MainWindow::onAccelerometerReadingChanged()
     if(m_calibrate > 0){
         if(m_calibrate == 1){
             m_first = 20;
-            mysocket->G = avg;
-            ekf.ekf->Gval = avg;
-            ekf.Gval = avg;
+            mysocket->G         = avg;
+            ekf.ekf->Gval       = avg;
+            ekf.ekf_quart->Gval = avg;
+            ekf.Gval            = avg;
+
+            Matrix3x6 config;
+            if(get_default_config(config) == 0)
+            {
+                config[0][2] = (double)avg;
+                set_default_config(config);
+                qDebug() << "Stored new config!!!";
+            }
         }
         m_calibrate--;
     }
@@ -644,7 +730,7 @@ void MainWindow::onAccelerometerReadingChanged()
 void MainWindow::onCompassReadingChanged()
 {
     m_compass_reader = m_compass_sensor->reading();
-    m_heading = m_compass_reader->azimuth();
+//    m_heading = m_compass_reader->azimuth();
 }
 
 void MainWindow::onOrientationReadingChanged()
@@ -671,13 +757,14 @@ void MainWindow::onPressureReadingChanged()
     m_preasure = m_preasure + (1013.25 - ui->doubleSpinBox->text().toDouble());
 
     m_preasure_alt = 145366.45 * (1.0 - std::pow(m_preasure / 1013.25,0.190284));
+    ui->baro_alt->setText(QString("%1").arg(m_preasure_alt));
 
     if( this->m_speed < 1.0){ first = true; }
     // Sett takeoff altitude...
     if(first){
         first = false;
         m_alt = m_preasure_alt;
-        qDebug() << "set takeoff baroalt";
+ //       qDebug() << "set takeoff baroalt";
 
     }
 }
@@ -695,22 +782,22 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         this->m_longitude = geoCoordinate.longitude();
         this->m_altitude  = geoCoordinate.altitude();
 
-        double speed     = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
-        double bearing   = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
-        this->m_speed    = speed*3.6;
+        m_gpsspeed     = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
+        m_gpsbearing   = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+        this->m_speed    = m_gpsspeed*3.6;
         double vel_D     = -geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
 
-        if(this->m_speed > 10.0 && !isnan(bearing)){
-            m_bearing    = bearing;
+        if(this->m_speed > 10.0 && !isnan(m_gpsbearing)){
+            m_bearing    = m_gpsbearing;
         }
         else{
             m_bearing    = 999;
         }
         // Get velocity vector...
-        if(!(isnan(speed) || isnan(bearing) || isnan(vel_D)))
+        if(!(isnan(m_gpsspeed) || isnan(m_gpsbearing) || isnan(vel_D)))
         {
-            this->m_vel_E  = sin(bearing*DEG_TO_RAD)*speed;
-            this->m_vel_N  = cos(bearing*DEG_TO_RAD)*speed;
+            this->m_vel_N  = cos(m_gpsbearing*DEG_TO_RAD)*m_gpsspeed;
+            this->m_vel_E  = sin(m_gpsbearing*DEG_TO_RAD)*m_gpsspeed;
             this->m_vel_D  = -geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
             this->m_vel_active = true;
         }
@@ -745,7 +832,7 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
                 // qDebug() << "set takeoff alt";
             }
             // As long as we do not move, but got altitude...
-            if(speed < 0.5){
+            if(m_gpsspeed < 0.5){
                 first = true;
                 // qDebug() << "reset takeoff alt";
             }
@@ -755,9 +842,7 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
 
 void MainWindow::EKF()
 {
-//    qDebug() << mysocket->AngleX << mysocket->AngleY << mysocket->AngleZ;
-
-    if((m_gyro_reader != nullptr && m_accel_reader != nullptr) || (ekf.m_use_gpt == true))
+    if((m_gyro_reader != nullptr && m_accel_reader != nullptr) || (ekf.m_use_gpt == 0))
     {
         static steady_clock::time_point clock_begin = steady_clock::now();
         steady_clock::time_point clock_end = steady_clock::now();
@@ -766,27 +851,35 @@ void MainWindow::EKF()
         clock_begin=clock_end;
 
         // How to caulcate Euler Angles [Roll Φ(Phi) Gyro Z, Pitch θ(Theta) gyro Y, Yaw Ψ(Psi) Gyro X]
-        if(ekf.m_use_gpt == false)
+        if(ekf.m_use_gpt > 0)
         {
             if(m_mag_reader == nullptr){
                 mysocket->HX=mysocket->HY=mysocket->HZ=0;
             }
-            Vector3x gyro = {mysocket->AsZ,mysocket->AsY,mysocket->AsX};
-            Vector3x accel= {-mysocket->AccY,-mysocket->AccZ,mysocket->AccX};
-            Vector3x mag  = {mysocket->HX,mysocket->HY,mysocket->HZ};
+            Vector3d gyro = {mysocket->AsZ,mysocket->AsY,mysocket->AsX};
+            Vector3d accel= {-mysocket->AccY,-mysocket->AccZ,mysocket->AccX};
+            Vector3d mag  = {mysocket->HX,mysocket->HY,mysocket->HZ};
 
+          //  Vector3d comp_acc = ekf.ekf_quart->getCompensatedAccel(m_gpsspeed, m_gpsbearing, accel, m_dt);
+
+            // This is wrong...
             // Rotate the roll axis with respect to pitch...
             double y = (gyro[2] * sin(ekf.getPitch_rad())) + (gyro[0] * cos(ekf.getPitch_rad())) ;
             double z = (gyro[2] * cos(ekf.getPitch_rad())) + (gyro[0] * sin(ekf.getPitch_rad())) ;
-
-            //            double ay = (accel[0]* DEG_TO_RAD * sin(ekf.getPitch_rad())) + (accel[2]* DEG_TO_RAD * cos(ekf.getPitch_rad())) ;
-            //          double az = (accel[0]* DEG_TO_RAD * cos(ekf.getPitch_rad())) + (accel[2]* DEG_TO_RAD * sin(ekf.getPitch_rad())) ;
+            float dummy;
 
             // Estimate using accelerometers...
-            std::tie(m_pitch,m_roll,m_yaw) = ekf.getPitchRollYaw(accel[1],accel[0],accel[2],mag[0],mag[1],mag[2],ekf.Gval);
+            std::tie(a_pitch,a_roll,dummy) = ekf.getPitchRoll(accel[1],accel[0],accel[2],ekf.Gval);
+            std::tie(m_pitch,m_roll,m_yaw) = ekf.getYaw(ekf.getRoll_rad(),ekf.getPitch_rad(),mag[0],mag[1],mag[2],ekf.Gval);
+
             if(isnan(m_pitch)) m_pitch = 0;
             if(isnan(m_roll)) m_roll = 0;
             if(isnan(m_yaw)) m_yaw = 0;
+            if(isnan(a_pitch)) m_pitch = 0;
+            if(isnan(a_roll)) m_roll = 0;
+
+            m_pitch = m_pitch + m_pitch_cal;
+            m_roll  = m_roll  + m_roll_cal;
 
             // Calculates X and Y relative distances in meters.
             double ypos = 0;
@@ -821,17 +914,29 @@ void MainWindow::EKF()
                            -gyro[1]* DEG_TO_RAD,
                            y* DEG_TO_RAD, //gyro[0] * DEG_TO_RAD,
                            z* DEG_TO_RAD, // gyro[2] * DEG_TO_RAD,
+                           a_pitch,
+                           a_roll,
+                           m_yaw,
+                           /*
                            m_pitch,
                            m_roll,
-                           m_yaw,
-                           mag[0], // Z
-                           mag[1], // Y
-                           mag[2]  // X
-                           );
+                           m_yaw
+
+                           mag[0]*2*M_PI,
+                           mag[1]*2*M_PI,
+                           mag[2]*2*M_PI
+*/
+                           // Adding magnetometer will help on long turns, however they are unpredictable.
+                           0, //m_pitch,
+                           0, //m_roll,
+                           0  //m_yaw
+
+                        );
 
 #define SCALE 1.00
             double roll = (ekf.getRoll_rad() * RAD_TO_DEG) + (SCALE * z * m_dt);
             m_attitude = {roll,ekf.getPitch_rad()* RAD_TO_DEG,ekf.getHeading_rad()* RAD_TO_DEG};
+            m_heading = ekf.getHeading_rad()* RAD_TO_DEG;
         }
         else{
             m_attitude =  {mysocket->AngleX,mysocket->AngleY,mysocket->AngleZ};
@@ -884,6 +989,9 @@ void MainWindow::onReadingChanged()
 
                 m_offset = attitude[1];
                 m_acc_Y_calib = accel[0];
+
+                m_pitch_cal+= a_pitch - m_pitch;
+                m_roll_cal+= a_roll - m_roll;
             }
         }
 
@@ -915,7 +1023,7 @@ void MainWindow::onReadingChanged()
         head_dir+=x_head;
         head_dir/=headfilterlength;
 
-        m_head = head_dir;
+        m_head = x_head; //head_dir;
 
         // Store data in local registers...
         double roll_att = 0;
@@ -971,7 +1079,7 @@ void MainWindow::onReadingChanged()
 
                 _widgetASI->redraw();
 
-                _widgetHI->setHeading(-m_head );
+                _widgetHI->setHeading(m_head);
                 _widgetHI->redraw();
             }
 
@@ -1317,6 +1425,7 @@ void MainWindow::onReadingChanged()
                 ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
                 ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
                 ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
+                if(m_temp_sensor != nullptr) ui->temperature->setText(QString("%1").arg(m_temp, 0, 'f', 1));
             }
 
             if( m_geopos == true){
@@ -1519,7 +1628,7 @@ void MainWindow::getVal(void *parent, QByteArray array)
                         snprintf(numout,20,"%.4d",(int)saved_this->m_tansALT);
                         local_ui->lcdNumber_3->display(numout);
                         local_ui->label_2->setText(altType);
-                        local_ui->baro_alt->setText(numout);
+//                        local_ui->baro_alt->setText(numout);
                         saved_this->alt_receiced = true;
                         break;
                     }
@@ -1791,16 +1900,26 @@ void MainWindow::on_select_gyro_page2_3_clicked(){
 void MainWindow::on_imu_reset_clicked()
 {
     m_calibrate = 500;
-    m_msgBoxCalibrating = new QMessageBox(QMessageBox::Information,tr("Full Calibrating!"),tr("Please make sure the equipment is still and wait!"));
-    m_msgBoxCalibrating->setStandardButtons(QMessageBox::NoButton);
+    m_msgBoxCalibrating = new NoButtonMessageBox(tr("Full Calibration\nPlease make sure the equipment is still !"));
+
+    // m_msgBoxCalibrating = new QMessageBox(QMessageBox::Information,tr("Full Calibrating!"),tr("Please make sure the equipment is still and wait!"));
+    // m_msgBoxCalibrating->setStandardButtons(QMessageBox::NoButton);
     m_msgBoxCalibrating->show();
 }
 
 void MainWindow::on_use_hw_clicked()
 {
     m_first = 10;
-    m_msgBoxCalibrating = new QMessageBox(QMessageBox::Information,tr("Fast Calibrating!"),tr("Please make sure the equipment is still and wait!"));
-    m_msgBoxCalibrating->setStandardButtons(QMessageBox::NoButton);
+
+    qDebug() << m_a_min_x << m_a_min_y << m_a_min_z <<
+                m_a_max_x << m_a_max_y << m_a_max_z <<
+                m_m_min_x << m_m_min_y << m_m_min_z <<
+                m_m_max_x << m_m_max_y << m_m_max_z;
+
+    m_msgBoxCalibrating = new NoButtonMessageBox(tr("Calibrating\nPlease make sure the equipment is still !"));
+
+    // m_msgBoxCalibrating = new QMessageBox(QMessageBox::Information,tr("Fast Calibrating!"),tr("Please make sure the equipment is still !"));
+    // m_msgBoxCalibrating->setStandardButtons(QMessageBox::NoButton);
     m_msgBoxCalibrating->show();
 }
 
@@ -1848,7 +1967,78 @@ void MainWindow::on_textEdit_2_textChanged()
 
 }
 
-void MainWindow::set_default_radio()
+int MainWindow::get_default_config(Matrix3x6 &sensor)
+{
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(CONFIG));
+    if (l_file->open(QIODevice::ReadOnly)){
+        QString blob = l_file->readAll();
+        l_file->close();
+
+        QStringList pieces = blob.split( "\n");
+        if(pieces.length() > 1){
+            for(QString value : pieces){
+                QStringList element = value.split(",");
+
+                if(element[0] == "AccelCal")
+                {
+                    sensor[0][0] = element[2].toDouble();
+                    sensor[0][1] = element[4].toDouble();
+                    sensor[0][2] = element[6].toDouble();
+                    sensor[0][3] = element[8].toDouble();
+                    sensor[0][4] = element[10].toDouble();
+                    sensor[0][5] = element[12].toDouble();
+                }
+                if(element[0] == "GyroCal")
+                {
+                    sensor[1][0] = element[2].toDouble();
+                    sensor[1][1] = element[4].toDouble();
+                    sensor[1][2] = element[6].toDouble();
+                    sensor[1][3] = element[8].toDouble();
+                    sensor[1][4] = element[10].toDouble();
+                    sensor[1][5] = element[12].toDouble();
+                }
+                if(element[0] == "MagCal")
+                {
+                    sensor[2][0] = element[2].toDouble();
+                    sensor[2][1] = element[4].toDouble();
+                    sensor[2][2] = element[6].toDouble();
+                    sensor[2][3] = element[8].toDouble();
+                    sensor[2][4] = element[10].toDouble();
+                    sensor[2][5] = element[12].toDouble();
+                }
+                /*
+                for(QString val : element){
+                    qDebug()<< val;
+                }
+                */
+            }
+            return 0;
+        }
+        return -2;
+    }
+    return -1;
+}
+
+int MainWindow::set_default_config(const Matrix3x6 &sensor)
+{
+    QString txt = "AccelCal,X1,%1,Y1,%2,Z1,%3,X2,%4,Y2,%5,Z2,%6\n";
+    txt.append(   "GyroCal,X,%7,Y,%8,Z,%9,X2,%10,Y2,%11,Z2,%12\n");
+    txt.append(   "MagCal,X,%13,Y,%14,Z,%15,X2,%16,Y2,%17,Z2,%18\n");
+
+    QString data  = txt.arg(sensor[0][0]).arg(sensor[0][1]).arg(sensor[0][2]).arg(sensor[0][3]).arg(sensor[0][4]).arg(sensor[0][5])
+                       .arg(sensor[1][0]).arg(sensor[1][1]).arg(sensor[1][2]).arg(sensor[1][3]).arg(sensor[1][4]).arg(sensor[1][5])
+                       .arg(sensor[2][0]).arg(sensor[2][1]).arg(sensor[2][2]).arg(sensor[2][3]).arg(sensor[2][4]).arg(sensor[2][5]);
+
+    QFile *l_file = new QFile(QString(LOG_DIR)+ QString(CONFIG));
+    if( l_file->open(QIODevice::WriteOnly | QIODevice::Truncate)){
+        l_file->write(data.toLocal8Bit());
+        l_file->close();
+        return 0;
+    }
+    return -1;
+}
+
+int MainWindow::set_default_radio()
 {
     ui->textEdit->setText("121.500\tEmergency\n");
     ui->textEdit->insertPlainText("123.500\tStandard\n");
@@ -1858,18 +2048,20 @@ void MainWindow::set_default_radio()
     ui->textEdit->insertPlainText("122.700\tTorsnes\n");
     ui->textEdit->insertPlainText("118.470\tOslo Approache\n");
 
-
     QFile *l_file = new QFile(QString(LOG_DIR)+ QString(RADIO));
+    qDebug() << "FILE: " << l_file->fileName();
     if( l_file->open(QIODevice::WriteOnly | QIODevice::Truncate)){
         QString data = ui->textEdit->toPlainText();
         qDebug() << data;
         ui->plainTextEdit->appendPlainText(data);
         l_file->write(data.toLocal8Bit());
         l_file->close();
+        return 0;
     }
+    return -1;
 }
 
-void MainWindow::set_default_planes()
+int MainWindow::set_default_planes()
 {
     ui->textEdit_2->setText("LN-YKQ\tRans S6\t\tSam S.\n");
     ui->textEdit_2->insertPlainText("LN-YYX\tAeros 2\t\tTerje\n");
@@ -1890,7 +2082,9 @@ void MainWindow::set_default_planes()
         ui->plainTextEdit->appendPlainText(data);
         l_file->write(data.toLocal8Bit());
         l_file->close();
+        return 0;
     }
+    return -1;
 }
 
 void MainWindow::on_pushButton_15_clicked()
@@ -1934,7 +2128,8 @@ void MainWindow::on_pushButton_23_clicked()
 
 void MainWindow::on_reset_heading_clicked()
 {
-    heading_offset = mysocket->AngleZ;
+    heading_offset = m_head; //mysocket->AngleZ;
+
     //    heading_offset = 180.0 - mysocket->AngleZ;
     //    if(heading_offset<0.0) heading_offset+=360.0;
 
@@ -1945,21 +2140,29 @@ void MainWindow::on_reset_heading_clicked()
 
 void MainWindow::on_reset_att_clicked()
 {
-    qDebug() << "Use IMU clicked... ";
-    if(ekf.m_use_gpt == true){
-        ekf.m_use_gpt = false;
-        QString x = ui->reset_att->styleSheet();
-        x.replace(QString("1 #f00"), QString("1 #888"));
-        ui->reset_att->setStyleSheet(x);
-        ui->reset_att->update();
+    qDebug() << "Use IMU clicked... " << ekf.m_use_gpt;
+
+    QString x = ui->reset_att->styleSheet();
+    qDebug() << x;
+
+    if(ekf.m_use_gpt == 0){
+        ekf.m_use_gpt = 1;
+        x.replace(QString("1 #f00"), QString("1 #00F"));
+        ui->reset_att->setText("EKF_1");
+    }
+    else if(ekf.m_use_gpt == 1){
+        ekf.m_use_gpt = 2;
+        x.replace(QString("1 #00F"), QString("1 #0F0"));
+        ui->reset_att->setText("EKF_2");
     }
     else{
-        ekf.m_use_gpt = true;
-        QString x = ui->reset_att->styleSheet();
-        x.replace(QString("1 #888"), QString("1 #f00"));
-        ui->reset_att->setStyleSheet(x);
-        ui->reset_att->update();
+        ekf.m_use_gpt = 0;
+        x.replace(QString("1 #0F0"), QString("1 #f00"));
+        ui->reset_att->setText("INT");
     }
+    qDebug() << x;
+    ui->reset_att->setStyleSheet(x);
+    ui->reset_att->update();
 }
 
 void MainWindow::on_fly_home_clicked()

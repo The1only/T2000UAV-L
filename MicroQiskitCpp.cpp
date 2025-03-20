@@ -123,9 +123,10 @@ void Qiskit(void) {
     }
 }
 
-
+/*
 #ifdef Q_OS_MAC
 int main(){
     Qiskit();
 }
 #endif
+*/

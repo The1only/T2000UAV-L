@@ -100,7 +100,6 @@ public:
         data.push_back(gate);
     }
     void h (int q) {
-        qDebug()<<"hello from header"<<Qt::endl;
         vector<string> gate;
         verify_qubit_range(q,"h gate");
         gate.push_back("h");

@@ -22,6 +22,7 @@ using Vector9 = std::array<double, 9>;
 #endif
 
 using Matrix3x3 = std::array<std::array<double, 3>, 3>;
+using Matrix3x6 = std::array<std::array<double, 6>, 3>;
 using Matrix9x9 = std::array<std::array<double, 9>, 9>;
 
 void printVector(const Vector3x& vector);

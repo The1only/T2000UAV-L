@@ -25,5 +25,7 @@
         <file>backwards.svg</file>
         <file>forwards.svg</file>
         <file>podcast.svg</file>
+        <file>splash.png</file>
+        <file>image_3.png</file>
     </qresource>
 </RCC>

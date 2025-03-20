@@ -1178,7 +1178,7 @@ QPushButton:pressed {
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>11</hour>
+        <hour>10</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -2034,7 +2034,7 @@ border-radius: 15px;
 border-style: outset;
 background: qradialgradient(
 cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #888
+radius: 1.35, stop: 0 #fff, stop: 1 #00F
 );
 padding: 5px;
 }
@@ -2045,7 +2045,7 @@ QPushButton:pressed {
 }</string>
       </property>
       <property name="text">
-       <string>EKF</string>
+       <string>EKF_1</string>
       </property>
       <property name="checkable">
        <bool>false</bool>

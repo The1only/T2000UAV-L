@@ -27,6 +27,9 @@
 #include <QOrientationSensor>
 #include <QOrientationReading>
 
+#include <QAmbientTemperatureSensor>
+#include <QAmbientTemperatureReading>
+
 #include <QRotationSensor>
 #include <QPressureReading>
 #include <QGeoPositionInfo>
@@ -40,19 +43,43 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class SCREEN; }
 QT_END_NAMESPACE
 
+// + "/Resources/"
+
 #ifdef Q_OS_IOS
-    #define IMAGES_DIR "file:assets-library:/asset/"
-    #define LOG_DIR "file:assets-library:/asset/"
+    #define LOG_DIR QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+    #define IMAGES_DIR QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
 #else
-    #define IMAGES_DIR "/storage/emulated/0/DCIM/Camera/"
-    #define LOG_DIR "/storage/emulated/0/Documents/"
+    #define IMAGES_DIR "/storage/emulated/0/DCIM/Camera"
+    #define LOG_DIR "/storage/emulated/0/Documents"
 #endif
 
-#define RADIO "setup_radio_b.txt"
-#define AIRPLANE "setup_ln_b.txt"
+#define RADIO     "/setup_radio_b.txt"
+#define AIRPLANE  "/setup_ln_b.txt"
+#define CONFIG    "/config_b.txt"
+#define FLIGHTLOG "/flightlog.txt"
 
 // Define the Qiskit interface...
-//void Qiskit(void);
+void Qiskit(void);
+
+
+class NoButtonMessageBox : public QDialog {
+public:
+    NoButtonMessageBox(const QString &message, QWidget *parent = nullptr)
+        : QDialog(parent) {
+        setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
+        setAttribute(Qt::WA_TranslucentBackground);
+        setModal(true);
+
+        auto layout = new QVBoxLayout(this);
+        QLabel *label = new QLabel(message, this);
+        label->setAlignment(Qt::AlignCenter);
+        label->setStyleSheet("QLabel { font-size: 18pt; color: white; background-color: #333; padding: 20px; border-radius: 12px; }");
+
+        layout->addWidget(label);
+        setLayout(layout);
+        resize(300, 100);
+    }
+};
 
 class MainWindow : public QMainWindow
 {
@@ -65,8 +92,11 @@ public:
     void addnext(int x);
     void addcurrent(int x);
     void setmode(int mode);
-    void set_default_radio(void);
-    void set_default_planes(void);
+    int  set_default_radio(void);
+    int  set_default_planes(void);
+    int  set_default_config(const Matrix3x6 &sensor);
+    int  get_default_config(Matrix3x6 &sensor);
+//    void set_default_config(double ax,double ay,double az,double gx,double gy,double gz,double hx,double hy,double hz);
     void logLanded();
     void logTakeoff();
     void init();
@@ -88,8 +118,12 @@ public:
     int current[4]={8,8,8,8};
     int mode=0;
 
-    double m_altitude      = 0;
+    double m_a_min_x = 0, m_a_min_y = 0, m_a_min_z = 0;
+    double m_a_max_x = 0, m_a_max_y = 0, m_a_max_z = 0;
+    double m_m_min_x = 0, m_m_min_y = 0, m_m_min_z = 0;
+    double m_m_max_x = 0, m_m_max_y = 0, m_m_max_z = 0;
 
+    double m_altitude      = 0;
     double m_latitude      = 0;
     double m_longitude     = 0;
 
@@ -100,19 +134,20 @@ public:
     double takeoff_longitude = 0;
     double takeoff_altitude  = 0;
 
+    double m_gpsspeed = 0;
+    double m_gpsbearing = 0;
     double m_vel_N  = 0;
     double m_vel_E  = 0;
     double m_vel_D  = 0;
     bool m_vel_active = false;
 
     double m_tansALT       = 0;
-     double m_pitch,m_roll,m_yaw;
 
     bool m_use_imu = false;
 
     double m_speed=0;
     double m_head =9999;
-    qreal m_temp =9999;
+    qreal m_temp  =9999;
 
     double m_var_speed = 0;
     double m_ms = 0;
@@ -208,6 +243,9 @@ private:
     QMagnetometer*        m_mag_sensor    = nullptr;
     QMagnetometerReading* m_mag_reader    = nullptr;
 
+    QAmbientTemperatureSensor*  m_temp_sensor    = nullptr;
+    QAmbientTemperatureReading* m_temp_reader    = nullptr;
+
     QGeoPositionInfoSource* m_geoPositionInfo = NULL;
 
     qreal m_offset      = 0.0;
@@ -217,8 +255,17 @@ private:
     double m_head_dir   = 0.0;
     double m_dt;
 
-    QMessageBox *m_msgBox = nullptr;
-    QMessageBox *m_msgBoxCalibrating = nullptr;
+    double a_pitch      = 0.0;
+    double a_roll       = 0.0;
+    double m_pitch_cal  = 0.0;
+    double m_roll_cal   = 0.0;
+    double m_pitch      = 0.0;
+    double m_roll       = 0.0;
+    double m_yaw        = 0.0;
+
+
+    NoButtonMessageBox *m_msgBox = nullptr;
+    NoButtonMessageBox *m_msgBoxCalibrating = nullptr;
 
     // Q_SIGNALS:
     void accepted();
@@ -251,7 +298,6 @@ private slots:
     void on_select_transponder_page_3_clicked();
     void on_select_from_4_to_5_clicked();
 
-
     void doCheck();
     void reset_ping();
     void active_ping();
@@ -267,10 +313,10 @@ private slots:
     void onGyroReadingChanged();
     void onMagReadingChanged();
     void onOrientationReadingChanged();
+    void onTempReadingChanged();
 
     void on_select_gyro_page_clicked();
     void on_select_gyro_page2_clicked();
-//    void on_select_dumy_page_clicked();
     void on_select_camera_from_transponder_clicked();
     void on_select_dumy_page2_clicked();
     void on_select_transponder_page_clicked();

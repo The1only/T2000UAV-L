@@ -22,7 +22,7 @@ Copyright 2011 Regents of the University of Minnesota. All rights reserved.
 Original Author: Adhika Lie
 */
 
-#include "ekfNavINS.h"
+#include "ekfNavINS_quart.h"
 
 /*
 ψ (psi): Rotation about the z-axis (yaw).
@@ -38,87 +38,80 @@ Roll (φ) is a rotation around the x-axis.
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
+#include "ekfNavINS.h"
 
 using namespace Eigen;
+
+ekfNavINS::ekfNavINS()
+{
+    // Initialize Extended Kalman filter
+    ekf_quart = new ExtendedKalmanFilter_quart();
+    ekf = new ExtendedKalmanFilter();
+
+    initialized_ = true;
+    ekf->Gval = Gfix;
+    ekf_quart->Gval = Gfix;
+}
 
 void ekfNavINS::ekf_update(double time, double vn,double ve,double vd,double lat,double lon,double alt,double baroalt,float p,float q,float r,float ax,float ay,float az,float hx,float hy, float hz)
 {
     m_dt = time;
 
-    if (!initialized_) {
-        // Initialize Extended Kalman filter
-        ekf = new ExtendedKalmanFilter();
-        initialized_ = true;
-        ekf->Gval = Gfix;
-    }
+    // Construct the measurement vector
+    VectorXd measurements = VectorXd::Zero(15);
+    measurements.segment<3>(0)  = Vector3d(lat, lon, alt);           // GPS position
+    measurements.segment<3>(3)  = Vector3d(vn, ve, vd);  // GPS velocity
+    measurements(6)             = baroalt;                // Barometer altitude
+    measurements.segment<3>(7)  = Vector3d(ax, ay, az); // Accelerometer orientation
+    measurements.segment<3>(10) = Vector3d(hx, hy, hz); // Magnetometer orientation
+    measurements.segment<2>(13) = Vector2d(0, 0);    // Correction
 
-    // Example sensor data (add more data points as needed)
-    std::vector<SensorData> sensorData = {
-        {
-            Vector3d(ax, ay, az),  // Accelerometer readings
-            Vector3d(p, q, r), // Gyroscope readings
-            Vector3d(hx, hy, hz),   // Magnetometer readings
-            baroalt,                     // Barometer reading
-            Vector3d(lat, lon, alt),      // GPS position readings
-            Vector3d(vn, ve, vd)          // GPS velocity readings
-        }
-    };
+    // Prediction step
+    if(m_use_gpt==2) ekf_quart->predict(m_dt, Vector3d(p, q, r), Vector3d(ax, ay, az));
+    else          ekf->predict(m_dt, Vector3d(p, q, r), Vector3d(ax, ay, az));
 
-    for (const auto &data : sensorData) {
-        // Construct the measurement vector
-        VectorXd measurements(15);
-        measurements.segment<3>(0) = data.gps;           // GPS position
-        measurements.segment<3>(3) = data.gps_velocity;  // GPS velocity
-        measurements(6) = data.barometer;                // Barometer altitude
-        measurements.segment<3>(7) = data.accelerometer; // Accelerometer orientation
-        measurements.segment<3>(10) = data.magnetometer; // Magnetometer orientation
-        measurements.segment<2>(13) = Vector2d(0, 0);    // Correction
-
-        // Prediction step
-        ekf->predict(m_dt, data.gyroscope, data.accelerometer);
-
-        // Update step
-        ekf->update(measurements);
-
-        theta = ekf->state[6];
-        phi = ekf->state[7];
-        psi = ekf->state[8];
-        lat_ins = ekf->state[0];
-        lon_ins = ekf->state[1];
-        alt_ins = ekf->state[2];
-        vn_ins = ekf->state[3];
-        ve_ins = ekf->state[4];
-        vd_ins = ekf->state[5];
-    }
+    // Update step
+    if(m_use_gpt==2) ekf_quart->update(measurements);
+    else             ekf->update(measurements);
 }
 
 // ...............................................
 
 // az = up donwn, ax = Roll, ay = flatt up
-std::tuple<float,float,float> ekfNavINS::getPitchRollYaw(float ax, float ay, float az, float hx, float hy, float hz, double Gcal )
+std::tuple<float,float,float> ekfNavINS::getPitchRoll(float ax, float ay, float az, float Gcal )
 {
     // initial attitude and heading
     if(ax > Gcal) ax = Gcal;
     if(ay > Gcal) ay = Gcal;
 
-    theta = -asinf(ax/Gcal);
-    phi = -asinf(ay/Gcal*cosf(theta));
+    float theta = -asinf(ax/Gcal);
+    float phi = -asinf(ay/Gcal*cosf(theta));
 
-    // magnetic heading correction due to roll and pitch angle
-    //Bxc = hx*cosf(theta) + (hy*sinf(phi) + hz*cosf(phi))*sinf(theta);
-    //Byc = hy*cosf(phi) - hz*sinf(phi);
+    return (std::make_tuple(theta,phi,0));
+}
+
+// Working...
+std::tuple<float,float,float> ekfNavINS::getYaw(float roll,float pitch, float hx, float hy, float hz, float Gcal )
+{
+    // magnetic heading corrected for roll and pitch angle
+    float Bxc, Byc;
+
+    double hz_ = (hx * sin(pitch)) + (hz * cos(pitch)) ;
+    double hx_ = (hx * cos(pitch)) + (hz * sin(pitch)) ;
 
     // Magnetic heading correction due to roll and pitch angle (after 90-degree rotation)
-    Bxc = -(hy*cosf(phi) - hx*sinf(phi));
-    Byc = hx*cosf(theta) + (hy*sinf(phi) + hz*cosf(phi))*sinf(theta);
+    Byc = hz*cosf(pitch) + (hy*sinf(roll) + hx*cosf(roll))*sinf(pitch);
+    Bxc = (hy*cosf(roll) - hx*sinf(roll));
 
     // finding initial heading
-    psi = -atan2f(Bxc,Byc);
+    float psi = -atan2f(Bxc,-Byc);
+  //  float psi = -atan2f(hy,-hz_);
 
-//    qDebug() << "H: " << hx << "  "  << hy << "  "  <<  hz << " PSI: " << psi*RAD_TO_DEG;
+    float p = atan2(hz, sqrt(hy*hy + hx*hx));
+    float r = atan2(hy, sqrt(hz_*hz_ + hx_*hx_));
 
     //    psi = psi + gz*DEG_TO_RAD*m_dt;
-    return (std::make_tuple(theta,phi,psi));
+    return (std::make_tuple(p,r,psi));
 }
 //--------------------------------------
 
