@@ -1,85 +1,198 @@
-TARGET = Glasscockpit
+
+TEMPLATE = app
+TARGET = lowenergyscanner
 INCLUDEPATH += .
 INCLUDEPATH += /Users/terjenilsen/Dropbox/Sportsfly/transponder/eigen-3.4.0
 INCLUDEPATH += ./EKF_IMU_GPS/ekf_nav_ins/inc/
 INCLUDEPATH += ./EKF_IMU_GPS/ekf_nav_ins/src/
-INCLUDEPATH += ./WitBluetooth_BWT901BLE5_0/IOS_swift/WitSDK/Sensor/Modular/Processor/Roles/
 
-QT += quick widgets charts quickwidgets sensors positioning multimedia multimediawidgets svgwidgets
+DEFINES += QT_NO_DEPRECATED_WARNINGS
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
-android: QT += serialport
-android: QT += core-private
-android: QT += core
-
-macx: QT += serialport
-
-ios: CONFIG+=sdk_no_version_check
+QT += quick widgets charts quickwidgets sensors positioning multimediawidgets svgwidgets xml gui
 
 macx {
+
+    CONFIG += app_bundle
+    QMAKE_INFO_PLIST = $$PWD/Info.plist
+
+    QT += serialport multimedia bluetooth
+    #opengl
+    #openglwidgets
+
+#    CONFIG += c++11
+    CONFIG += c++17
+    QMAKE_CXXFLAGS += -std=c++17
+
+    INCLUDEPATH += /usr/local/include
+    LIBS += -L/usr/local/lib -lpaho-mqttpp3 -lpaho-mqtt3as
+    LIBS -= framework AGL
+
     SOURCES += main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
-    MicroQiskitCpp.cpp \
     ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
-    rotation_matrix.cpp
+    rotation_matrix.cpp \
+    gpx_parse.cpp \
+    mqttclient.cpp \
+    serialport.cpp \
+    INS_driver.cpp \
+    BleUart.cpp \
+    wit_c_sdk.c \
+
 
     HEADERS += \
     QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
-    MicroQiskitCpp.h \
-    IBWT901BLE5_0DataProcessor.swift \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
-    myNativeWrapperFunctions.h \
-    rotation_matrix.h
+    rotation_matrix.h \
+    gpx_parse.h \
+    mqttclient.h \
+    serialport.h \
+    BleUart.h \
+    REG.h \
+    wit_c_sdk.h \
 
-
+#myNativeWrapperFunctions.h \
 #MicroQiskitCpp.h \
 #MicroQiskitCpp.cpp \
 
 }
 
 ios{
-    SOURCES += main.cpp \
+    CONFIG+=sdk_no_version_check
+    QT += bluetooth
+
+    #CONFIG += mobility
+
+    # iOS frameworks typically added automatically, but ensure they’re there:
+#    LIBS += \
+#        -framework CoreMedia \
+#        -framework CoreVideo \
+#        -framework VideoToolbox \
+
+#       -framework AVFoundation \
+#       -framework AudioToolbox \
+
+# Make sure we use the AVFoundation backend (QAVF*)
+    # (For static builds this ensures the plugin is linked in.)
+ #   QTPLUGIN += qavfmediaplayer qavfcamera
+
+#    QTPLUGIN -= qffmpegmediaplugin
+#    QTPLUGIN -= qffmpeg
+
+    # iOS: Bundle identifier
+    QMAKE_TARGET_BUNDLE_IDENTIFIER = teni@9tek.no
+
+    # iOS: Manual signing setup
+    QMAKE_MAC_SDK = iphoneos
+    QMAKE_XCODE_CODE_SIGN_STYLE = Manual
+    QMAKE_XCODE_DEVELOPMENT_TEAM = 75F9V574G2
+    QMAKE_XCODE_CODE_SIGN_IDENTITY = "Apple Development: Terje Nilsen (MGWC6SDUJH)"
+    QMAKE_XCODE_PROVISIONING_PROFILE = "terjenilsen-3.mobileprovision"
+
+    SOURCES += \
+    main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
-    MicroQiskitCpp.cpp \
     ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
     myNativeWrapperFunctions.mm \
-    rotation_matrix.cpp
+    rotation_matrix.cpp \
+    gpx_parse.cpp \
+    mqttclient.cpp \
+    wit_c_sdk.c \
+    INS_driver.cpp \
+
+#MicroQiskitCpp.cpp \
+
 
     HEADERS += \
-    QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
-    MicroQiskitCpp.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
-    IOS_swift/WitSDK/Sensor/Modular/Processor/Roles/BWT901BLE5_0DataProcessor.swift \
     myNativeWrapperFunctions.h \
-    rotation_matrix.h
+    rotation_matrix.h \
+    $$PWD/example/Headers/WidgetAI.h \
+    gpx_parse.h \
+    mqttclient.h \
+    serialport.h \
+    REG.h \
+    wit_c_sdk.h \
 
+#   BleUart.h \
+
+    PAHO_IOS_BASE = /Users/terjenilsen/Dropbox/Sportsfly/transponder/third_party/paho/ios
+    #PAHO_IOS = $$PAHO_IOS_BASE/iphonesimulator
+    PAHO_IOS = $$PAHO_IOS_BASE/iphoneos
+    INCLUDEPATH += $$PAHO_IOS/include
+    LIBS += -L$$PAHO_IOS/lib -lpaho-mqttpp3 -lpaho-mqtt3a
+
+    # Recommended for static third-party on iOS
+    QMAKE_CXXFLAGS += -fPIC
+
+    QMAKE_INFO_PLIST = $$PWD/Info.plist
+    QMAKE_BUNDLE_IDENTIFIER = teni@9tek.no
+
+# QuickWidget.h \
+# MicroQiskitCpp.h \
 }
 
+# Android-specific permissions
 android {
+
+    QT += serialport multimedia core-private core
+
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+    RESOURCES += android/AndroidManifest.xml
+
+    # Optional: override Android manifest attributes
+    # QMAKE_ANDROID_PACKAGE_NAME = org.sportsfly.lowenergyscanner
+    # QMAKE_ANDROID_VERSION_NAME = 1.0
+    # QMAKE_ANDROID_VERSION_CODE = 1
+
     SOURCES += main.cpp \
     mainwindow.cpp \
     mytcpsocket.cpp \
     lockhelper.cpp \
-    MicroQiskitCpp.cpp \
     ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
-    rotation_matrix.cpp
+    rotation_matrix.cpp \
+    gpx_parse.cpp \
+    mqttclient.cpp \
+    serialport_android.cpp \
+    INS_driver.cpp \
+    BleUart.cpp \
+    wit_c_sdk.c \
+
+
+#serialport_bluetooth.cpp \
+#MicroQiskitCpp.cpp \
 
     HEADERS += \
     QuickWidget.h \
     mainwindow.h \
     mytcpsocket.h \
     lockhelper.h \
-    MicroQiskitCpp.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
     ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
-    rotation_matrix.h
+    rotation_matrix.h \
+    gpx_parse.h \
+    mqttclient.h \
+    serialport.h \
+    BleUart.h \
+    REG.h \
+
+#serialport_bluetooth.h \
+#MicroQiskitCpp.h \
+
+    PAHO_ROOT = /Users/terjenilsen/Dropbox/Sportsfly/transponder/third_party/paho/$$ANDROID_TARGET_ARCH
+    INCLUDEPATH += $$PAHO_ROOT/include
+    LIBS += -L$$PAHO_ROOT/lib -lpaho-mqttpp3 -lpaho-mqtt3a
+
+    # Helpful for static libs:
+    QMAKE_CXXFLAGS += -fPIC
 
     ANDROID_PERMISSIONS += android.permission.WAKE_LOCK
     ANDROID_PERMISSIONS += android.permission.READ_EXTERNAL_STORAGE
@@ -108,16 +221,17 @@ android {
     QT += bluetooth
     QT += positioning
 
-}
+    QMAKE_CXXFLAGS += -std=c++17
+    QMAKE_LFLAGS += -static-libstdc++ -static-libgcc
 
-CONFIG += mobility
+    CONFIG += c++17
+    CONFIG += mobility
+    CONFIG +=debug
+    MOBILITY += bluetooth
+}
 
 ios: QMAKE_INFO_PLIST = Info.plist
 macos: QMAKE_INFO_PLIST = Info.qmake.macos.plist
-
-#OTHER_FILES += assets/*.qml
-
-#chatserver.h \
 
 RESOURCES += \
     resources.qrc
@@ -132,47 +246,6 @@ FORMS += \
     mainwindow_phone.ui \
     mainwindow_port_iPhone.ui \
     mainwindow_small.ui \
-
-ios | macx{
-DISTFILES += \
-    swift/BleExample/Assets.xcassets/AccentColor.colorset/Contents.json \
-    swift/BleExample/Assets.xcassets/AppIcon.appiconset/Contents.json \
-    swift/BleExample/Assets.xcassets/Contents.json \
-    swift/BleExample/BleExampleApp.swift \
-    swift/BleExample/Preview Content/Preview Assets.xcassets/Contents.json \
-    swift/README.md \
-    swift/WitSDK.xcodeproj/project.pbxproj \
-    swift/WitSDK.xcodeproj/project.xcworkspace/contents.xcworkspacedata \
-    swift/WitSDK.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist \
-    swift/WitSDK.xcodeproj/project.xcworkspace/xcuserdata/terjenilsen.xcuserdatad/UserInterfaceState.xcuserstate \
-    swift/WitSDK.xcodeproj/project.xcworkspace/xcuserdata/zhaowen.xcuserdatad/IDEFindNavigatorScopes.plist \
-    swift/WitSDK.xcodeproj/project.xcworkspace/xcuserdata/zhaowen.xcuserdatad/UserInterfaceState.xcuserstate \
-    swift/WitSDK.xcodeproj/xcuserdata/terjenilsen.xcuserdatad/xcschemes/xcschememanagement.plist \
-    swift/WitSDK.xcodeproj/xcuserdata/zhaowen.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist \
-    swift/WitSDK.xcodeproj/xcuserdata/zhaowen.xcuserdatad/xcschemes/xcschememanagement.plist \
-    swift/WitSDK/Sensor/DeviceModel.swift \
-    swift/WitSDK/Sensor/Errors/DeviceModelError.swift \
-    swift/WitSDK/Sensor/Modular/Connector/Modular/BluetoothBLE.swift \
-    swift/WitSDK/Sensor/Modular/Connector/Modular/IBluetoothEventObserver.swift \
-    swift/WitSDK/Sensor/Modular/Connector/Modular/WitBluetoothManager.swift \
-    swift/WitSDK/Sensor/Modular/Connector/Roles/WitCoreConnector.swift \
-    swift/WitSDK/Sensor/Modular/Processor/Constants/WitSensorKey.swift \
-    swift/WitSDK/Sensor/Modular/Processor/Protocol/IDataProcessor.swift \
-    swift/WitSDK/Sensor/Modular/Processor/Roles/BWT901BLE5_0DataProcessor.swift \
-    swift/WitSDK/Sensor/Modular/Resolver/Protocol/IProtocolResolver.swift \
-    swift/WitSDK/Sensor/Modular/Resolver/Roles/BWT901BLE5_0ProtocolResolver.swift \
-    swift/WitSDK/Sensor/Protocol/IKeyUpdateObserver.swift \
-    swift/WitSDK/Sensor/Protocol/IListenKeyUpdateObserver.swift \
-    swift/WitSDK/Sensor/Utils/CompareObjectHelper.swift \
-    swift/WitSDK/Sensor/Utils/DataHelper.swift \
-    swift/WitSDK/Sensor/Utils/DateHelper.swift \
-    swift/WitSDK/Sensor/Utils/DipSensorMagHelper.swift \
-    swift/WitSDK/Sensor/Utils/StringUtils.swift \
-    swift/WitSDK/Sensor/Utils/SyncDictionary.swift \
-    swift/WitSDK/WitSDK.docc/WitSDK.md \
-    swift/WitSDK/WitSensorApi/Modular/Ble5/Bwt901ble.swift \
-    swift/WitSDK/WitSensorApi/Modular/Ble5/IBwt901bleRecordObserver.swift
-}
 
 android {
 DISTFILES += \
@@ -219,16 +292,7 @@ DISTFILES += \
     android/src/main/java/com/hoho/android/usbserial/util/SerialInputOutputManager.java \
     android/src/main/java/com/hoho/android/usbserial/util/UsbUtils.java \
     android/src/main/java/com/hoho/android/usbserial/util/XonXoffFilter.java \
-    android/src/main/java/com/wit/witsdk/Bluetooth/WitBluetoothManager.java \
-    android/src/main/java/com/wit/witsdk/Device/IMUActivity.java \
-    android/src/main/java/com/wit/witsdk/Device/DeviceActivity.java \
-    android/src/main/java/com/wit/witsdk/Device/DeviceEvent.java \
-    android/src/main/java/com/wit/witsdk/Device/DeviceManager.java \
-    android/src/main/java/com/wit/witsdk/Device/DeviceModel.java \
-    android/src/main/java/com/wit/witsdk/Device/Interface/DeviceDataListener.java \
-    android/src/main/java/com/wit/witsdk/Device/Interface/DeviceFindListener.java \
-    android/src/main/java/com/wit/witsdk/UI/CustomAdapter.java \
-    android/src/main/java/com/wit/witsdk/UI/ListItem.java \
+
 }
 
 #android/src/main/java/com/hoho/android/usbserial/driver/NmeaActivity.java \
@@ -250,6 +314,10 @@ include($$PWD/example/example.pri)
 #MicroQiskitCpp.h \
 #MicroQiskitCpp.cpp \
 
-HEADERS += \
-    EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart_9dof.h
+
+DISTFILES += \
+    android/res/values/libs.xml \
+    android/res/xml/qtprovider_paths.xml
+
+
 
