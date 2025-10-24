@@ -1,0 +1,4 @@
+#Wed Sep 03 20:54:28 EEST 2025
+base.0=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Release/android-build/build/intermediates/dex/release/mergeDexRelease/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex

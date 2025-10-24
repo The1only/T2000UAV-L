@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'lowenergyscanner' in project 'lowenergyscanner'
+➜ Explicit dependency on target 'Qt Preprocess' in project 'lowenergyscanner'
+Target 'Qt Preprocess' in project 'lowenergyscanner' (no dependencies)

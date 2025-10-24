@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>455</width>
-    <height>1024</height>
+    <height>813</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -44,7 +44,7 @@
       <x>0</x>
       <y>0</y>
       <width>451</width>
-      <height>731</height>
+      <height>771</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -1138,7 +1138,7 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>410</y>
+        <y>420</y>
         <width>91</width>
         <height>31</height>
        </rect>
@@ -1163,7 +1163,7 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>440</y>
+        <y>450</y>
         <width>191</width>
         <height>41</height>
        </rect>
@@ -1178,7 +1178,7 @@ QPushButton:pressed {
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>10</hour>
+        <hour>5</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -1197,7 +1197,7 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>240</x>
-        <y>410</y>
+        <y>420</y>
         <width>131</width>
         <height>31</height>
        </rect>
@@ -1222,7 +1222,7 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>240</x>
-        <y>440</y>
+        <y>450</y>
         <width>191</width>
         <height>41</height>
        </rect>
@@ -1253,13 +1253,14 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>370</y>
+        <y>380</y>
         <width>191</width>
         <height>41</height>
        </rect>
       </property>
       <property name="font">
        <font>
+        <family>.AppleSystemUIFont</family>
         <pointsize>22</pointsize>
         <italic>true</italic>
         <bold>true</bold>
@@ -1479,9 +1480,9 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>130</x>
-        <y>610</y>
+        <y>620</y>
         <width>191</width>
-        <height>31</height>
+        <height>71</height>
        </rect>
       </property>
       <property name="font">
@@ -1511,51 +1512,6 @@ QPushButton:pressed {
       </property>
       <property name="text">
        <string>ViewLogFile</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="imu_reset">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>560</y>
-        <width>91</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>16</pointsize>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/config.svg); 
-color: #333;
-border: 2px solid #555;
-border-radius: 15px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #888
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="autoDefault">
-       <bool>false</bool>
-      </property>
-      <property name="default">
-       <bool>true</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_7">
@@ -1785,50 +1741,6 @@ background-color: rgb(0, 0, 0);</string>
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QPushButton" name="exit_2">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>660</y>
-        <width>191</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>18</pointsize>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-color: #333;
-border: 2px solid #555;
-border-radius: 15px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #888
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
-      </property>
-      <property name="text">
-       <string>Exit</string>
-      </property>
-      <property name="autoDefault">
-       <bool>false</bool>
-      </property>
-      <property name="default">
-       <bool>true</bool>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_15">
       <property name="geometry">
        <rect>
@@ -1935,122 +1847,6 @@ background-color: rgb(0, 0, 0);</string>
        <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
      </widget>
-     <widget class="QPushButton" name="reset_heading">
-      <property name="geometry">
-       <rect>
-        <x>230</x>
-        <y>560</y>
-        <width>91</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>16</pointsize>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-color: #333;
-border: 2px solid #555;
-border-radius: 15px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #888
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
-      </property>
-      <property name="text">
-       <string>Heading</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="use_hw">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>500</y>
-        <width>91</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>16</pointsize>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/podcast.svg); 
-color: #333;
-border: 2px solid #555;
-border-radius: 15px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #888
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}</string>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="reset_att">
-      <property name="geometry">
-       <rect>
-        <x>230</x>
-        <y>500</y>
-        <width>91</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>16</pointsize>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-color: #333;
-border: 2px solid #555;
-border-radius: 15px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #00F
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}</string>
-      </property>
-      <property name="text">
-       <string>EKF_1</string>
-      </property>
-      <property name="checkable">
-       <bool>false</bool>
-      </property>
-     </widget>
      <zorder>listView</zorder>
      <zorder>label_4</zorder>
      <zorder>timeEdit</zorder>
@@ -2065,7 +1861,6 @@ QPushButton:pressed {
      <zorder>select_dumy_page2</zorder>
      <zorder>select_transponder_page</zorder>
      <zorder>timer_start</zorder>
-     <zorder>imu_reset</zorder>
      <zorder>label_7</zorder>
      <zorder>label_8</zorder>
      <zorder>label_9</zorder>
@@ -2074,14 +1869,10 @@ QPushButton:pressed {
      <zorder>altitude</zorder>
      <zorder>temp</zorder>
      <zorder>label_12</zorder>
-     <zorder>exit_2</zorder>
      <zorder>label_15</zorder>
      <zorder>temperature</zorder>
      <zorder>baro_alt</zorder>
      <zorder>label_16</zorder>
-     <zorder>reset_heading</zorder>
-     <zorder>use_hw</zorder>
-     <zorder>reset_att</zorder>
     </widget>
     <widget class="QWidget" name="page_6">
      <widget class="QPushButton" name="select_transponder_page_2">
@@ -2182,9 +1973,9 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>-10</x>
-        <y>320</y>
-        <width>211</width>
-        <height>181</height>
+        <y>310</y>
+        <width>221</width>
+        <height>201</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -2682,6 +2473,102 @@ QPushButton:pressed {
       </property>
      </widget>
     </widget>
+    <widget class="QWidget" name="page_9">
+     <widget class="QPushButton" name="select_from_5_to_6">
+      <property name="geometry">
+       <rect>
+        <x>380</x>
+        <y>540</y>
+        <width>51</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>19</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+image: url(:/forwards.svg);
+color: #333;
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #15E
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="select_transponder_page_4">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>540</y>
+        <width>51</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>19</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+image: url(:/backwards.svg);
+color: #333;
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #15E
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QGraphicsView" name="graphicsView_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>431</width>
+        <height>501</height>
+       </rect>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+      </property>
+     </widget>
+    </widget>
     <widget class="QWidget" name="page_3">
      <widget class="QPushButton" name="select_transponder_page2">
       <property name="geometry">
@@ -3044,6 +2931,492 @@ QPushButton:pressed {
       </property>
      </widget>
     </widget>
+    <widget class="QWidget" name="page_8">
+     <widget class="QPushButton" name="select_transponder_page_camera">
+      <property name="geometry">
+       <rect>
+        <x>380</x>
+        <y>540</y>
+        <width>51</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>19</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+image: url(:/forwards.svg); 
+color: #333;
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #15E
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="select_page2_map">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>540</y>
+        <width>51</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>19</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+image: url(:/backwards.svg); 
+color: #333;
+border: 2px solid #555;
+border-radius: 20px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #15E
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="exit_2">
+      <property name="geometry">
+       <rect>
+        <x>140</x>
+        <y>620</y>
+        <width>161</width>
+        <height>61</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>18</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Exit</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+      <property name="default">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="imu_reset">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>110</y>
+        <width>161</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+image: url(:/config.svg); 
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+      <property name="default">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="use_hw">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>40</y>
+        <width>161</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+image: url(:/podcast.svg); 
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="reset_att">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>180</y>
+        <width>161</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #00F
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}</string>
+      </property>
+      <property name="text">
+       <string>EKF_1</string>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>220</x>
+        <y>110</y>
+        <width>161</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Full recalibrate</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_21">
+      <property name="geometry">
+       <rect>
+        <x>220</x>
+        <y>50</y>
+        <width>161</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Pitch recalibrate</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_23">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>320</y>
+        <width>251</width>
+        <height>55</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Calibrate Attitude in Barometer from
+GPS Only to be used on ground !</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="use_gps_in_attitude">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>250</y>
+        <width>161</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Use GPS in algo.</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="reset_altitude_2">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>320</y>
+        <width>161</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Calibrate Altitude</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="reset_heading">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>390</y>
+        <width>161</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #888
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Calibrate Heading</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_24">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>390</y>
+        <width>350</width>
+        <height>55</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Calibrate Heading in compass from
+GPS Only to be used in air !</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="use_built_inn_barometer">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>460</y>
+        <width>151</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #080
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Use External
+barometer</string>
+      </property>
+     </widget>
+    </widget>
     <widget class="QWidget" name="page_5">
      <widget class="QPushButton" name="select_transponder_page2_3">
       <property name="geometry">
@@ -3314,12 +3687,6 @@ QPushButton:pressed {
    <header location="global">QtQuickWidgets/QQuickWidget</header>
   </customwidget>
   <customwidget>
-   <class>QVideoWidget</class>
-   <extends>QWidget</extends>
-   <header>qvideowidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>WidgetASI</class>
    <extends>QWidget</extends>
    <header>example/WidgetASI.h</header>
@@ -3353,6 +3720,12 @@ QPushButton:pressed {
    <class>WidgetHI</class>
    <extends>QWidget</extends>
    <header>example/WidgetHI.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QVideoWidget</class>
+   <extends>QWidget</extends>
+   <header>qvideowidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

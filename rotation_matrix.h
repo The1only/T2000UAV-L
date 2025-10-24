@@ -7,6 +7,10 @@
 #include <iostream>  // For std::cout
 #include <array>
 #include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Geometry> // for AngleAxis
+#include <vector>
+#include <cmath>
 
 using namespace Eigen;
 

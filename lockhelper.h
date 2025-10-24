@@ -10,6 +10,7 @@ class KeepAwakeHelper
 {
 public:
     KeepAwakeHelper();
+    void EnableKeepAwakeHelper();
     virtual ~KeepAwakeHelper();
 
 private:

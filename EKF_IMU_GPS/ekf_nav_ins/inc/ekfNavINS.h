@@ -51,7 +51,7 @@ struct ExtendedKalmanFilter {
         Q = MatrixXd::Zero(15, 15);
 
          Q.diagonal() <<1e-4, 1e-4, 1e-4,
-                        1e-2, 1e-2, 1e-2,
+                        1e-3, 1e-3, 1e-3,
                         1e-3, 1e-3, 1e-3,
                         1e-5, 1e-5, 1e-5,
                         1e-5, 1e-5, 1e-5;
@@ -60,16 +60,16 @@ struct ExtendedKalmanFilter {
         R = MatrixXd::Zero(15, 15);
 
         // Set diagonal elements of R explicitly
-        R(0, 0) = 1e-2; // GPS x noise
-        R(1, 1) = 1e-2; // GPS y noise
-        R(2, 2) = 1e-2; // GPS z noise
-        R(3, 3) = 1e-2; // GPS vx noise
-        R(4, 4) = 1e-2; // GPS vy noise
-        R(5, 5) = 1e-2; // GPS vz noise
-        R(6, 6) = 1e-1; // Barometer noise
-        R(7, 7) = 0.01; //1e-2; // Accelerometer roll noise
-        R(8, 8) = 0.01; //1e-2; // Accelerometer pitch noise
-        R(9, 9) = 0.01; //1e-2; // Accelerometer yaw noise
+        R(0, 0)   = 1e-2; // GPS x noise
+        R(1, 1)   = 1e-2; // GPS y noise
+        R(2, 2)   = 1e-2; // GPS z noise
+        R(3, 3)   = 1e-3; // GPS vx noise
+        R(4, 4)   = 1e-3; // GPS vy noise
+        R(5, 5)   = 1e-3; // GPS vz noise
+        R(6, 6)   = 1e-1; // Barometer noise
+        R(7, 7)   = 0.092; //1e-5; //1e-2; // Accelerometer roll noise
+        R(8, 8)   = 0.092; //1e-5; //1e-2; // Accelerometer pitch noise
+        R(9, 9)   = 0.092; //1e-5; //1e-2; // Accelerometer yaw noise
         R(10, 10) = 1e-3; // Magnetometer x noise
         R(11, 11) = 1e-3; // Magnetometer y noise
         R(12, 12) = 1e-3; // Magnetometer z noise
@@ -90,6 +90,7 @@ struct ExtendedKalmanFilter {
 
     // Jacobian of the state transition function
     MatrixXd F_jacobian(const VectorXd &state, double dt) {
+        Q_UNUSED(state);
         MatrixXd F = MatrixXd::Identity(15, 15);
         F(0, 3) = dt;
         F(1, 4) = dt;
@@ -114,6 +115,7 @@ struct ExtendedKalmanFilter {
 
     // Jacobian of the measurement function
     MatrixXd H_jacobian(const VectorXd &state) {
+        Q_UNUSED(state);
         MatrixXd H = MatrixXd::Zero(15, 15);
         H.block<3, 3>(0, 0) = Matrix3d::Identity(); // GPS position measurements
         H.block<3, 3>(3, 3) = Matrix3d::Identity(); // GPS velocity measurements
@@ -219,8 +221,8 @@ class ekfNavINS {
     }
 
     // return pitch, roll and yaw
-    std::tuple<float,float,float> getPitchRoll(float ax, float ay, float az, float Gcal);
-    std::tuple<float,float,float> getYaw(float ax, float ay, float hx, float hy, float hz, float Gcal);
+    std::tuple<double,double,double> getPitchRoll(double ax, double ay, double az, double Gcal);
+    float getHeading(float Mx, float My, float Mz, float roll, float pitch);
 
     // Use Kalmanfilter of build in function...
     bool initialized_ = false;

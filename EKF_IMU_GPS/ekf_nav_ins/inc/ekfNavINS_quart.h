@@ -58,10 +58,10 @@ struct ExtendedKalmanFilter_quart {
         Rco(4, 4) = 1e-2; // GPS vy noise
         Rco(5, 5) = 1e-2; // GPS vz noise
         Rco(6, 6) = 1e-1; // Barometer noise
-        Rco(7, 7) = 0.03; //1e-2; // Accelerometer quat. 0.04 is slow, 0.01 is faster 0.06 is too slow...
-        Rco(8, 8) = 0.03; //1e-2; // Accelerometer quat.
-        Rco(9, 9) = 0.03; //1e-2; // Accelerometer quat.
-        Rco(10,10)= 0.03; //1e-2; // Accelerometer quat.
+        Rco(7, 7) = 0.25; //1e-2; // Accelerometer quat. 0.04 is slow, 0.01 is faster 0.06 is too slow...
+        Rco(8, 8) = 0.25; //1e-2; // Accelerometer quat.
+        Rco(9, 9) = 0.25; //1e-2; // Accelerometer quat.
+        Rco(10,10)= 0.25; //1e-2; // Accelerometer quat.
         Rco(11,11)= 1e-3; // 1e-1 Magnetometer x noise
         Rco(12,12)= 1e-3; // 1e-1 Magnetometer y noise
         Rco(13,13)= 1e-3; // 1e-1 Magnetometer z noise
@@ -132,6 +132,7 @@ struct ExtendedKalmanFilter_quart {
 
     // Jacobian of the measurement function
     MatrixXd H_jacobian(const VectorXd &state) {
+        Q_UNUSED(state);
         MatrixXd H = MatrixXd::Zero(16, 16);
         H.block<3, 3>(0, 0) = Matrix3d::Identity(); // GPS position measurements
         H.block<3, 3>(3, 3) = Matrix3d::Identity(); // GPS velocity measurements
@@ -196,9 +197,90 @@ struct ExtendedKalmanFilter_quart {
     }
 
     // ------------------------------------------------
+
+    // ------------------------------------------------
+    // Convert quaternion to Euler angles (ZYX order: roll, pitch, yaw)
+    Vector3d quaternionToEulerAngles(const Quaterniond& q)
+    {
+        Matrix3d R = q.toRotationMatrix();
+
+        double roll  = atan2(R(2, 1), R(2, 2));
+        double pitch = atan2(-R(2, 0), sqrt(R(2, 1) * R(2, 1) + R(2, 2) * R(2, 2)));
+        double yaw   = atan2(R(1, 0), R(0, 0));
+
+        return Vector3d(roll, pitch, yaw); // In radians
+    }
+
+    // ------------------------------------------------
+    // Apply full mounting correction: transforms attitude into display frame
+    Vector3d getCorrectedEulerAnglesFullFrame(const Quaterniond& q_mounting, const Quaterniond& q_estimatedAttitude)
+    {
+        // Apply inverse mounting to convert attitude into mounting/display frame
+        Quaterniond q_corrected = q_mounting.inverse() * q_estimatedAttitude;
+
+        // Convert to Euler angles
+        return quaternionToEulerAngles(q_corrected);
+    }
+
+    Vector3d mounting(Vector3d est, Vector3d mount)
+    {
+        // Step 1: Define the estimated attitude (EKF output) as Euler angles
+        double roll_est = est[0], pitch_est = est[1], yaw_est = est[2];
+
+        // Step 2: Define the IMU mounting orientation as Euler angles
+        double roll_mount = mount[0], pitch_mount = mount[1], yaw_mount = mount[2];
+
+        // Step 3: Build estimated attitude quaternion
+        Quaterniond q_estimatedAttitude = AngleAxisd(yaw_est,   Vector3d::UnitZ()) *
+                                          AngleAxisd(pitch_est, Vector3d::UnitY()) *
+                                          AngleAxisd(roll_est,  Vector3d::UnitX());
+
+        // Step 4: Build mounting quaternion, this can then be reused...
+        Quaterniond q_mounting = AngleAxisd(yaw_mount,   Vector3d::UnitZ()) *
+                                 AngleAxisd(pitch_mount, Vector3d::UnitY()) *
+                                 AngleAxisd(roll_mount,  Vector3d::UnitX());
+
+        // Step 5: Apply full-frame mounting correction
+        Vector3d correctedEuler = getCorrectedEulerAnglesFullFrame(q_mounting, q_estimatedAttitude);
+        Vector3d correctedDeg = correctedEuler * (180.0 / M_PI); // convert to degrees
+        return correctedDeg;
+    }
+
+    Eigen::Matrix3d rotationMatrixFromEuler(Vector3d sens) {
+        double cr = cos(sens[0]),  sr = sin(sens[0]);
+        double cp = cos(sens[1]),  sp = sin(sens[1]);
+        double cy = cos(sens[2]),  sy = sin(sens[2]);
+
+        Eigen::Matrix3d R;
+        R << cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr,
+            sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr,
+            -sp,     cp * sr,                cp * cr;
+        return R;
+    }
+
+    Vector3d mountingRot(int axis, Vector3d est, Vector3d mount)
+    {
+        if(axis){
+            double x = (sin(mount[1])*est[2]) + (cos(mount[1])*est[0]);
+            double y = (cos(mount[1])*est[2]) - (sin(mount[1])*est[0]);
+            est[0] = x;
+            est[2] = y;
+        }
+        else{
+            double x = (sin(mount[1])*est[2]) + (cos(mount[1])*est[1]);
+            double y = (cos(mount[1])*est[2]) - (sin(mount[1])*est[1]);
+            est[1] = x;
+            est[2] = y;
+        }
+        return est;
+//        return (rotationMatrixFromEuler(mount) * est);
+    }
+
+    // ------------------------------------------------
     // GPS ground speed... GPS bearing in radians...
     Vector3d getCompensatedAccel(double speed, double bearing, Vector3d imuAccel, double dt)
     {
+        Q_UNUSED(dt);
         Vector3d gps_velocity_ned;
         gps_velocity_ned << speed * cos(bearing), // North
                             speed * sin(bearing), // East
@@ -208,6 +290,8 @@ struct ExtendedKalmanFilter_quart {
         Vector3d corrected_accel = imuAccel - gps_velocity_body; // approximate inertial effect
         return corrected_accel;
     }
+
+    // ------------------------------------------------
     double getYaw() const {
         Quaterniond q = getQuat();
         Matrix3d Rx = q.toRotationMatrix();

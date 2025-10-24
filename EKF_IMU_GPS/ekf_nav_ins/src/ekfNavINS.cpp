@@ -78,40 +78,32 @@ void ekfNavINS::ekf_update(double time, double vn,double ve,double vd,double lat
 // ...............................................
 
 // az = up donwn, ax = Roll, ay = flatt up
-std::tuple<float,float,float> ekfNavINS::getPitchRoll(float ax, float ay, float az, float Gcal )
+std::tuple<double,double,double> ekfNavINS::getPitchRoll(double ax, double ay, double az, double Gcal )
 {
-    // initial attitude and heading
-    if(ax > Gcal) ax = Gcal;
-    if(ay > Gcal) ay = Gcal;
+    Vector3d att = {ax,ay,az};
+    att = att.normalized();
 
-    float theta = -asinf(ax/Gcal);
-    float phi = -asinf(ay/Gcal*cosf(theta));
-
-    return (std::make_tuple(theta,phi,0));
+    double theta2 = -atan2(att[0],att[2]);
+    double phi2 = atan2(-att[1], sqrt((att[0]*att[0]) + (att[2]*att[2])));
+    return (std::make_tuple(theta2,phi2,0));
 }
 
+// -------------------------------------------------------
 // Working...
-std::tuple<float,float,float> ekfNavINS::getYaw(float roll,float pitch, float hx, float hy, float hz, float Gcal )
+float ekfNavINS::getHeading(float Mx, float My, float Mz, float roll, float pitch)
 {
-    // magnetic heading corrected for roll and pitch angle
-    float Bxc, Byc;
+    Vector3d mag = {Mx,My,Mz};
+    mag = mag.normalized();
 
-    double hz_ = (hx * sin(pitch)) + (hz * cos(pitch)) ;
-    double hx_ = (hx * cos(pitch)) + (hz * sin(pitch)) ;
+    float mx2 = mag[0] * cos(pitch) + mag[2] * sin(pitch);
+    float my2 = mag[0] * sin(roll) * sin(pitch) + mag[1] * cos(roll) - mag[2] * sin(roll) * cos(pitch);
 
-    // Magnetic heading correction due to roll and pitch angle (after 90-degree rotation)
-    Byc = hz*cosf(pitch) + (hy*sinf(roll) + hx*cosf(roll))*sinf(pitch);
-    Bxc = (hy*cosf(roll) - hx*sinf(roll));
+    float heading = atan2(my2, mx2);  // North-referenced
+    //float heading  = atan2(mag[1],mag[0]);
+    //if (heading < 0) heading += 2 * M_PI;
 
-    // finding initial heading
-    float psi = -atan2f(Bxc,-Byc);
-  //  float psi = -atan2f(hy,-hz_);
-
-    float p = atan2(hz, sqrt(hy*hy + hx*hx));
-    float r = atan2(hy, sqrt(hz_*hz_ + hx_*hx_));
-
-    //    psi = psi + gz*DEG_TO_RAD*m_dt;
-    return (std::make_tuple(p,r,psi));
+ //   qDebug() << pitch*RAD_TO_DEG << roll*RAD_TO_DEG << heading*RAD_TO_DEG;
+    return heading;  // In radians
 }
 //--------------------------------------
 

@@ -12,6 +12,8 @@ In development on replit (https://repl.it/@quantum_jim/MicroQiskitC) and on gith
 */
 #ifndef MICROQISKITCPP_H
 #define MICROQISKITCPP_H
+#include <QMainWindow>
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -22,7 +24,7 @@ In development on replit (https://repl.it/@quantum_jim/MicroQiskitC) and on gith
 #include <map>
 
 //#include <QtCore/QLoggingCategory>
-#define qDebug() cout
+//#define qDebug() cout
 #define Qt
 
 #define RESET   "\033[0m"

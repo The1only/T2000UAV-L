@@ -1,87 +1,93 @@
 //#define T10_V20
 //#define BTSerial
+//#define Bluetooth
 #define simulate
+bool Debug = true;
 
 #include <SPI.h>
 #include <Wire.h>
 
-#ifdef BTSerial
-#include "BluetoothSerial.h"
-#else
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
-#include <BLE2902.h>
+#ifdef Bluetooth
+  #ifdef BTSerial
+  #include "BluetoothSerial.h"
+  #else
+  #include <BLEDevice.h>
+  #include <BLEUtils.h>
+  #include <BLEServer.h>
+  #include <BLE2902.h>
+  #endif
 #endif
 
 #include <stdio.h>
 #include "string.h"
 
-#ifdef BTSerial
-//#define bluetoothModuleSerial Serial1
-// Create a BluetoothSerial object
-// Serial port that the bluetooth module is connected
-// Verbose mode: true
-//BluetoothSerial blueSerial(bluetoothModuleSerial, true);
+#ifdef Bluetooth
+  #ifdef BTSerial
+  //#define bluetoothModuleSerial Serial1
+  // Create a BluetoothSerial object
+  // Serial port that the bluetooth module is connected
+  // Verbose mode: true
+  //BluetoothSerial blueSerial(bluetoothModuleSerial, true);
 
-// BluetoothSerial SerialBT();
-boolean confirmRequestPending = true;
+  // BluetoothSerial SerialBT();
+  boolean confirmRequestPending = true;
 
-void BTConfirmRequestCallback(uint32_t numVal) {
-  confirmRequestPending = true;
-  Serial.println(numVal);
- // SerialBT.confirmReply(true);
-}
-
-void BTAuthCompleteCallback(boolean success) {
-  confirmRequestPending = false;
-  if (success) {
-    Serial.println("Pairing success!!");
-  } else {
-    Serial.println("Pairing failed, rejected by user!!");
+  void BTConfirmRequestCallback(uint32_t numVal) {
+    confirmRequestPending = true;
+    Serial.println(numVal);
+  // SerialBT.confirmReply(true);
   }
-}
-#else
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
-#include <BLE2902.h>
 
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
-
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-
-BLEServer* pServer = NULL;
-BLECharacteristic* pCharacteristic = NULL;
-BLEService *pService = NULL;
-//bool deviceConnected = false;
-bool confirmRequestPending = true;
-
-class MyServerCallbacks: public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-      confirmRequestPending = false;
+  void BTAuthCompleteCallback(boolean success) {
+    confirmRequestPending = false;
+    if (success) {
       Serial.println("Pairing success!!");
-    };
-
-    void onDisconnect(BLEServer* pServer) {
-      confirmRequestPending = true;
+    } else {
+      Serial.println("Pairing failed, rejected by user!!");
     }
-};
+  }
+  #else
+  #include <BLEDevice.h>
+  #include <BLEUtils.h>
+  #include <BLEServer.h>
+  #include <BLE2902.h>
 
-class MyCallbacks: public BLECharacteristicCallbacks {
-  void onRead(BLECharacteristic *pCharacteristic) {
-    pCharacteristic->setValue("Hello World!");
-  }
-  
-  void onWrite(BLECharacteristic *pCharacteristic) {
- //   std::string value = pCharacteristic->getValue();
-  }
-};
+  // See the following for generating UUIDs:
+  // https://www.uuidgenerator.net/
+
+  #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+  #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+  BLEServer* pServer = NULL;
+  BLECharacteristic* pCharacteristic = NULL;
+  BLEService *pService = NULL;
+  //bool deviceConnected = false;
+  bool confirmRequestPending = true;
+
+  class MyServerCallbacks: public BLEServerCallbacks {
+      void onConnect(BLEServer* pServer) {
+        confirmRequestPending = false;
+        Serial.println("Pairing success!!");
+      };
+
+      void onDisconnect(BLEServer* pServer) {
+        confirmRequestPending = true;
+      }
+  };
+
+  class MyCallbacks: public BLECharacteristicCallbacks {
+    void onRead(BLECharacteristic *pCharacteristic) {
+      pCharacteristic->setValue("Hello World!");
+    }
+    
+    void onWrite(BLECharacteristic *pCharacteristic) {
+  //   std::string value = pCharacteristic->getValue();
+    }
+  };
+  #endif
+#else
+boolean confirmRequestPending = true;
 #endif
-
-bool Debug = true;
 
 //define the pins used by the LoRa transceiver module
 #define OLED_SDA 4
@@ -157,42 +163,44 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Transponder v1.0");
 
-#ifdef BTSerial
-  bluetoothModuleSerial.begin(9600);
-  SerialBT.enableSSP();
-#ifdef USE_PIN
-  SerialBT.setPin(pin);
-  Serial.println("Using PIN");
-#endif
-  SerialBT.onConfirmRequest(BTConfirmRequestCallback);
-  SerialBT.onAuthComplete(BTAuthCompleteCallback);
-  SerialBT.begin("Transponder");  //Bluetooth device name
-#else
-  BLEDevice::init("Transponder");
-  pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
-  pService = pServer->createService(SERVICE_UUID);
-  pCharacteristic = pService->createCharacteristic(
-                                         CHARACTERISTIC_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE |
-                                         BLECharacteristic::PROPERTY_NOTIFY |
-                                         BLECharacteristic::PROPERTY_INDICATE
-                                       );
+#ifdef Bluetooth
+  #ifdef BTSerial
+    bluetoothModuleSerial.begin(9600);
+    SerialBT.enableSSP();
+  #ifdef USE_PIN
+    SerialBT.setPin(pin);
+    Serial.println("Using PIN");
+  #endif
+    SerialBT.onConfirmRequest(BTConfirmRequestCallback);
+    SerialBT.onAuthComplete(BTAuthCompleteCallback);
+    SerialBT.begin("Transponder");  //Bluetooth device name
+  #else
+    BLEDevice::init("Transponder");
+    pServer = BLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
+    pService = pServer->createService(SERVICE_UUID);
+    pCharacteristic = pService->createCharacteristic(
+                                          CHARACTERISTIC_UUID,
+                                          BLECharacteristic::PROPERTY_READ |
+                                          BLECharacteristic::PROPERTY_WRITE |
+                                          BLECharacteristic::PROPERTY_NOTIFY |
+                                          BLECharacteristic::PROPERTY_INDICATE
+                                        );
 
-//  pCharacteristic->setValue("Hello Transponder...");
+  //  pCharacteristic->setValue("Hello Transponder...");
 
-  pCharacteristic->setCallbacks(new MyCallbacks());
-  pCharacteristic->addDescriptor(new BLE2902());
-  pService->start();
+    pCharacteristic->setCallbacks(new MyCallbacks());
+    pCharacteristic->addDescriptor(new BLE2902());
+    pService->start();
 
-  BLEAdvertising *pAdvertising = pServer->getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(true);
-  pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
-  pAdvertising->setMinPreferred(0x12);
-  //BLEDevice::startAdvertising();
-  pAdvertising->start();
+    BLEAdvertising *pAdvertising = pServer->getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->setScanResponse(true);
+    pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
+    pAdvertising->setMinPreferred(0x12);
+    //BLEDevice::startAdvertising();
+    pAdvertising->start();
+  #endif
 #endif
 
   Serial.println("The device started, now you can pair it with bluetooth!");

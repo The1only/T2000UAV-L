@@ -1,0 +1,36 @@
+dependencies: \
+  /Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/mqttclient.cpp \
+  /Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/mqttClient.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/async_client.h \
+  ../../../third_party/paho/ios/iphoneos/include/MQTTAsync.h \
+  ../../../third_party/paho/ios/iphoneos/include/MQTTExportDeclarations.h \
+  ../../../third_party/paho/ios/iphoneos/include/MQTTProperties.h \
+  ../../../third_party/paho/ios/iphoneos/include/MQTTReasonCodes.h \
+  ../../../third_party/paho/ios/iphoneos/include/MQTTSubscribeOpts.h \
+  ../../../third_party/paho/ios/iphoneos/include/MQTTClientPersistence.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/callback.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/delivery_token.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/message.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/buffer_ref.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/types.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/reason_code.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/exception.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/platform.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/export.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/properties.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/token.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/iaction_listener.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/server_response.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/string_collection.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/create_options.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/iclient_persistence.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/buffer_view.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/event.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/iasync_client.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/connect_options.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/ssl_options.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/topic.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/subscribe_options.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/will_options.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/disconnect_options.h \
+  ../../../third_party/paho/ios/iphoneos/include/mqtt/thread_queue.h

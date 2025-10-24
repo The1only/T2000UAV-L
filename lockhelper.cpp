@@ -7,7 +7,11 @@
 #include "lockhelper.h"
 
 KeepAwakeHelper::KeepAwakeHelper()
-{    
+{
+}
+
+void KeepAwakeHelper::EnableKeepAwakeHelper()
+{
     QJniObject activity = QJniObject::callStaticObjectMethod("org/qtproject/qt/android/QtNative", "activity", "()Landroid/app/Activity;");
     if ( activity.isValid() )
     {

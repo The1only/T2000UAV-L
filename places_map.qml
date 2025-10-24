@@ -5,7 +5,7 @@ import QtPositioning
 Rectangle {
     anchors.fill: parent
 
-    property double zoomLevel: 14
+    property double zoomLevel: 15
     property double lat: 59.91
     property double lon: 10.75
     property double las_lat_1:lat
@@ -45,41 +45,13 @@ Rectangle {
                                               coordinate: QtPositioning.coordinate(latitude, longitude)
                                           })
         map.addMapItem(item)
-
-        var Component1 = Qt.createComponent("qrc:///marker.qml")
-        var item1 = Component1.createObject(parent, {
-                                              coordinate: QtPositioning.coordinate(las_lat_1, las_lon_1)
-                                          })
-        map.addMapItem(item1)
-
-        las_lon_10 = las_lon_9
-        las_lon_9 = las_lon_8
-        las_lon_8 = las_lon_7
-        las_lon_7 = las_lon_6
-        las_lon_6 = las_lon_5
-        las_lon_5 = las_lon_4
-        las_lon_4 = las_lon_3
-        las_lon_3 = las_lon_2
-        las_lon_2 = las_lon_1
-        las_lon_1 = longitude
-
-        las_lat_10 = las_lat_9
-        las_lat_9 = las_lat_8
-        las_lat_8 = las_lat_7
-        las_lat_7 = las_lat_6
-        las_lat_6 = las_lat_5
-        las_lat_5 = las_lat_4
-        las_lat_4 = las_lat_3
-        las_lat_3 = las_lat_2
-        las_lat_2 = las_lat_1
-        las_lat_1 = latitude
     }
 
     Map {
         id: map
         anchors.fill: parent
         plugin: mapPlugin
-        zoomLevel: 17
+        zoomLevel: 15
         property geoCoordinate startCentroid
 
         center: QtPositioning.coordinate(lat,lon) // Oslo
@@ -107,7 +79,7 @@ Rectangle {
         Timer {
             interval: 1000; running: true; repeat: true
             onTriggered: {
-               // map.zoomLevel = zoomLevel
+                // map.zoomLevel = zoomLevel
                 map.zoomLevelChanged(true)
                 //               debug(map.zoomLevel)
 

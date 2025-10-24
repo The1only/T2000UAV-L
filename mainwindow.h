@@ -11,6 +11,7 @@
 #include <QCamera>
 #include <QMediaCaptureSession>
 #include <QMessageBox>
+#include <QSplashScreen>
 
 #include <QGyroscopeReading>
 #include <QGyroscope>
@@ -39,16 +40,43 @@
 #include "mytcpsocket.h"
 #include "ekfNavINS.h"
 
+#include "mqttclient.h"
+
+#include "example/WidgetSix.h"
+/*
+#include "example/WidgetAI.h"
+#include "example/WidgetALT.h"
+#include "example/WidgetASI.h"
+#include "example/WidgetHI.h"
+#include "example/WidgetTC.h"
+#include "example/WidgetVSI.h"
+#include "example/WidgetEADI.h"
+#include "example/WidgetEHSI.h"
+*/
+
+#ifdef Q_OS_IOS
+#undef Q_OS_MAC
+#endif
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class SCREEN; }
 QT_END_NAMESPACE
 
 // + "/Resources/"
 
+#define USE_KeepAwakeHelper
+
 #ifdef Q_OS_IOS
+    // iOS-specific code...
     #define LOG_DIR QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
     #define IMAGES_DIR QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+#elif defined(Q_OS_MAC)
+    // macOS-specific code...
+    #define IMAGES_DIR QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) // "./Camera"
+    #define LOG_DIR QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)   // "./Documents"
+    #include "mqttclient.h"
 #else
+    // Android-spesific code...
     #define IMAGES_DIR "/storage/emulated/0/DCIM/Camera"
     #define LOG_DIR "/storage/emulated/0/Documents"
 #endif
@@ -57,29 +85,10 @@ QT_END_NAMESPACE
 #define AIRPLANE  "/setup_ln_b.txt"
 #define CONFIG    "/config_b.txt"
 #define FLIGHTLOG "/flightlog.txt"
+#define TRANSPONDERLOG "/log.txt"
 
 // Define the Qiskit interface...
 void Qiskit(void);
-
-
-class NoButtonMessageBox : public QDialog {
-public:
-    NoButtonMessageBox(const QString &message, QWidget *parent = nullptr)
-        : QDialog(parent) {
-        setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
-        setAttribute(Qt::WA_TranslucentBackground);
-        setModal(true);
-
-        auto layout = new QVBoxLayout(this);
-        QLabel *label = new QLabel(message, this);
-        label->setAlignment(Qt::AlignCenter);
-        label->setStyleSheet("QLabel { font-size: 18pt; color: white; background-color: #333; padding: 20px; border-radius: 12px; }");
-
-        layout->addWidget(label);
-        setLayout(layout);
-        resize(300, 100);
-    }
-};
 
 class MainWindow : public QMainWindow
 {
@@ -105,10 +114,17 @@ public:
     void setCamera(const QCameraDevice &cameraDevice);
     void permissionUpdated(const QPermission &permission);
     void setButtonIcon(QString iconPath, QPushButton* button);
+    double getBearing(double lat1, double lon1, double lat2, double lon2);
+    void AccelerometerRead();
+    void handleUpdate(const std::string& ID, float value);
+    double setQNH();
+    void showImage();
 
-
+    QSplashScreen *splash;
     //    void updateCameraActive(bool active);
-    Vector3x m_attitude;
+    Vector3d m_attitude;
+    double roll_blended = 0.0;
+    bool roll_blended_ok = false;
 
     Matrix3x3 rotationMatrix;
 
@@ -118,17 +134,17 @@ public:
     int current[4]={8,8,8,8};
     int mode=0;
 
-    double m_a_min_x = 0, m_a_min_y = 0, m_a_min_z = 0;
-    double m_a_max_x = 0, m_a_max_y = 0, m_a_max_z = 0;
-    double m_m_min_x = 0, m_m_min_y = 0, m_m_min_z = 0;
-    double m_m_max_x = 0, m_m_max_y = 0, m_m_max_z = 0;
-
     double m_altitude      = 0;
     double m_latitude      = 0;
     double m_longitude     = 0;
 
+    // Install orientation...
+    Vector3d m_install;
+
     double m_preasure_alt  = 0;
     double m_preasure      = 0;
+    double m_pressure_raw = 0;
+    double m_vario         = 0;
 
     double takeoff_latitude  = 0;
     double takeoff_longitude = 0;
@@ -148,9 +164,13 @@ public:
     double m_speed=0;
     double m_head =9999;
     qreal m_temp  =9999;
+    double m_roll_angle = 0;
+    double m_total_accel = 0;
 
     double m_var_speed = 0;
     double m_ms = 0;
+
+    bool m_bluetoothrunning = false;
 
     QDateTime m_takeoffTime;
     QDateTime m_landedTime;
@@ -158,11 +178,18 @@ public:
     MyTcpSocket *mysocket = NULL;
     int currentIndex = 0;
 
+    QString _transponder_id = "4150323833373205";   // SIM
+//  QString _transponder_id = "4150323833373205"; // REAL
+    QString _radar_id = "415032383337320B";       // SIM
+//    QString _radar_id = "4150325537323317";         // REAL
+    QString _IMU_id = "4150323833373009";         // SIM
+ //   QString _IMU_id = "FTHM2H8X";                   // REAL
+
     static void setIMU(void *parent, bool use_imu);
-    static void getVal(void *parent, QByteArray);
     void onResized(int);
     QScreen* getActiveScreen(QWidget* pWidget) const;
 
+    NoButtonMessageBox *m_msgBox = nullptr;
 
     QQuickView view;
     QSplineSeries *series;
@@ -212,12 +239,14 @@ private:
     void setalt(int alt_mode);
 
     int m_reading    = 0;
-    int m_first      = 75;        // Count down to recalibrate...
-    int m_calibrate  = 0;
+    int m_first      = 0;        // Count down to recalibrate...
+    int m_calibrate  = 150;
     bool m_armed     = false;
     bool m_takeoff   = false;
     double m_bearing = 999;
     double m_heading = 0;
+
+    bool m_use_gps_in_attitude = false;
 
     //   QAltimeterSensor*  m_altimeter_sensor;
     QPressureSensor*    m_pressure_sensor = NULL;
@@ -254,18 +283,38 @@ private:
     bool m_geopos       = false;
     double m_head_dir   = 0.0;
     double m_dt;
+    Vector3d m_accel_body;
 
     double a_pitch      = 0.0;
     double a_roll       = 0.0;
-    double m_pitch_cal  = 0.0;
-    double m_roll_cal   = 0.0;
+    double a_yaw        = 0.0;
+    // double m_pitch_cal  = 0.0;
+    // double m_roll_cal   = 0.0;
     double m_pitch      = 0.0;
     double m_roll       = 0.0;
     double m_yaw        = 0.0;
 
-
-    NoButtonMessageBox *m_msgBox = nullptr;
     NoButtonMessageBox *m_msgBoxCalibrating = nullptr;
+
+#if defined(Q_OS_ANDROID) && defined(USE_KeepAwakeHelper)
+    KeepAwakeHelper *helper = new KeepAwakeHelper();
+#endif
+
+
+//#if defined(Q_OS_ANDROID) || defined(Q_OS_MAC)
+    std::string SERVER_ADDRESS;
+    std::string CLIENT_ID;
+    MqttClient      *mqtt;
+//#endif
+
+    bool m_has_MQTT = false;
+    bool m_has_MQTT_gyro = false;
+    bool m_has_MQTT_accel = false;
+    bool m_has_MQTT_vsi = false;
+    bool m_has_MQTT_heading = false;
+    bool m_has_MQTT_airspeed = false;
+    bool m_has_MQTT_preassure = false;
+
 
     // Q_SIGNALS:
     void accepted();
@@ -323,7 +372,7 @@ private slots:
     void on_select_transponder_page2_clicked();
     void on_imu_reset_clicked();
     void on_timer_start_clicked();
-    void on_textEdit_textChanged();
+    void on_textEdit_1_textChanged();
     void on_textEdit_2_textChanged();
     void on_pushButton_15_clicked();
     void on_select_transponder_page2_2_clicked();
@@ -334,15 +383,30 @@ private slots:
     void on_pushButton_22_clicked();
     void on_select_dumy_page2_2_clicked();
     void on_select_transponder_page_2_clicked();
-    void takePicture();
+    void on_select_page2_map_clicked();
+//    void on_select_page2_camera_clicked();
+    void on_select_transponder_page_camera_clicked();
+    void on_use_gps_in_attitude_clicked();
+    void on_select_transponder_page_4_clicked();
+    void on_select_from_5_to_6_clicked();
+    void on_use_built_inn_barometer_clicked();
+
     void on_pushButton_23_clicked();
     void on_exit_2_clicked();
     void on_use_hw_clicked();
     void on_reset_att_clicked();
     void on_fly_home_clicked();
+
+    void on_reset_altitude_3_clicked();
+    void on_reset_altitude_2_clicked();
+    void on_reset_heading_2_clicked();
+
+    void takePicture();
     void on_dial_valueChanged(int value);
     void on_dial_2_valueChanged(int value);
     void EKF();
+
+    static void getVal(void *, const char *data, uint32_t lenght); //const QByteArray &data);
 
 
 public:
