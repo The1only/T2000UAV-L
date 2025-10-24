@@ -1,3 +1,4 @@
+//
 #include <QtCore/QLoggingCategory>
 #include <QQmlContext>
 #include <QGuiApplication>
