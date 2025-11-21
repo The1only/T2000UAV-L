@@ -25,10 +25,10 @@ android {
     RESOURCES += android/AndroidManifest.xml
 
     # for deployment: include .so into APK
-    ANDROID_EXTRA_LIBS += $$PWD/../build/GeographicLib/build-arm64/install/lib/libGeographicLib.so
+    ANDROID_EXTRA_LIBS += $$PWD/../GeographicLib/build-arm64/install/lib/libGeographicLib.so
     # link path for qmake when building
-    LIBS += -L$$PWD/../build/GeographicLib/build-arm64/install/lib -lGeographicLib
-    INCLUDEPATH += $$PWD/../build/GeographicLib/build-arm64/install/include
+    LIBS += -L$$PWD/../GeographicLib/build-arm64/install/lib -lGeographicLib
+    INCLUDEPATH += $$PWD/../GeographicLib/build-arm64/install/include
 
 
     DEFINES += USE_GEOGRAPHICLIB

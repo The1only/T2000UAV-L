@@ -102,13 +102,16 @@ template <> constexpr inline auto MyTcpSocket::qt_create_metaobjectdata<qt_meta_
         "message",
         "doTransponder",
         "doStart",
-        "doIMU",
+        "parseIMU",
         "parent",
+        "uint32_t",
+        "uiReg",
+        "uint16_t[]",
+        "sReg",
+        "doRadar",
         "const char*",
         "data",
-        "uint32_t",
-        "length",
-        "doRadar"
+        "length"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -120,13 +123,13 @@ template <> constexpr inline auto MyTcpSocket::qt_create_metaobjectdata<qt_meta_
         QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPublic, QMetaType::Void),
         // Slot 'doStart'
         QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPublic, QMetaType::Void),
-        // Slot 'doIMU'
-        QtMocHelpers::SlotData<void(void *, const char *, uint32_t)>(6, 2, QMC::AccessPublic, QMetaType::Void, {{
+        // Slot 'parseIMU'
+        QtMocHelpers::SlotData<void(void *, uint32_t, uint16_t)>(6, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::VoidStar, 7 }, { 0x80000000 | 8, 9 }, { 0x80000000 | 10, 11 },
         }}),
         // Slot 'doRadar'
         QtMocHelpers::SlotData<void(void *, const char *, uint32_t)>(12, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::VoidStar, 7 }, { 0x80000000 | 8, 9 }, { 0x80000000 | 10, 11 },
+            { QMetaType::VoidStar, 7 }, { 0x80000000 | 13, 14 }, { 0x80000000 | 8, 15 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -154,7 +157,7 @@ void MyTcpSocket::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id,
         case 0: _t->sendMessage((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         case 1: _t->doTransponder(); break;
         case 2: _t->doStart(); break;
-        case 3: _t->doIMU((*reinterpret_cast< std::add_pointer_t<void*>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<const char*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<uint32_t>>(_a[3]))); break;
+        case 3: _t->parseIMU((*reinterpret_cast< std::add_pointer_t<void*>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<uint32_t>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<uint16_t[]>>(_a[3]))); break;
         case 4: _t->doRadar((*reinterpret_cast< std::add_pointer_t<void*>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<const char*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<uint32_t>>(_a[3]))); break;
         default: ;
         }

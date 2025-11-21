@@ -1036,12 +1036,6 @@ double MainWindow::setQNH()
         // Pressure offset in millibars (hPa) to add to m_pressure_raw
         double pressure_offset = qnh_hpa - this->mysocket->m_pressure_raw;
 
-        //  mysocket->m_preasure_QNH = 145366.45 * (1.0 - std::pow(qnh_hpa / 1013.25, 0.190284));
-        //  double test              = 145366.45 * (1.0 - std::pow(m_pressure_raw / 1013.25, 0.190284));
-
-        // Now your calibrated pressure
-   //     double calibrated_pressure = m_pressure_raw + pressure_offset;
-
         // Check: this should now yield GPS altitude
         mysocket->m_preasure_QNH  = 145366.45 * (1.0 - std::pow(this->mysocket->m_pressure_raw / qnh_hpa, 0.190284));
 
@@ -1050,7 +1044,6 @@ double MainWindow::setQNH()
                  << " Calc.GPS.Alt:" << mysocket->m_preasure_QNH; // << " Test: " << test;
 
         ui->doubleSpinBox->setText(QString("%1").arg(qnh_hpa));
-//        ui->doubleSpinBox->setText(QString("%1").arg(1013.25 + pressure_offset));
         return qnh_hpa;
     }
     else return 1013.25;
@@ -2029,7 +2022,7 @@ void MainWindow::onReadingChanged()
             {
                 ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
                 ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
-                ui->temp->setText(QString("%1").arg(mysocket->AIR_PRESSURE, 0, 'f', 0));
+                ui->temp->setText(QString("%1").arg(mysocket->Temp, 0, 'f', 0));
                 ui->temperature->setText(QString("%1").arg(mysocket->FW_Speed, 0, 'f', 1));
                 ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
             }

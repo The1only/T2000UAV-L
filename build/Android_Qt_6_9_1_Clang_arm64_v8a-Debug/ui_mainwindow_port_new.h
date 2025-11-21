@@ -768,7 +768,7 @@ public:
         font13.setPointSize(25);
         timeEdit->setFont(font13);
         timeEdit->setReadOnly(true);
-        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 26), QTime(2, 0, 0)));
+        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 25), QTime(20, 0, 0)));
         timeEdit->setTimeSpec(Qt::TimeSpec::UTC);
         label_5 = new QLabel(page);
         label_5->setObjectName("label_5");
@@ -829,12 +829,12 @@ public:
         select_dumy_page2->setObjectName("select_dumy_page2");
         select_dumy_page2->setGeometry(QRect(810, 10, 41, 161));
         select_dumy_page2->setFont(font9);
-        select_dumy_page2->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_dumy_page2->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         select_transponder_page = new QPushButton(page);
         select_transponder_page->setObjectName("select_transponder_page");
         select_transponder_page->setGeometry(QRect(810, 180, 41, 161));
         select_transponder_page->setFont(font9);
-        select_transponder_page->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
+        select_transponder_page->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         timer_start = new QPushButton(page);
         timer_start->setObjectName("timer_start");
         timer_start->setGeometry(QRect(10, 280, 181, 71));
@@ -1210,7 +1210,7 @@ public:
         graphicsView_2->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
         label_26 = new QLabel(page_9);
         label_26->setObjectName("label_26");
-        label_26->setGeometry(QRect(30, 40, 71, 41));
+        label_26->setGeometry(QRect(30, 40, 131, 41));
         QFont font18;
         font18.setPointSize(40);
         font18.setBold(true);
@@ -1218,7 +1218,7 @@ public:
         label_26->setStyleSheet(QString::fromUtf8("color: rgba(250,250, 50, 190);"));
         label_29 = new QLabel(page_9);
         label_29->setObjectName("label_29");
-        label_29->setGeometry(QRect(660, 220, 81, 41));
+        label_29->setGeometry(QRect(660, 220, 111, 41));
         label_29->setFont(font18);
         label_29->setStyleSheet(QString::fromUtf8("color: rgba(250,250, 50, 190);"));
         stackedWidget->addWidget(page_9);
@@ -1733,7 +1733,7 @@ public:
         retranslateUi(MainWindow_port_new);
 
         stackedWidget->setCurrentIndex(2);
-        tabWidget->setCurrentIndex(2);
+        tabWidget->setCurrentIndex(0);
         exit_2->setDefault(true);
         imu_reset->setDefault(true);
 
@@ -1817,8 +1817,8 @@ public:
         doubleSpinBox_2->setText(QCoreApplication::translate("MainWindow_port_new", "1013.25", nullptr));
         select_from_5_to_6->setText(QString());
         select_transponder_page_4->setText(QString());
-        label_26->setText(QCoreApplication::translate("MainWindow_port_new", "100", nullptr));
-        label_29->setText(QCoreApplication::translate("MainWindow_port_new", "200", nullptr));
+        label_26->setText(QCoreApplication::translate("MainWindow_port_new", "0", nullptr));
+        label_29->setText(QCoreApplication::translate("MainWindow_port_new", "0", nullptr));
         select_transponder_page2->setText(QString());
         select_gyro_page2->setText(QString());
         textEdit->setHtml(QCoreApplication::translate("MainWindow_port_new", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
