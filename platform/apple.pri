@@ -25,16 +25,16 @@ macx {
     LIBS -= framework AGL
 
     # prefer opt/homebrew on Apple Silicon
-    exists($$PWD/../build/GeographicLib) {
+    exists($$PWD/../GeographicLib) {
         message(... FOUND ... )
-        INCLUDEPATH += $$PWD/../build/GeographicLib/build-mac/install/include
-        LIBS += -L$$PWD/../build/GeographicLib/build-mac/install/lib -lGeographicLib
+        INCLUDEPATH += $$PWD/../GeographicLib/build-mac/install/include
+        LIBS += -L$$PWD/../GeographicLib/build-mac/install/lib -lGeographicLib
         GEODATA_DIR = //usr/local/share/GeographicLib
 #       INCLUDEPATH += /opt/homebrew/include
 #       LIBS += -L/opt/homebrew/lib -lGeographicLib
 #       GEODATA_DIR = /opt/homebrew/share/GeographicLib
     } else {
-        message(... ERROR ... Missing: $$PWD/../build/GeographicLib/build-mac/install/include)
+        message(... ERROR ... Missing: $$PWD/../GeographicLib/build-mac/install/include)
     }
 
     DEFINES += USE_GEOGRAPHICLIB
