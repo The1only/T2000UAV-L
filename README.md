@@ -8,7 +8,6 @@ The system supports both external IMU and internal Android IMU.
 It can be used in a split screen on a pad together with Skydemon etc. 
 
 <img width="867" height="410" alt="Screenshot 2025-10-24 at 14 13 30" src="https://github.com/user-attachments/assets/e9bac420-f465-4934-8e1d-e7a1b7004baf" />
-<img width="289" height="284" alt="Screenshot 2025-10-23 at 13 07 22" src="https://github.com/user-attachments/assets/b5b750d1-a535-4132-bb52-f30a6bde2d3a" />
 <img width="865" height="410" alt="Screenshot 2025-10-24 at 14 18 13" src="https://github.com/user-attachments/assets/9b340342-3944-4415-bb72-3d4a53b99011" />
 <img width="865" height="378" alt="Screenshot 2025-11-21 at 13 33 03" src="https://github.com/user-attachments/assets/6e30c939-8673-4881-ac2a-ba5833163d5e" />
 <img width="860" height="373" alt="Screenshot 2025-11-21 at 13 33 15" src="https://github.com/user-attachments/assets/07c4ab33-8c71-4db3-a341-f9b255b09c53" />
