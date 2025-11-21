@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
         <key>NSLocationAlwaysUsageDescription</key>
-        <string>Program requires GPS to track cars and job orders</string>
+        <string>Program requires GPS</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-        <string>Program requires GPS to track cars and job orders</string>
+        <string>Program requires GPS</string>
         <key>NSLocationWhenInUseUsageDescription</key>
-        <string>Program requires GPS to track cars and job orders</string>
+        <string>Program requires GPS</string>
         <key>NSMicrophoneUsageDescription</key>
         <string>This app uses your Microphone to allow Voice over IP communication with the Program Admin system</string>
         <key>NSLocationUsageDescription</key>

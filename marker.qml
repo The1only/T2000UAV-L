@@ -7,7 +7,7 @@ MapQuickItem{
     anchorPoint.y: marker.height
     sourceItem: Image{
         id: icon
-        source: "qrc:///plane.png"
+        source: "qrc:///images/plane.png"
         sourceSize.width: 10
         sourceSize.height: 10
     }

@@ -1,5 +1,5 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource prefix="/">
-<file alias="android/AndroidManifest.xml">/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/android/AndroidManifest.xml</file>
+<file alias="android/AndroidManifest.xml">/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/android/AndroidManifest.xml</file>
 </qresource>
 </RCC>

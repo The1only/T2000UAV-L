@@ -136,7 +136,12 @@ public:
     QPushButton *select_transponder_page_4;
     QPushButton *select_from_4_to_6;
     QLabel *label_22;
+    QLabel *radar_speed;
+    QLabel *label_27;
+    QLabel *label_26;
     QGraphicsView *graphicsView_2;
+    QLabel *label_28;
+    QLabel *label_29;
     QWidget *page_3;
     QPushButton *select_transponder_page2;
     QPushButton *select_gyro_page2;
@@ -788,7 +793,7 @@ public:
         font13.setPointSize(25);
         timeEdit->setFont(font13);
         timeEdit->setReadOnly(true);
-        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 28), QTime(19, 0, 0)));
+        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 29), QTime(0, 0, 0)));
         timeEdit->setTimeSpec(Qt::TimeSpec::UTC);
         label_5 = new QLabel(page);
         label_5->setObjectName("label_5");
@@ -1332,23 +1337,52 @@ public:
 ""));
         label_22 = new QLabel(page_9);
         label_22->setObjectName("label_22");
-        label_22->setGeometry(QRect(0, 10, 111, 31));
+        label_22->setGeometry(QRect(10, 20, 111, 21));
         QFont font18;
         font18.setFamilies({QString::fromUtf8("Academy Engraved LET")});
         font18.setPointSize(20);
         label_22->setFont(font18);
         label_22->setStyleSheet(QString::fromUtf8("color: rgb(255, 255, 255);\n"
 ""));
+        radar_speed = new QLabel(page_9);
+        radar_speed->setObjectName("radar_speed");
+        radar_speed->setGeometry(QRect(570, 30, 91, 21));
+        radar_speed->setFont(font14);
+        radar_speed->setStyleSheet(QString::fromUtf8("color: rgb(138, 150, 155);"));
+        radar_speed->setAlignment(Qt::AlignmentFlag::AlignCenter);
+        label_27 = new QLabel(page_9);
+        label_27->setObjectName("label_27");
+        label_27->setGeometry(QRect(10, 190, 31, 16));
+        label_27->setStyleSheet(QString::fromUtf8("color: rgb(255, 172, 26);"));
+        label_26 = new QLabel(page_9);
+        label_26->setObjectName("label_26");
+        label_26->setGeometry(QRect(10, 40, 41, 16));
+        label_26->setStyleSheet(QString::fromUtf8("color: rgb(255, 56, 25);"));
         graphicsView_2 = new QGraphicsView(page_9);
         graphicsView_2->setObjectName("graphicsView_2");
-        graphicsView_2->setGeometry(QRect(0, 0, 671, 351));
+        graphicsView_2->setGeometry(QRect(0, 10, 671, 351));
         graphicsView_2->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
         graphicsView_2->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+        label_28 = new QLabel(page_9);
+        label_28->setObjectName("label_28");
+        label_28->setGeometry(QRect(10, 340, 21, 16));
+        label_28->setStyleSheet(QString::fromUtf8("color: rgb(26, 255, 29);"));
+        label_29 = new QLabel(page_9);
+        label_29->setObjectName("label_29");
+        label_29->setGeometry(QRect(560, 50, 101, 21));
+        label_29->setFont(font10);
+        label_29->setStyleSheet(QString::fromUtf8("color: rgb(135,135,135);"));
+        label_29->setAlignment(Qt::AlignmentFlag::AlignCenter);
         stackedWidget->addWidget(page_9);
         graphicsView_2->raise();
         select_transponder_page_4->raise();
         select_from_4_to_6->raise();
         label_22->raise();
+        radar_speed->raise();
+        label_27->raise();
+        label_26->raise();
+        label_28->raise();
+        label_29->raise();
         page_3 = new QWidget();
         page_3->setObjectName("page_3");
         select_transponder_page2 = new QPushButton(page_3);
@@ -1924,7 +1958,7 @@ public:
 
         retranslateUi(MainWindow_port_iPhone);
 
-        stackedWidget->setCurrentIndex(2);
+        stackedWidget->setCurrentIndex(4);
         tabWidget->setCurrentIndex(0);
         imu_reset->setDefault(true);
         exit_2->setDefault(true);
@@ -2008,6 +2042,11 @@ public:
         select_transponder_page_4->setText(QString());
         select_from_4_to_6->setText(QString());
         label_22->setText(QCoreApplication::translate("MainWindow_port_iPhone", "RadarView", nullptr));
+        radar_speed->setText(QCoreApplication::translate("MainWindow_port_iPhone", "--", nullptr));
+        label_27->setText(QCoreApplication::translate("MainWindow_port_iPhone", "50 M", nullptr));
+        label_26->setText(QCoreApplication::translate("MainWindow_port_iPhone", "100 M", nullptr));
+        label_28->setText(QCoreApplication::translate("MainWindow_port_iPhone", "0 M", nullptr));
+        label_29->setText(QCoreApplication::translate("MainWindow_port_iPhone", "Radar Speed", nullptr));
         select_transponder_page2->setText(QString());
         select_gyro_page2->setText(QString());
         textEdit->setHtml(QCoreApplication::translate("MainWindow_port_iPhone", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"

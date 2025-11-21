@@ -39,19 +39,31 @@ template <> constexpr inline auto ComQt::qt_create_metaobjectdata<qt_meta_tag_ZN
     namespace QMC = QtMocConstants;
     QtMocHelpers::StringRefStorage qt_stringData {
         "ComQt",
-        "dataReceived",
+        "connectionChanged",
         "",
+        "connected",
+        "dataReceived",
         "data",
+        "errorReceived",
+        "message",
         "handleReadyRead"
     };
 
     QtMocHelpers::UintData qt_methods {
+        // Signal 'connectionChanged'
+        QtMocHelpers::SignalData<void(bool)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::Bool, 3 },
+        }}),
         // Signal 'dataReceived'
-        QtMocHelpers::SignalData<void(const QByteArray &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QByteArray, 3 },
+        QtMocHelpers::SignalData<void(const QByteArray &)>(4, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QByteArray, 5 },
+        }}),
+        // Signal 'errorReceived'
+        QtMocHelpers::SignalData<void(const QString &)>(6, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 7 },
         }}),
         // Slot 'handleReadyRead'
-        QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(8, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -75,13 +87,19 @@ void ComQt::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void 
     auto *_t = static_cast<ComQt *>(_o);
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
-        case 0: _t->dataReceived((*reinterpret_cast< std::add_pointer_t<QByteArray>>(_a[1]))); break;
-        case 1: _t->handleReadyRead(); break;
+        case 0: _t->connectionChanged((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
+        case 1: _t->dataReceived((*reinterpret_cast< std::add_pointer_t<QByteArray>>(_a[1]))); break;
+        case 2: _t->errorReceived((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 3: _t->handleReadyRead(); break;
         default: ;
         }
     }
     if (_c == QMetaObject::IndexOfMethod) {
-        if (QtMocHelpers::indexOfMethod<void (ComQt::*)(const QByteArray & )>(_a, &ComQt::dataReceived, 0))
+        if (QtMocHelpers::indexOfMethod<void (ComQt::*)(bool )>(_a, &ComQt::connectionChanged, 0))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (ComQt::*)(const QByteArray & )>(_a, &ComQt::dataReceived, 1))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (ComQt::*)(const QString & )>(_a, &ComQt::errorReceived, 2))
             return;
     }
 }
@@ -105,21 +123,33 @@ int ComQt::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 2)
+        if (_id < 4)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 2;
+        _id -= 4;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 2)
+        if (_id < 4)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 2;
+        _id -= 4;
     }
     return _id;
 }
 
 // SIGNAL 0
-void ComQt::dataReceived(const QByteArray & _t1)
+void ComQt::connectionChanged(bool _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 0, nullptr, _t1);
+}
+
+// SIGNAL 1
+void ComQt::dataReceived(const QByteArray & _t1)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 1, nullptr, _t1);
+}
+
+// SIGNAL 2
+void ComQt::errorReceived(const QString & _t1)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 2, nullptr, _t1);
 }
 QT_WARNING_POP

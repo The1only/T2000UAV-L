@@ -13,19 +13,19 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>14.0</string>
+	<string>13</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>This app uses Bluetooth to communicate with nearby devices.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Need to access your camera to capture a photo add and update profile picture.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Program requires GPS to track cars and job orders</string>
+	<string>Program requires GPS</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Program requires GPS to track cars and job orders</string>
+	<string>Program requires GPS</string>
 	<key>NSLocationUsageDescription</key>
 	<string></string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Program requires GPS to track cars and job orders</string>
+	<string>Program requires GPS</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app uses your Microphone to allow Voice over IP communication with the Program Admin system</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -34,5 +34,9 @@
 	<string>NSApplication</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+	</array>
 </dict>
 </plist>

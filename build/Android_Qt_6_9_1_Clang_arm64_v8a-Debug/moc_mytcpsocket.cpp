@@ -6,7 +6,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../mytcpsocket.h"
+#include "../../Header/generic/mytcpsocket.h"
 #include <QtGui/qtextcursor.h>
 #include <QtCore/qmetatype.h>
 
@@ -100,7 +100,7 @@ template <> constexpr inline auto MyTcpSocket::qt_create_metaobjectdata<qt_meta_
         "sendMessage",
         "",
         "message",
-        "doAlt",
+        "doTransponder",
         "doStart",
         "doIMU",
         "parent",
@@ -116,7 +116,7 @@ template <> constexpr inline auto MyTcpSocket::qt_create_metaobjectdata<qt_meta_
         QtMocHelpers::SignalData<void(const QString &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 },
         }}),
-        // Slot 'doAlt'
+        // Slot 'doTransponder'
         QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPublic, QMetaType::Void),
         // Slot 'doStart'
         QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPublic, QMetaType::Void),
@@ -152,7 +152,7 @@ void MyTcpSocket::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id,
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->sendMessage((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 1: _t->doAlt(); break;
+        case 1: _t->doTransponder(); break;
         case 2: _t->doStart(); break;
         case 3: _t->doIMU((*reinterpret_cast< std::add_pointer_t<void*>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<const char*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<uint32_t>>(_a[3]))); break;
         case 4: _t->doRadar((*reinterpret_cast< std::add_pointer_t<void*>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<const char*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<uint32_t>>(_a[3]))); break;

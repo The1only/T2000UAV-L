@@ -138,16 +138,9 @@ public:
     QWidget *page_9;
     QPushButton *select_from_5_to_6;
     QPushButton *select_transponder_page_4;
-    QLabel *label_22;
     QGraphicsView *graphicsView_2;
     QLabel *label_26;
-    QLabel *label_27;
-    QLabel *label_28;
-    QLabel *label_30;
-    QLabel *label_31;
     QLabel *label_29;
-    QLabel *label_32;
-    QLabel *label_33;
     QWidget *page_3;
     QPushButton *select_transponder_page2;
     QPushButton *select_gyro_page2;
@@ -223,13 +216,13 @@ public:
         pushButton->setGeometry(QRect(10, 10, 71, 71));
         pushButton->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/one.png); \n"
-"    background-image: url(:/one.png);  \n"
+"    image: url(:/images/one.png); \n"
+"    background-image: url(:/images/one.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/one.png);\n"
-"    background-image: url(:/one.png);\n"
+"    image: url(:/images/one.png);\n"
+"    background-image: url(:/images/one.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_2 = new QPushButton(page_2);
@@ -237,13 +230,13 @@ public:
         pushButton_2->setGeometry(QRect(90, 10, 71, 71));
         pushButton_2->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/two.png); \n"
-"    background-image: url(:/two.png);  \n"
+"    image: url(:/images/two.png); \n"
+"    background-image: url(:/images/two.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/two.png);\n"
-"    background-image: url(:/two.png);\n"
+"    image: url(:/images/two.png);\n"
+"    background-image: url(:/images/two.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_3 = new QPushButton(page_2);
@@ -251,13 +244,13 @@ public:
         pushButton_3->setGeometry(QRect(170, 10, 71, 71));
         pushButton_3->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/tree.png); \n"
-"    background-image: url(:/tree.png);  \n"
+"    image: url(:/images/tree.png); \n"
+"    background-image: url(:/images/tree.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/tree.png);\n"
-"    background-image: url(:/tree.png);\n"
+"    image: url(:/images/tree.png);\n"
+"    background-image: url(:/images/tree.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_4 = new QPushButton(page_2);
@@ -265,13 +258,13 @@ public:
         pushButton_4->setGeometry(QRect(10, 90, 71, 71));
         pushButton_4->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/fore.png); \n"
-"    background-image: url(:/fore.png);  \n"
+"    image: url(:/images/fore.png); \n"
+"    background-image: url(:/images/fore.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/fore.png);\n"
-"    background-image: url(:/fore.png);\n"
+"    image: url(:/images/fore.png);\n"
+"    background-image: url(:/images/fore.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_5 = new QPushButton(page_2);
@@ -279,13 +272,13 @@ public:
         pushButton_5->setGeometry(QRect(90, 90, 71, 71));
         pushButton_5->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/five.png); \n"
-"    background-image: url(:/five.png);  \n"
+"    image: url(:/images/five.png); \n"
+"    background-image: url(:/images/five.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/five.png);\n"
-"    background-image: url(:/five.png);\n"
+"    image: url(:/images/five.png);\n"
+"    background-image: url(:/images/five.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_6 = new QPushButton(page_2);
@@ -293,13 +286,13 @@ public:
         pushButton_6->setGeometry(QRect(170, 90, 71, 71));
         pushButton_6->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/six.png); \n"
-"    background-image: url(:/six.png);  \n"
+"    image: url(:/images/six.png); \n"
+"    background-image: url(:/images/six.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/six.png);\n"
-"    background-image: url(:/six.png);\n"
+"    image: url(:/images/six.png);\n"
+"    background-image: url(:/images/six.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_7 = new QPushButton(page_2);
@@ -307,13 +300,13 @@ public:
         pushButton_7->setGeometry(QRect(10, 170, 71, 71));
         pushButton_7->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/seven.png); \n"
-"    background-image: url(:/seven.png);  \n"
+"    image: url(:/images/seven.png); \n"
+"    background-image: url(:/images/seven.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/seven.png);\n"
-"    background-image: url(:/seven.png);\n"
+"    image: url(:/images/seven.png);\n"
+"    background-image: url(:/images/seven.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_8 = new QPushButton(page_2);
@@ -321,13 +314,13 @@ public:
         pushButton_8->setGeometry(QRect(90, 170, 71, 71));
         pushButton_8->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/eight.png); \n"
-"    background-image: url(:/eight.png);  \n"
+"    image: url(:/images/eight.png); \n"
+"    background-image: url(:/images/eight.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/eight.png);\n"
-"    background-image: url(:/eight.png);\n"
+"    image: url(:/images/eight.png);\n"
+"    background-image: url(:/images/eight.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_9 = new QPushButton(page_2);
@@ -335,13 +328,13 @@ public:
         pushButton_9->setGeometry(QRect(170, 170, 71, 71));
         pushButton_9->setStyleSheet(QString::fromUtf8("\n"
 "QPushButton {\n"
-"    image: url(:/nine.png); \n"
-"    background-image: url(:/nine.png);  \n"
+"    image: url(:/images/nine.png); \n"
+"    background-image: url(:/images/nine.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/nine.png);\n"
-"    background-image: url(:/nine.png);\n"
+"    image: url(:/images/nine.png);\n"
+"    background-image: url(:/images/nine.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_16 = new QPushButton(page_2);
@@ -351,39 +344,39 @@ public:
         font.setBold(true);
         pushButton_16->setFont(font);
         pushButton_16->setStyleSheet(QString::fromUtf8("QPushButton {\n"
-"    image: url(:/enter.png); \n"
-"    background-image: url(:/enter.png);  \n"
+"    image: url(:/images/enter.png); \n"
+"    background-image: url(:/images/enter.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/enter.png);\n"
-"    background-image: url(:/enter.png);\n"
+"    image: url(:/images/enter.png);\n"
+"    background-image: url(:/images/enter.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_17 = new QPushButton(page_2);
         pushButton_17->setObjectName("pushButton_17");
         pushButton_17->setGeometry(QRect(90, 250, 71, 71));
         pushButton_17->setStyleSheet(QString::fromUtf8("QPushButton {\n"
-"    image: url(:/zero.png); \n"
-"    background-image: url(:/zero.png);  \n"
+"    image: url(:/images/zero.png); \n"
+"    background-image: url(:/images/zero.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/zero.png);\n"
-"    background-image: url(:/zero.png);\n"
+"    image: url(:/images/zero.png);\n"
+"    background-image: url(:/images/zero.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_18 = new QPushButton(page_2);
         pushButton_18->setObjectName("pushButton_18");
         pushButton_18->setGeometry(QRect(170, 250, 71, 71));
         pushButton_18->setStyleSheet(QString::fromUtf8("QPushButton {\n"
-"    image: url(:/del.png); \n"
-"    background-image: url(:/del.png);  \n"
+"    image: url(:/images/del.png); \n"
+"    background-image: url(:/images/del.png);  \n"
 "    background-color: rgb(49, 49, 49);\n"
 "}\n"
 "QPushButton:pressed {\n"
-"    image: url(:/del.png);\n"
-"    background-image: url(:/del.png);\n"
+"    image: url(:/images/del.png);\n"
+"    background-image: url(:/images/del.png);\n"
 "    background-color: rgb(224, 0, 0);\n"
 "}"));
         pushButton_14 = new QPushButton(page_2);
@@ -707,12 +700,12 @@ public:
         font9.setPointSize(19);
         font9.setBold(true);
         select_gyro_page->setFont(font9);
-        select_gyro_page->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_gyro_page->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         select_camera_from_transponder = new QPushButton(page_2);
         select_camera_from_transponder->setObjectName("select_camera_from_transponder");
         select_camera_from_transponder->setGeometry(QRect(810, 180, 41, 161));
         select_camera_from_transponder->setFont(font9);
-        select_camera_from_transponder->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
+        select_camera_from_transponder->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         label_17 = new QLabel(page_2);
         label_17->setObjectName("label_17");
         label_17->setGeometry(QRect(520, 150, 71, 20));
@@ -775,7 +768,7 @@ public:
         font13.setPointSize(25);
         timeEdit->setFont(font13);
         timeEdit->setReadOnly(true);
-        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 27), QTime(16, 0, 0)));
+        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 25), QTime(21, 0, 0)));
         timeEdit->setTimeSpec(Qt::TimeSpec::UTC);
         label_5 = new QLabel(page);
         label_5->setObjectName("label_5");
@@ -836,12 +829,12 @@ public:
         select_dumy_page2->setObjectName("select_dumy_page2");
         select_dumy_page2->setGeometry(QRect(810, 10, 41, 161));
         select_dumy_page2->setFont(font9);
-        select_dumy_page2->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_dumy_page2->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         select_transponder_page = new QPushButton(page);
         select_transponder_page->setObjectName("select_transponder_page");
         select_transponder_page->setGeometry(QRect(810, 180, 41, 161));
         select_transponder_page->setFont(font9);
-        select_transponder_page->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
+        select_transponder_page->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         timer_start = new QPushButton(page);
         timer_start->setObjectName("timer_start");
         timer_start->setGeometry(QRect(10, 280, 181, 71));
@@ -980,12 +973,12 @@ public:
         select_transponder_page_2->setObjectName("select_transponder_page_2");
         select_transponder_page_2->setGeometry(QRect(810, 180, 41, 161));
         select_transponder_page_2->setFont(font9);
-        select_transponder_page_2->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
+        select_transponder_page_2->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         select_dumy_page2_2 = new QPushButton(page_6);
         select_dumy_page2_2->setObjectName("select_dumy_page2_2");
         select_dumy_page2_2->setGeometry(QRect(810, 10, 41, 161));
         select_dumy_page2_2->setFont(font9);
-        select_dumy_page2_2->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_dumy_page2_2->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         widgetai = new WidgetAI(page_6);
         widgetai->setObjectName("widgetai");
         widgetai->setGeometry(QRect(470, 110, 301, 261));
@@ -1165,12 +1158,12 @@ public:
         select_transponder_page_3->setObjectName("select_transponder_page_3");
         select_transponder_page_3->setGeometry(QRect(810, 180, 41, 161));
         select_transponder_page_3->setFont(font9);
-        select_transponder_page_3->setStyleSheet(QString::fromUtf8("image: url(:/buttonq.png);"));
+        select_transponder_page_3->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         select_from_4_to_5 = new QPushButton(page_7);
         select_from_4_to_5->setObjectName("select_from_4_to_5");
         select_from_4_to_5->setGeometry(QRect(810, 10, 41, 161));
         select_from_4_to_5->setFont(font9);
-        select_from_4_to_5->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_from_4_to_5->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         widgetEADI = new WidgetEADI(page_7);
         widgetEADI->setObjectName("widgetEADI");
         widgetEADI->setGeometry(QRect(0, 0, 411, 361));
@@ -1204,77 +1197,36 @@ public:
         select_from_5_to_6->setObjectName("select_from_5_to_6");
         select_from_5_to_6->setGeometry(QRect(810, 10, 41, 161));
         select_from_5_to_6->setFont(font9);
-        select_from_5_to_6->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_from_5_to_6->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         select_transponder_page_4 = new QPushButton(page_9);
         select_transponder_page_4->setObjectName("select_transponder_page_4");
         select_transponder_page_4->setGeometry(QRect(810, 180, 41, 161));
         select_transponder_page_4->setFont(font9);
-        select_transponder_page_4->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
-        label_22 = new QLabel(page_9);
-        label_22->setObjectName("label_22");
-        label_22->setGeometry(QRect(350, 10, 111, 21));
-        QFont font18;
-        font18.setFamilies({QString::fromUtf8("Academy Engraved LET")});
-        font18.setPointSize(20);
-        label_22->setFont(font18);
-        label_22->setStyleSheet(QString::fromUtf8("color: rgb(255, 255, 255);\n"
-""));
+        select_transponder_page_4->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         graphicsView_2 = new QGraphicsView(page_9);
         graphicsView_2->setObjectName("graphicsView_2");
-        graphicsView_2->setGeometry(QRect(0, 0, 791, 341));
+        graphicsView_2->setGeometry(QRect(0, 0, 801, 341));
         graphicsView_2->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
         graphicsView_2->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
         label_26 = new QLabel(page_9);
         label_26->setObjectName("label_26");
-        label_26->setGeometry(QRect(10, 10, 41, 16));
-        label_26->setStyleSheet(QString::fromUtf8("color: rgb(255, 56, 25);"));
-        label_27 = new QLabel(page_9);
-        label_27->setObjectName("label_27");
-        label_27->setGeometry(QRect(10, 160, 31, 21));
-        label_27->setStyleSheet(QString::fromUtf8("color: rgb(255, 172, 26);"));
-        label_28 = new QLabel(page_9);
-        label_28->setObjectName("label_28");
-        label_28->setGeometry(QRect(10, 320, 21, 16));
-        label_28->setStyleSheet(QString::fromUtf8("color: rgb(26, 255, 29);"));
-        label_30 = new QLabel(page_9);
-        label_30->setObjectName("label_30");
-        label_30->setGeometry(QRect(600, 20, 61, 21));
-        label_30->setFont(font10);
-        label_30->setStyleSheet(QString::fromUtf8("\n"
-"color: rgb(243, 245, 245);"));
-        label_30->setAlignment(Qt::AlignmentFlag::AlignCenter);
-        label_31 = new QLabel(page_9);
-        label_31->setObjectName("label_31");
-        label_31->setGeometry(QRect(60, 20, 71, 21));
-        label_31->setFont(font10);
-        label_31->setStyleSheet(QString::fromUtf8("\n"
-"color: rgb(255, 230, 2);"));
-        label_31->setAlignment(Qt::AlignmentFlag::AlignCenter);
+        label_26->setGeometry(QRect(30, 40, 131, 41));
+        QFont font18;
+        font18.setPointSize(40);
+        font18.setBold(true);
+        label_26->setFont(font18);
+        label_26->setStyleSheet(QString::fromUtf8("color: rgba(250,250, 50, 190);"));
         label_29 = new QLabel(page_9);
         label_29->setObjectName("label_29");
-        label_29->setGeometry(QRect(730, 10, 61, 20));
-        label_29->setStyleSheet(QString::fromUtf8("color: rgb(255, 56, 25);"));
-        label_32 = new QLabel(page_9);
-        label_32->setObjectName("label_32");
-        label_32->setGeometry(QRect(730, 160, 51, 20));
-        label_32->setStyleSheet(QString::fromUtf8("color: rgb(255, 172, 26);"));
-        label_33 = new QLabel(page_9);
-        label_33->setObjectName("label_33");
-        label_33->setGeometry(QRect(730, 320, 41, 20));
-        label_33->setStyleSheet(QString::fromUtf8("color: rgb(26, 255, 29);"));
+        label_29->setGeometry(QRect(660, 220, 111, 41));
+        label_29->setFont(font18);
+        label_29->setStyleSheet(QString::fromUtf8("color: rgba(250,250, 50, 190);"));
         stackedWidget->addWidget(page_9);
         graphicsView_2->raise();
         select_from_5_to_6->raise();
         select_transponder_page_4->raise();
-        label_22->raise();
         label_26->raise();
-        label_27->raise();
-        label_28->raise();
-        label_30->raise();
-        label_31->raise();
         label_29->raise();
-        label_32->raise();
-        label_33->raise();
         page_3 = new QWidget();
         page_3->setObjectName("page_3");
         select_transponder_page2 = new QPushButton(page_3);
@@ -1341,12 +1293,12 @@ public:
         select_transponder_page2_2->setObjectName("select_transponder_page2_2");
         select_transponder_page2_2->setGeometry(QRect(810, 10, 51, 161));
         select_transponder_page2_2->setFont(font9);
-        select_transponder_page2_2->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_transponder_page2_2->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         select_gyro_page2_2 = new QPushButton(page_4);
         select_gyro_page2_2->setObjectName("select_gyro_page2_2");
         select_gyro_page2_2->setGeometry(QRect(810, 180, 51, 161));
         select_gyro_page2_2->setFont(font9);
-        select_gyro_page2_2->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
+        select_gyro_page2_2->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         quickWidget = new QQuickWidget(page_4);
         quickWidget->setObjectName("quickWidget");
         quickWidget->setGeometry(QRect(10, 10, 781, 331));
@@ -1436,12 +1388,12 @@ public:
         select_transponder_page_camera->setObjectName("select_transponder_page_camera");
         select_transponder_page_camera->setGeometry(QRect(810, 10, 41, 161));
         select_transponder_page_camera->setFont(font9);
-        select_transponder_page_camera->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_transponder_page_camera->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         select_page2_map = new QPushButton(page_8);
         select_page2_map->setObjectName("select_page2_map");
         select_page2_map->setGeometry(QRect(810, 180, 41, 161));
         select_page2_map->setFont(font9);
-        select_page2_map->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
+        select_page2_map->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         use_hw = new QPushButton(page_8);
         use_hw->setObjectName("use_hw");
         use_hw->setGeometry(QRect(20, 80, 151, 51));
@@ -1666,12 +1618,12 @@ public:
         select_transponder_page2_3->setObjectName("select_transponder_page2_3");
         select_transponder_page2_3->setGeometry(QRect(810, 10, 41, 161));
         select_transponder_page2_3->setFont(font9);
-        select_transponder_page2_3->setStyleSheet(QString::fromUtf8("image: url(:/button2.png);"));
+        select_transponder_page2_3->setStyleSheet(QString::fromUtf8("image: url(:/images/button2.png);"));
         select_gyro_page2_3 = new QPushButton(page_5);
         select_gyro_page2_3->setObjectName("select_gyro_page2_3");
         select_gyro_page2_3->setGeometry(QRect(810, 180, 41, 161));
         select_gyro_page2_3->setFont(font9);
-        select_gyro_page2_3->setStyleSheet(QString::fromUtf8("image: url(:/button1.png);"));
+        select_gyro_page2_3->setStyleSheet(QString::fromUtf8("image: url(:/images/button1.png);"));
         viewfinder = new QVideoWidget(page_5);
         viewfinder->setObjectName("viewfinder");
         viewfinder->setGeometry(QRect(70, 0, 721, 361));
@@ -1780,8 +1732,8 @@ public:
 
         retranslateUi(MainWindow_port_new);
 
-        stackedWidget->setCurrentIndex(6);
-        tabWidget->setCurrentIndex(2);
+        stackedWidget->setCurrentIndex(4);
+        tabWidget->setCurrentIndex(0);
         exit_2->setDefault(true);
         imu_reset->setDefault(true);
 
@@ -1865,15 +1817,8 @@ public:
         doubleSpinBox_2->setText(QCoreApplication::translate("MainWindow_port_new", "1013.25", nullptr));
         select_from_5_to_6->setText(QString());
         select_transponder_page_4->setText(QString());
-        label_22->setText(QCoreApplication::translate("MainWindow_port_new", "RadarView", nullptr));
-        label_26->setText(QCoreApplication::translate("MainWindow_port_new", "100 M", nullptr));
-        label_27->setText(QCoreApplication::translate("MainWindow_port_new", "50 M", nullptr));
-        label_28->setText(QCoreApplication::translate("MainWindow_port_new", "0 M", nullptr));
-        label_30->setText(QCoreApplication::translate("MainWindow_port_new", "Speed", nullptr));
-        label_31->setText(QCoreApplication::translate("MainWindow_port_new", "Altitude", nullptr));
-        label_29->setText(QCoreApplication::translate("MainWindow_port_new", "200Km/t", nullptr));
-        label_32->setText(QCoreApplication::translate("MainWindow_port_new", "100Km/t", nullptr));
-        label_33->setText(QCoreApplication::translate("MainWindow_port_new", "0Km/t", nullptr));
+        label_26->setText(QCoreApplication::translate("MainWindow_port_new", "0", nullptr));
+        label_29->setText(QCoreApplication::translate("MainWindow_port_new", "0", nullptr));
         select_transponder_page2->setText(QString());
         select_gyro_page2->setText(QString());
         textEdit->setHtml(QCoreApplication::translate("MainWindow_port_new", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"

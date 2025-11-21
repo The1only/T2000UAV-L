@@ -122,8 +122,10 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "on_dial_2_valueChanged",
         "EKF",
         "getVal",
-        "char*",
+        "parent",
+        "const char*",
         "data",
+        "uint32_t",
         "lenght"
     };
 
@@ -289,8 +291,8 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         // Slot 'EKF'
         QtMocHelpers::SlotData<void()>(81, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'getVal'
-        QtMocHelpers::SlotData<void(void *, char *, int)>(82, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::VoidStar, 2 }, { 0x80000000 | 83, 84 }, { QMetaType::Int, 85 },
+        QtMocHelpers::SlotData<void(void *, const char *, uint32_t)>(82, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::VoidStar, 83 }, { 0x80000000 | 84, 85 }, { 0x80000000 | 86, 87 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -392,7 +394,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 74: _t->on_dial_valueChanged((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
         case 75: _t->on_dial_2_valueChanged((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
         case 76: _t->EKF(); break;
-        case 77: _t->getVal((*reinterpret_cast< std::add_pointer_t<void*>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<char*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<int>>(_a[3]))); break;
+        case 77: _t->getVal((*reinterpret_cast< std::add_pointer_t<void*>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<const char*>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<uint32_t>>(_a[3]))); break;
         default: ;
         }
     }

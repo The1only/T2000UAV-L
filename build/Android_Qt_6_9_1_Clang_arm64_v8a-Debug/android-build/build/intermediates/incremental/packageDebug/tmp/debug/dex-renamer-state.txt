@@ -1,4 +1,4 @@
-#Thu Oct 23 13:24:50 CEST 2025
+#Tue Nov 18 14:34:58 CET 2025
 path.4=14/classes.dex
 path.3=11/classes.dex
 path.2=10/classes.dex
@@ -7,19 +7,19 @@ path.7=8/classes.dex
 path.6=5/classes.dex
 path.5=15/classes.dex
 path.0=classes.dex
-base.4=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/14/classes.dex
-base.3=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/11/classes.dex
-base.2=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/10/classes.dex
-base.1=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
-base.0=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
+base.4=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/14/classes.dex
+base.3=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/11/classes.dex
+base.2=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/10/classes.dex
+base.1=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
+base.0=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
 renamed.3=classes4.dex
 renamed.2=classes3.dex
 renamed.1=classes2.dex
 renamed.0=classes.dex
 renamed.7=classes8.dex
 renamed.6=classes7.dex
-base.7=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/8/classes.dex
+base.7=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/8/classes.dex
 renamed.5=classes6.dex
-base.6=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/5/classes.dex
+base.6=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/5/classes.dex
 renamed.4=classes5.dex
-base.5=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/15/classes.dex
+base.5=/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/build/intermediates/dex/debug/mergeProjectDexDebug/15/classes.dex

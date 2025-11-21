@@ -80,6 +80,7 @@ void ekfNavINS::ekf_update(double time, double vn,double ve,double vd,double lat
 // az = up donwn, ax = Roll, ay = flatt up
 std::tuple<double,double,double> ekfNavINS::getPitchRoll(double ax, double ay, double az, double Gcal )
 {
+    (void) Gcal;
     Vector3d att = {ax,ay,az};
     att = att.normalized();
 

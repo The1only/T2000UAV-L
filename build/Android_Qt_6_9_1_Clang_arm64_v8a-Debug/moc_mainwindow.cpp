@@ -6,7 +6,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../mainwindow.h"
+#include "../../Header/generic/mainwindow.h"
 #include <QtGui/qtextcursor.h>
 #include <QtCore/qmetatype.h>
 
@@ -122,6 +122,7 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "on_dial_2_valueChanged",
         "EKF",
         "getVal",
+        "parent",
         "const char*",
         "data",
         "uint32_t",
@@ -291,7 +292,7 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         QtMocHelpers::SlotData<void()>(81, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'getVal'
         QtMocHelpers::SlotData<void(void *, const char *, uint32_t)>(82, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::VoidStar, 2 }, { 0x80000000 | 83, 84 }, { 0x80000000 | 85, 86 },
+            { QMetaType::VoidStar, 83 }, { 0x80000000 | 84, 85 }, { 0x80000000 | 86, 87 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {

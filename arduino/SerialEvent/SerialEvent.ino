@@ -183,8 +183,8 @@ void loop()
       char tmp = outputString[4+1];
       float section = (((float)tmp*0.5)-50.0)/100.0;
 //      float section = ((float)outputString[4+1]*0.5)-50.0;
-      float range   = ((float)outputString[4+2]*256.0 + (float)outputString[4+3])*0.01;
-      float VrelH    =((float)outputString[4+5]*256.0 + (float)outputString[4+6])*0.05; //-35;
+      float VrelH   = ((float)outputString[4+2]*256.0 + (float)outputString[4+3])*0.006;
+      float range    =((float)outputString[4+5]*256.0 + (float)outputString[4+6])*0.05; //-35;
 
       sprintf(buff, "%f,%f,%f\n",section,VrelH,range);
 //      sprintf(buff, "\t%d\t%f\t%f\t%f  <- I receive...\n", index,section,range,VrelH);
@@ -211,5 +211,5 @@ void loop()
     }
     
   }
-#else
+//#else
 }

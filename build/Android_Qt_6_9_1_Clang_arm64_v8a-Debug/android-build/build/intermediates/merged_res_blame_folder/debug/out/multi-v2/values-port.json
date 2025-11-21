@@ -4,7 +4,7 @@
             "outputFile": "org.qtproject.example.lowenergyscanner-mergeDebugResources-6:/values-port/values-port.xml",
             "map": [
                 {
-                    "source": "/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-10_09_24_BT5_IMU/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/res/values-port/splashscreentheme.xml",
+                    "source": "/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/build/Android_Qt_6_9_1_Clang_arm64_v8a-Debug/android-build/res/values-port/splashscreentheme.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

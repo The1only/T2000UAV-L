@@ -1,38 +1,48 @@
 <RCC>
     <qresource prefix="/">
-        <file>del.png</file>
-        <file>eight.png</file>
-        <file>enter.png</file>
-        <file>five.png</file>
-        <file>fore.png</file>
-        <file>frontend.png</file>
-        <file>ident.png</file>
-        <file>ident_off.png</file>
-        <file>ident_on.png</file>
-        <file>nine.png</file>
-        <file>one.png</file>
-        <file>seven.png</file>
-        <file>six.png</file>
-        <file>tree.png</file>
-        <file>two.png</file>
-        <file>zero.png</file>
         <file>places_map.qml</file>
         <file>marker.qml</file>
-        <file>plane.png</file>
-        <file>compass.png</file>
-        <file>config.svg</file>
-        <file>arrow-right.svg</file>
-        <file>backwards.svg</file>
-        <file>forwards.svg</file>
-        <file>podcast.svg</file>
-        <file>splash.png</file>
-        <file>image_3.png</file>
         <file>example.gpx</file>
         <file>sin.gpx</file>
-        <file>test1.png</file>
-        <file>button1.png</file>
-        <file>button2.png</file>
-        <file>power1.png</file>
-        <file>engage.png</file>
+        <file>images/arrow-right.svg</file>
+        <file>images/backwards.svg</file>
+        <file>images/button1.png</file>
+        <file>images/button1.png.paint</file>
+        <file>images/button2.png</file>
+        <file>images/compass.png</file>
+        <file>images/config.svg</file>
+        <file>images/del.png</file>
+        <file>images/eight.png</file>
+        <file>images/engage.png</file>
+        <file>images/enter.png</file>
+        <file>images/five.png</file>
+        <file>images/fore.png</file>
+        <file>images/forwards.svg</file>
+        <file>images/frontend.png</file>
+        <file>images/GPS Velocity Components (NED Frame).png</file>
+        <file>images/ident_off.png</file>
+        <file>images/ident_on.png</file>
+        <file>images/ident.png</file>
+        <file>images/image_2.png</file>
+        <file>images/image_3.png</file>
+        <file>images/image_4.png</file>
+        <file>images/image_5.png</file>
+        <file>images/image_6.png</file>
+        <file>images/image.png</file>
+        <file>images/nine.png</file>
+        <file>images/one.png</file>
+        <file>images/plane.png</file>
+        <file>images/podcast.svg</file>
+        <file>images/power1.png</file>
+        <file>images/radar.png</file>
+        <file>images/radar_2.png</file>
+        <file>images/radar_3.png</file>
+        <file>images/seven.png</file>
+        <file>images/six.png</file>
+        <file>images/splash.png</file>
+        <file>images/test1.png</file>
+        <file>images/tree.png</file>
+        <file>images/two.png</file>
+        <file>images/zero.png</file>
     </qresource>
 </RCC>

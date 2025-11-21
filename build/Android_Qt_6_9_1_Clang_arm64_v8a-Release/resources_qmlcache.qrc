@@ -30,5 +30,12 @@
         <file alias="image_3.png">../../image_3.png</file>
         <file alias="example.gpx">../../example.gpx</file>
         <file alias="sin.gpx">../../sin.gpx</file>
+        <file alias="test1.png">../../test1.png</file>
+        <file alias="button1.png">../../button1.png</file>
+        <file alias="button2.png">../../button2.png</file>
+        <file alias="power1.png">../../power1.png</file>
+        <file alias="engage.png">../../engage.png</file>
+        <file alias="radar_2.png">../../radar_2.png</file>
+        <file alias="radar_3.png">../../radar_3.png</file>
     </qresource>
 </RCC>
