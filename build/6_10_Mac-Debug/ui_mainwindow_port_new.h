@@ -768,7 +768,7 @@ public:
         font13.setPointSize(25);
         timeEdit->setFont(font13);
         timeEdit->setReadOnly(true);
-        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 25), QTime(21, 0, 0)));
+        timeEdit->setDateTime(QDateTime(QDate(2023, 12, 25), QTime(20, 0, 0)));
         timeEdit->setTimeSpec(Qt::TimeSpec::UTC);
         label_5 = new QLabel(page);
         label_5->setObjectName("label_5");
@@ -1732,7 +1732,7 @@ public:
 
         retranslateUi(MainWindow_port_new);
 
-        stackedWidget->setCurrentIndex(4);
+        stackedWidget->setCurrentIndex(2);
         tabWidget->setCurrentIndex(0);
         exit_2->setDefault(true);
         imu_reset->setDefault(true);

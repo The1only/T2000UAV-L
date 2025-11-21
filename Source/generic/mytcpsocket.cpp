@@ -558,7 +558,7 @@ void MyTcpSocket::connectedIMU()
     // ---------------------------------------------------------------------
     // 3) Radar (USB serial)
     // ---------------------------------------------------------------------
-    m_msgBoxIMU = new NoButtonMessageBox(tr("Looking for USB RADAR!"));
+    m_msgBoxIMU = new NoButtonMessageBox(tr("Looking for NRA24 RADAR!"));
     m_msgBoxIMU->show();
     QCoreApplication::processEvents();
     QThread::msleep(500);
@@ -750,7 +750,7 @@ void MyTcpSocket::parseIMU(void *parent,uint32_t uiReg, uint16_t sRegAll[])
         local->VER = sRegAll[VERSION];
 
         local->m_pressure_raw = join32(sReg[PressureL],sReg[PressureH])/100.0;
-        local->m_preasure_alt     = join32(sReg[HeightL],sReg[HeightH])/100.0;
+      //  local->m_preasure_alt     = join32(sReg[HeightL],sReg[HeightH])/100.0;
 
         uint32_t raw = join32(sReg[GPSVL], sReg[GPSVH])/100.0;
         int32_t yaw = sReg[GPSYAW] / 100.0;     // deg (use /10.0 if your fw is 0.1°/LSB)

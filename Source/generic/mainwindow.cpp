@@ -1045,12 +1045,13 @@ double MainWindow::setQNH()
         // Check: this should now yield GPS altitude
         mysocket->m_preasure_QNH  = 145366.45 * (1.0 - std::pow(this->mysocket->m_pressure_raw / qnh_hpa, 0.190284));
 
-        qDebug() << feet_gps << "  " << pressure_offset << "  "
-                 << (this->mysocket->m_pressure_raw + pressure_offset) << " qnh-> " << qnh_hpa
-                 << "  " << mysocket->m_preasure_QNH   << " ---- " << mysocket->m_preasure_QNH; // << " Test: " << test;
+        qDebug() << "GPS ALT:" <<feet_gps << " Press.Error:" << pressure_offset << " Raw.Press:"
+                 << this->mysocket->m_pressure_raw<< " qnh-> " << qnh_hpa
+                 << " Calc.GPS.Alt:" << mysocket->m_preasure_QNH; // << " Test: " << test;
 
-        ui->doubleSpinBox->setText(QString("%1").arg(1013.25 + pressure_offset));
-        return 1013.25 + pressure_offset;
+        ui->doubleSpinBox->setText(QString("%1").arg(qnh_hpa));
+//        ui->doubleSpinBox->setText(QString("%1").arg(1013.25 + pressure_offset));
+        return qnh_hpa;
     }
     else return 1013.25;
 }
