@@ -375,7 +375,7 @@ public:
     double HZ = 0.0;        ///< Magnetometer Z.
 
     quint16 VER = 0.0;       ///< IMU firmware version or similar (from "VER" field).
-    double Temp = 0.0;      ///< IMU temperature [°C].
+    double Temp = -100.0;      ///< IMU temperature [°C].
 
     // GPS / altitude
     double m_altitude      = 0.0; ///< GPS altitude [feet] (geoid-compensated).

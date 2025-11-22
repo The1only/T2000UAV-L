@@ -1071,7 +1071,7 @@ padding: 5px;
        <string notr="true">color: rgb(135,135,135);</string>
       </property>
       <property name="text">
-       <string>v1.01a-2024</string>
+       <string>v1.02a-2025</string>
       </property>
      </widget>
      <zorder>pushButton</zorder>
@@ -1146,7 +1146,7 @@ padding: 5px;
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>20</hour>
+        <hour>19</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -1649,7 +1649,7 @@ QPushButton:pressed {
        <rect>
         <x>200</x>
         <y>0</y>
-        <width>541</width>
+        <width>601</width>
         <height>391</height>
        </rect>
       </property>
@@ -2513,7 +2513,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">image: url(:/button2.png);</string>
+       <string notr="true">image: url(:/images/button2.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -2535,7 +2535,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">image: url(:/button1.png);</string>
+       <string notr="true">image: url(:/images/button1.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -3040,7 +3040,7 @@ QPushButton:pressed {
       </property>
       <property name="styleSheet">
        <string notr="true">QPushButton {
-image: url(:/podcast.svg); 
+image: url(:/images/podcast.svg); 
 color: #333;
 border: 2px solid #555;
 border-radius: 15px;
@@ -3193,7 +3193,7 @@ QPushButton:pressed {
       </property>
       <property name="styleSheet">
        <string notr="true">QPushButton {
-image: url(:/config.svg); 
+image: url(:/images/config.svg); 
 color: #333;
 border: 2px solid #555;
 border-radius: 15px;

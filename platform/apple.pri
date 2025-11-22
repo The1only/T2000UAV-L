@@ -49,7 +49,7 @@ macx {
         ./Source/driver/gpx_parse.cpp \
         ./Source/driver/mqttclient.cpp \
         ./Source/driver/serialport.cpp \
-        ./Source/generic/INS_driver.cpp \
+        ./Source/generic/ins_driver.cpp \
         ./Source/driver/wit_c_sdk.c \
         ./Source/driver/geoid_helper.cpp
 
@@ -65,7 +65,7 @@ macx {
         ./Header/driver/gpx_parse.h \
         ./Header/driver/mqttclient.h \
         ./Header/driver/serialport.h \
-        ./Header/generic/REG.h \
+        ./Header/generic/reg.h \
         ./Header/driver/wit_c_sdk.h \
         ./Header/driver/geoid_helper.h
 }

@@ -43,8 +43,8 @@ android {
         ./Source/driver/gpx_parse.cpp \
         ./Source/driver/mqttclient.cpp \
         ./Source/driver/serialport_android.cpp \
-        ./Source/generic/INS_driver.cpp \
-        ./Source/driver/BleUart.cpp \
+        ./Source/generic/ins_driver.cpp \
+        ./Source/driver/bleuart.cpp \
         ./Source/driver/wit_c_sdk.c \
         ./Source/driver/geoid_helper.cpp
 
@@ -60,8 +60,8 @@ android {
         ./Header/driver/gpx_parse.h \
         ./Header/driver/mqttclient.h \
         ./Header/driver/serialport.h \
-        ./Header/driver/BleUart.h \
-        ./Header/generic/REG.h \
+        ./Header/driver/bleuart.h \
+        ./Header/generic/reg.h \
         ./Header/driver/geoid_helper.h
 
     # Paho for Android (your original paths)

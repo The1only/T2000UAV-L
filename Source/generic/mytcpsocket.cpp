@@ -296,7 +296,7 @@ void MyTcpSocket::doStart()
         // Step 0: IMU init
         timerStart->stop();
         connectedIMU();          // try to find & initialize IMU / INS
-        timerStart->start(2000);
+        timerStart->start(200);
         ++state;
     } else if (state == 1) {
         // Step 1: Transponder init
@@ -310,7 +310,8 @@ void MyTcpSocket::doStart()
         connected();             // try to find & initialize transponder
 
         QCoreApplication::processEvents();
-        QThread::msleep(2000);
+        QThread::msleep(1000);
+        QCoreApplication::processEvents();
 
         m_msgBoxTrans->hide();
         delete m_msgBoxTrans;
@@ -332,7 +333,7 @@ void MyTcpSocket::doStart()
         // Notify IMU connection state through callback
         this->ret_imu(this->parent, IMUconnected);
 
-        timerStart->start(5000);
+        timerStart->start(500);
         ++state;
     } else if (state == 2) {
         // Step 2: Keep retrying transponder if not connected
@@ -487,7 +488,7 @@ void MyTcpSocket::connectedIMU()
     }
     m_msgBoxIMU->show();
     QCoreApplication::processEvents();
-    QThread::msleep(1500);
+    QThread::msleep(1000);
     m_msgBoxIMU->hide();
     delete m_msgBoxIMU;
 #endif  // USE_BT_IMU
@@ -535,7 +536,7 @@ void MyTcpSocket::connectedIMU()
         }
 
         QCoreApplication::processEvents();
-        QThread::msleep(1500);
+        QThread::msleep(1000);
 
         m_msgBoxIMUx->hide();
         delete m_msgBoxIMUx;
@@ -550,7 +551,7 @@ void MyTcpSocket::connectedIMU()
         }
         m_msgBoxIMUx->show();
         QCoreApplication::processEvents();
-        QThread::msleep(1500);
+        QThread::msleep(1000);
         m_msgBoxIMUx->hide();
         delete m_msgBoxIMUx;
     }
@@ -582,7 +583,7 @@ void MyTcpSocket::connectedIMU()
 #endif
 
     QCoreApplication::processEvents();
-    QThread::msleep(1500);
+    QThread::msleep(1000);
 
     m_msgBoxIMU->hide();
     delete m_msgBoxIMU;
@@ -595,7 +596,7 @@ void MyTcpSocket::connectedIMU()
     }
     m_msgBoxIMU->show();
     QCoreApplication::processEvents();
-    QThread::msleep(1500);
+    QThread::msleep(1000);
     m_msgBoxIMU->hide();
     delete m_msgBoxIMU;
 #endif  // !Q_OS_IOS

@@ -343,8 +343,8 @@ public:
     QString _transponder_id = "4150323833373009";   ///< Default transponder ID (SIM).
     // QString _transponder_id = "4150323833373205"; ///< REAL
 
-    //QString _radar_id       = "415032383337320B";   ///< Default radar ID (SIM).
-    QString _radar_id       = "4150325537323317"; ///< REAL
+    QString _radar_id       = "415032383337320B";   ///< Default radar ID (SIM).
+    //QString _radar_id       = "4150325537323317"; ///< REAL
 
     //QString _IMU_id          = "4150323833373009";   ///< Default IMU ID (SIM).
     //QString _IMU_id         = "FTHM2H8X";         ///< REAL

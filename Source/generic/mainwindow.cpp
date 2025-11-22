@@ -574,6 +574,9 @@ void MainWindow::setIMU(void *parent, bool use_imu)
         local->ui->label_18->update();
     }
 
+    if(local->mysocket->IMUconnected == true){
+        local->m_calibrate = 2;
+    }
     local->m_Display = new QTimer(local);
     local->m_Display->setSingleShot(false);
     connect(local->m_Display, SIGNAL(timeout()), local, SLOT(onReadingChanged()));
@@ -862,9 +865,14 @@ void MainWindow::doClock()
         static QGeoPositionInfo x;
         positionUpdated(x);
     }
-    // If we
+    // If we got an IMU with preassure...
     if(m_pressure_sensor == nullptr && mysocket->m_pressure_raw > 1){
         onPressureReadingChanged();
+    }
+
+    // If we got an IMU with GPS...
+    if(mysocket->m_altitude > 0){
+        calcPosition(mysocket->FW_Speed);
     }
 }
 
@@ -955,7 +963,6 @@ void MainWindow::AccelerometerRead()
 
         if(m_calibrate == 1)
         {
-            qDebug() << "Saved...!!!!!!!!!!!!!!!";
             if(mysocket->IMUconnected == false){
 #ifdef Q_OS_MAC
                 m_first = 2;
@@ -1069,7 +1076,7 @@ double MainWindow::getBearing(double lat1, double lon1, double lat2, double lon2
 void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
 {
     // If we have a GPS lock...
-    if (geoPositionInfo.isValid())
+    if (geoPositionInfo.isValid() && mysocket->m_altitude < 1)
     {
         double vel_D=0;
 
@@ -1445,8 +1452,6 @@ void MainWindow::onReadingChanged()
 
                 m_offset = attitude[1];
                 m_acc_Y_calib = accel[0];
-
-                qDebug() << "TERJE:::::: " << m_offset;
 
                 //m_pitch_cal+= a_pitch - m_pitch;
                 //m_roll_cal+= a_roll - m_roll;
@@ -2032,7 +2037,9 @@ void MainWindow::onReadingChanged()
                 ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
                 ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
                 ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
-                if(m_temp_sensor != nullptr) ui->temperature->setText(QString("%1").arg(m_temp, 0, 'f', 1));
+                if(this->mysocket->Temp != -100.0){
+                    ui->temperature->setText(QString("%1").arg(this->mysocket->Temp, 0, 'f', 1));
+                }
             }
 
             if( m_geopos == true)
