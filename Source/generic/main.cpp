@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 //    app.processEvents();
 
 #if defined(Q_OS_IOS)
-    setIosParams();
+ //   setIosParams();
 #endif
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)

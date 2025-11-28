@@ -12,15 +12,21 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QList>
+#include <QHostAddress>
 
 #include "ekfNavINS.h"
 #include "rotation_matrix.h"
 #include "serialport.h"
 #include "bleuart.h"
 #include "mqttclient.h"
+#include "tcpclient.h"
 
 // Look for an external IMU over Bluetooth
+#ifndef Q_OS_IOS
 #define USE_BT_IMU
+#else
+#undef  USE_BT_IMU
+#endif
 
 #ifdef Q_OS_IOS
 #undef Q_OS_MAC
@@ -50,8 +56,10 @@
 
 #ifdef Q_OS_IOS
 // iOS: iPhone layout
-#define SCREEN MainWindow_port_iPhone
-#include "ui_mainwindow_port_iPhone.h"
+#include "ui_mainwindow_port_new.h"
+#define SCREEN MainWindow_port_new
+//#define SCREEN MainWindow_port_iPhone
+//#include "ui_mainwindow_port_iPhone.h"
 #define simGPS false
 #else
 // Desktop: new layout, GPS simulation enabled
@@ -65,6 +73,12 @@
 // STX/ETX used for framing protocols (if needed elsewhere)
 static constexpr char STX = 0x02;
 static constexpr char ETX = 0x03;
+
+
+#ifdef Q_OS_IOS
+#define ComBt void
+#define ComQt void
+#endif
 
 // ============================================================================
 // NoButtonMessageBox
@@ -403,10 +417,19 @@ private:
     // ---------------------------------------------------------------------
     // Hardware communication backends
     // ---------------------------------------------------------------------
+#ifndef Q_OS_IOS
     ComQt *TransponderSerPort = nullptr; ///< Serial port for transponder.
     ComQt *RadarSerPort       = nullptr; ///< Serial port for radar.
     ComQt *INSSerPort         = nullptr; ///< Serial port for IMU/INS.
     ComBt *bluetootPort       = nullptr; ///< Bluetooth port for IMU.
+#endif
+    QString m_imu_address = "";
+    QString m_radar_address = "";
+    QString m_transponder_address = "";
+
+    TcpClient *m_imuClient = nullptr;
+    TcpClient *m_radarClient = nullptr;
+    TcpClient *m_transponderClient = nullptr;
 
 signals:
     /**

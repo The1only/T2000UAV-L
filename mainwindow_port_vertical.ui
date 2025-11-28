@@ -32,7 +32,7 @@
    <string>MainWindow</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0,0,0);</string>
+   <string notr="true"/>
   </property>
   <property name="unifiedTitleAndToolBarOnMac">
    <bool>false</bool>
@@ -48,7 +48,7 @@
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: rgb(45, 45, 45);</string>
+     <string notr="true"/>
     </property>
     <property name="currentIndex">
      <number>2</number>
@@ -984,9 +984,9 @@ padding: 5px;
      <widget class="QPushButton" name="select_gyro_page">
       <property name="geometry">
        <rect>
-        <x>380</x>
+        <x>390</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -997,24 +997,7 @@ padding: 5px;
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/forwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button2.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -1025,7 +1008,7 @@ QPushButton:pressed {
        <rect>
         <x>20</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -1036,24 +1019,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/backwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button1.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -1178,7 +1144,7 @@ QPushButton:pressed {
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>5</hour>
+        <hour>3</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -1401,9 +1367,9 @@ background-color: rgb(0, 0, 0);</string>
      <widget class="QPushButton" name="select_dumy_page2">
       <property name="geometry">
        <rect>
-        <x>380</x>
+        <x>390</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -1414,24 +1380,7 @@ background-color: rgb(0, 0, 0);</string>
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/forwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button2.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -1442,7 +1391,7 @@ QPushButton:pressed {
        <rect>
         <x>20</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -1453,24 +1402,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/backwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button1.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -1880,7 +1812,7 @@ background-color: rgb(0, 0, 0);</string>
        <rect>
         <x>20</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -1891,24 +1823,7 @@ background-color: rgb(0, 0, 0);</string>
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/backwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button1.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -1917,9 +1832,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_dumy_page2_2">
       <property name="geometry">
        <rect>
-        <x>380</x>
+        <x>390</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -1930,24 +1845,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/forwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button2.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -2799,9 +2697,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_transponder_page2_2">
       <property name="geometry">
        <rect>
-        <x>380</x>
+        <x>390</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -2812,24 +2710,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/forwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button2.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -2840,7 +2721,7 @@ QPushButton:pressed {
        <rect>
         <x>20</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -2851,24 +2732,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/backwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button1.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -2935,9 +2799,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_transponder_page_camera">
       <property name="geometry">
        <rect>
-        <x>380</x>
+        <x>390</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -2948,24 +2812,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/forwards.svg); 
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button2.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -2976,7 +2823,7 @@ QPushButton:pressed {
        <rect>
         <x>20</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -2987,24 +2834,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/backwards.svg); 
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button1.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -3071,7 +2901,7 @@ QPushButton:pressed {
       </property>
       <property name="styleSheet">
        <string notr="true">QPushButton {
-image: url(:/config.svg); 
+image: url(:/images/config.svg); 
 color: #333;
 border: 2px solid #555;
 border-radius: 15px;
@@ -3116,7 +2946,7 @@ QPushButton:pressed {
       </property>
       <property name="styleSheet">
        <string notr="true">QPushButton {
-image: url(:/podcast.svg); 
+image: url(:/images/podcast.svg); 
 color: #333;
 border: 2px solid #555;
 border-radius: 15px;
@@ -3421,9 +3251,9 @@ barometer</string>
      <widget class="QPushButton" name="select_transponder_page2_3">
       <property name="geometry">
        <rect>
-        <x>380</x>
+        <x>390</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -3434,24 +3264,7 @@ barometer</string>
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/forwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button2.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -3462,7 +3275,7 @@ QPushButton:pressed {
        <rect>
         <x>20</x>
         <y>540</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -3473,24 +3286,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">QPushButton {
-image: url(:/backwards.svg);
-color: #333;
-border: 2px solid #555;
-border-radius: 20px;
-border-style: outset;
-background: qradialgradient(
-cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #15E
-);
-padding: 5px;
-}
-
-QPushButton:pressed {
-    background-color: rgb(224, 0, 0);
-    border-style: inset;
-}
-</string>
+       <string notr="true">image: url(:/images/button1.png);</string>
       </property>
       <property name="text">
        <string/>
@@ -3693,6 +3489,12 @@ QPushButton:pressed {
    <container>1</container>
   </customwidget>
   <customwidget>
+   <class>WidgetVSI</class>
+   <extends>QWidget</extends>
+   <header>example/WidgetVSI.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>WidgetALT</class>
    <extends>QWidget</extends>
    <header>example/WidgetALT.h</header>
@@ -3702,12 +3504,6 @@ QPushButton:pressed {
    <class>WidgetTC</class>
    <extends>QWidget</extends>
    <header>example/WidgetTC.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>WidgetVSI</class>
-   <extends>QWidget</extends>
-   <header>example/WidgetVSI.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

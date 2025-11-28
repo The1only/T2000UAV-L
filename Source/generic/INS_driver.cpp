@@ -6,19 +6,26 @@
 #include <cstring>
 // #include <cmath>
 #include <string.h>
-
+#include <math.h>
 #include <unistd.h>
-#include "serialport.h"
-#include "bleuart.h"
+
 #include "wit_c_sdk.h"
 
-#include <math.h>
+#ifndef Q_OS_IOS
+#include "bleuart.h"
+#include "serialport.h"
+#endif
 
 typedef struct { double L, F, D; } LFD;
 
 static char s_cDataUpdate = 0;
 ulong iComPort  = 4;
 int iAddress  = 0x50;
+
+#ifdef Q_OS_IOS
+#define ComBt void
+#define ComQt void
+#endif
 
 static ComQt *serialPorts = nullptr;
 static ComBt *serialPortb = nullptr;
@@ -51,6 +58,7 @@ bool INS_driver(void *handler,ComQt *serPorts, ComBt *serPortb, void *func)
 
 void AutoSetBaud(int baud)
 {
+    (void)baud;
 #ifndef Q_OS_IOS
     if(baud == QSerialPort::Baud9600){
         WitSetUartBaud(WIT_BAUD_9600);
@@ -77,10 +85,18 @@ bool AutoScanSensor()
 
 static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
 {
-    if(serialPorts != nullptr)
+    (void)p_data;
+    (void)uiSize;
+
+#ifndef Q_OS_IOS
+    if(serialPorts != nullptr){
         serialPorts->send(reinterpret_cast<const char*>(p_data),static_cast<unsigned short>(uiSize));
-    else if(serialPortb != nullptr)
+    }
+    else{
+        if(serialPortb != nullptr)
         serialPortb->send(reinterpret_cast<const char*>(p_data),static_cast<unsigned short>(uiSize));
+    }
+#endif
 }
 
 static void CopeSensorData(uint32_t uiReg, uint32_t uiRegNum)

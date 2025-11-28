@@ -40,89 +40,137 @@ macx {
     DEFINES += USE_GEOGRAPHICLIB
 
     SOURCES += \
-        ./Source/driver/bleuart.cpp \
         ./Source/generic/main.cpp \
         ./Source/generic/mainwindow.cpp \
         ./Source/generic/mytcpsocket.cpp \
-        ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
+        ./Source/generic/ins_driver.cpp \
+        ./Source/generic/multicastlistner.cpp \
+        ./Source/generic/tcpclient.cpp \
         ./Source/driver/rotation_matrix.cpp \
         ./Source/driver/gpx_parse.cpp \
+        ./Source/driver/bleuart.cpp \
         ./Source/driver/mqttclient.cpp \
         ./Source/driver/serialport.cpp \
-        ./Source/generic/ins_driver.cpp \
         ./Source/driver/wit_c_sdk.c \
-        ./Source/driver/geoid_helper.cpp
+        ./Source/driver/geoid_helper.cpp \
+        ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
 
 
     HEADERS += \
-        ./Header/driver/bleuart.h \
+        ./Header/generic/multicastlistner.h \
         ./Header/generic/QuickWidget.h \
         ./Header/generic/mainwindow.h \
         ./Header/generic/mytcpsocket.h \
-        ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
-        ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
+        ./Header/generic/reg.h \
+        ./Header/generic/tcpclient.h \
+        ./Header/driver/bleuart.h \
         ./Header/driver/rotation_matrix.h \
         ./Header/driver/gpx_parse.h \
         ./Header/driver/mqttclient.h \
         ./Header/driver/serialport.h \
-        ./Header/generic/reg.h \
         ./Header/driver/wit_c_sdk.h \
-        ./Header/driver/geoid_helper.h
+        ./Header/driver/geoid_helper.h \
+        ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
+        ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
+
+
 }
 
 # ----------------
 # iOS
 # ----------------
+# HUSK: User Script Sandboxind = NO must be set in XCODE...
 ios {
     message(This is iPhone....)
 
+    CONFIG += add_ios_ffmpeg_libraries
     CONFIG += sdk_no_version_check
-    QT += bluetooth
+    QT +=  multimedia
+
+    QTPLUGIN -= qffmpeg
+
+    # 👇 turn off Xcode's user script sandboxing for this target
+    QMAKE_XCODE_ATTRIBUTE_ENABLE_USER_SCRIPT_SANDBOXING = NO
 
     # iOS bundle / signing
-    QMAKE_TARGET_BUNDLE_IDENTIFIER = teni@9tek.no
+    QMAKE_TARGET_BUNDLE_IDENTIFIER = com.example.lowenergyscanner
     QMAKE_MAC_SDK = iphoneos
-    QMAKE_XCODE_CODE_SIGN_STYLE = Manual
-    QMAKE_XCODE_DEVELOPMENT_TEAM = 75F9V574G2
-    QMAKE_XCODE_CODE_SIGN_IDENTITY = "Apple Development: Terje Nilsen (MGWC6SDUJH)"
-    QMAKE_XCODE_PROVISIONING_PROFILE = "terjenilsen-3.mobileprovision"
+    QMAKE_XCODE_CODE_SIGN_STYLE = Automatic
+    QMAKE_XCODE_DEVELOPMENT_TEAM =
+    QMAKE_XCODE_CODE_SIGN_IDENTITY = ""
+    QMAKE_XCODE_PROVISIONING_PROFILE = ""
+    QMAKE_BUNDLE_IDENTIFIER =
+
+# your iOS paho path
+    PAHO_IOS_BASE = /Users/terjenilsen/Dropbox/Sportsfly/transponder/third_party/paho/ios
+    PAHO_IOS = $$PAHO_IOS_BASE/iphoneos
+    INCLUDEPATH += $$PAHO_IOS/include
+    INCLUDEPATH += $$PWD/../Header/generic
+    INCLUDEPATH += $$PWD/../Header/driver
+    INCLUDEPATH += $$PWD/../example/Headers
+    INCLUDEPATH += ./Header/generic
+    INCLUDEPATH += ./Header/driver
+    INCLUDEPATH += ./example/Headers
+    LIBS += -L$$PAHO_IOS/lib -lpaho-mqttpp3 -lpaho-mqtt3a
+
+    #-------------------------------------------
+    # prefer opt/homebrew on Apple Silicon
+    exists($$PWD/../GeographicLib) {
+        message(... FOUND ... )
+        INCLUDEPATH += $$PWD/../GeographicLib/build-ios/include
+        INCLUDEPATH += $$PWD/../GeographicLib/include
+
+        # If the lib is libGeographicLib.a:
+        LIBS += $$PWD/../GeographicLib/build-ios/src/Release-iphoneos/libGeographicLib.a
+
+        # If instead it is libGeographicLib_STATIC.a, use this:
+        # LIBS += $$GEOLIB_ROOT/build-ios/build/Release-iphoneos/libGeographicLib_STATIC.a
+    } else {
+        error(... ERROR ... Missing: $$PWD/../GeographicLib/build-ios/install/include)
+    }
+
+    DEFINES += USE_GEOGRAPHICLIB
+    #-------------------------------------------
 
     # iOS sources
     SOURCES += \
-        ./Source/generic/main.cpp \
-        ./Source/generic/mainwindow.cpp \
-        ./Source/generic/mytcpsocket.cpp \
-        ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
-        ./Source/generic/myNativeWrapperFunctions.mm \
-        ./Source/driver/rotation_matrix.cpp \
-        ./Source/driver/gpx_parse.cpp \
-        ./Source/generic/mqttclient.cpp \
-        ./Source/driver/wit_c_sdk.c \
-        ./Source/generic/INS_driver.cpp
+        $$PWD/../Source/generic/main.cpp \
+        $$PWD/../Source/generic/mainwindow.cpp \
+        $$PWD/../Source/generic/mytcpsocket.cpp \
+        $$PWD/../Source/generic/INS_driver.cpp \
+        $$PWD/../Source/generic/multicastlistner.cpp \
+        $$PWD/../Source/generic/mytcpsocket.cpp \
+        $$PWD/../Source/generic/tcpclient.cpp \
+        $$PWD/../EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
+        $$PWD/../Source/driver/rotation_matrix.cpp \
+        $$PWD/../Source/driver/gpx_parse.cpp \
+        $$PWD/../Source/driver/mqttclient.cpp \
+        $$PWD/../Source/driver/wit_c_sdk.c \
+        $$PWD/../Source/driver/geoid_helper.cpp \
+
+#$$PWD/../Source/generic/myNativeWrapperFunctions.mm \
+
 
     HEADERS += \
         ./Header/generic/mainwindow.h \
         ./Header/generic/mytcpsocket.h \
+        ./Header/generic/multicastlistner.h \
+        ./Header/generic/mytcpsocket.h \
+        ./Header/generic/REG.h \
+        ./Header/generic/tcpclient.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
-        ./Header/generic/myNativeWrapperFunctions.h \
         ./Header/driver/rotation_matrix.h \
-        $$PWD/example/Headers/WidgetAI.h \
         ./Header/driver/gpx_parse.h \
         ./Header/driver/mqttclient.h \
-        ./Header/driver/serialport.h \
-        ./Header/generic/REG.h \
-        ./Header/driver/wit_c_sdk.h
+        ./Header/driver/wit_c_sdk.h \
 
-    # your iOS paho path
-    PAHO_IOS_BASE = /Users/terjenilsen/Dropbox/Sportsfly/transponder/third_party/paho/ios
-    PAHO_IOS = $$PAHO_IOS_BASE/iphoneos
-    INCLUDEPATH += $$PAHO_IOS/include
-    LIBS += -L$$PAHO_IOS/lib -lpaho-mqttpp3 -lpaho-mqtt3a
+# WidgetAI.h \
+
+#./Header/generic/myNativeWrapperFunctions.h \
 
     # Position plist for iOS
     QMAKE_INFO_PLIST = $$PWD/Info.plist
-    QMAKE_BUNDLE_IDENTIFIER = teni@9tek.no
 
     # Recommended for static 3rd party on iOS
     QMAKE_CXXFLAGS += -fPIC

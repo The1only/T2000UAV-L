@@ -37,8 +37,9 @@ android {
         ./Source/generic/main.cpp \
         ./Source/generic/mainwindow.cpp \
         ./Source/generic/mytcpsocket.cpp \
+        ./Source/generic/multicastlistner.cpp \
         ./Source/generic/lockhelper.cpp \
-        ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
+        ./Source/generic/tcpclient.cpp \
         ./Source/driver/rotation_matrix.cpp \
         ./Source/driver/gpx_parse.cpp \
         ./Source/driver/mqttclient.cpp \
@@ -46,7 +47,9 @@ android {
         ./Source/generic/ins_driver.cpp \
         ./Source/driver/bleuart.cpp \
         ./Source/driver/wit_c_sdk.c \
-        ./Source/driver/geoid_helper.cpp
+        ./Source/driver/geoid_helper.cpp \
+        ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
+
 
 
     HEADERS += \
@@ -54,6 +57,9 @@ android {
         ./Header/generic/mainwindow.h \
         ./Header/generic/mytcpsocket.h \
         ./Header/generic/lockhelper.h \
+        ./Header/generic/reg.h \
+        ./Header/generic/multicastlistner.h \
+        ./Header/generic/tcpclient.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
         ./Header/driver/rotation_matrix.h \
@@ -61,8 +67,8 @@ android {
         ./Header/driver/mqttclient.h \
         ./Header/driver/serialport.h \
         ./Header/driver/bleuart.h \
-        ./Header/generic/reg.h \
-        ./Header/driver/geoid_helper.h
+        ./Header/driver/geoid_helper.h \
+
 
     # Paho for Android (your original paths)
     PAHO_ROOT = /Users/terjenilsen/Dropbox/Sportsfly/transponder/third_party/paho/$$ANDROID_TARGET_ARCH

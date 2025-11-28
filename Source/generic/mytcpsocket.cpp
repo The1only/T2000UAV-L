@@ -14,6 +14,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QThread>
+#include <QHostAddress>
 
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
@@ -38,12 +39,15 @@
 
 #include "mytcpsocket.h"
 #include "wit_c_sdk.h"
+#include "tcpclient.h"
 
 #include <QVector>
 #include <QString>
 #include <QMap>
 #include <unistd.h>   // usleep
 #include "REG.h"
+#include "multicastlistner.h"
+
 
 // Enable internal radar simulator (used when real radar is not present)
 #undef SIMULATE_RADAR
@@ -77,10 +81,49 @@ MyTcpSocket::MyTcpSocket(QObject *parent,
     this->text     = s;
     this->parent   = parent;
 
+    //-------------------------------------------------------------
+    // Set up the multicast listern to find wlan sensors...
+    // in some QObject-based class:
+    MulticastListener *listener = new MulticastListener(this);
+
+    connect(listener, &MulticastListener::messageReceived,
+            this, [this](const QString &msg, const QHostAddress &sender, quint16 port) {
+                qDebug() << "Multicast from" << sender.toString() << ":" << port << "->" << msg;
+
+                QString local = msg;
+                QStringList pieces = local.split( " ");
+                if(pieces.length() > 0)
+                {
+                    if(pieces.at(0) == "WTGAHRS1"){
+                        qDebug() << "WTGAHRS1 found at: " << pieces.at(1);
+                        m_imu_address = pieces.at(1);
+                    }
+                    if(pieces.at(0) == "RADAR"){
+                        qDebug() << "WTGAHRS1 found at: " << pieces.at(1);
+                        m_radar_address = pieces.at(1);
+                    }
+                    if(pieces.at(0) == "TRANSPONDER"){
+                        qDebug() << "WTGAHRS1 found at: " << pieces.at(1);
+                        m_transponder_address = pieces.at(1);
+                    }
+                }
+            });
+
+    connect(listener, &MulticastListener::errorOccurred,
+            this, [](const QString &err) {
+                qWarning() << "Multicast error:" << err;
+            });
+
+    if (!listener->start(QStringLiteral("239.255.0.1"), 4210)) {
+        qWarning() << "Failed to start raw multicast listener";
+    }
+
     // ---------------------------------------------------------------------
     // Serial / Bluetooth COM objects
     // ---------------------------------------------------------------------
 
+
+#ifndef Q_OS_IOS
     // Transponder serial port
     TransponderSerPort = new ComQt(parent);
     TransponderSerPort->setParent(this);
@@ -100,14 +143,7 @@ MyTcpSocket::MyTcpSocket(QObject *parent,
     bluetootPort = new ComBt(this);
     bluetootPort->setParent(this);
     bluetootPort->setRxCallback(WitSerialDataIn);       // callback from WIT C SDK
-
-    // ---------------------------------------------------------------------
-    // Deferred startup using a timer (ensures constructor returns first)
-    // ---------------------------------------------------------------------
-    timerStart = new QTimer(this);
-    timerStart->setSingleShot(false);
-    connect(timerStart, SIGNAL(timeout()), this, SLOT(doStart()));
-    timerStart->start(200);                             // first step after 200 ms
+#endif
 
 #ifdef Q_OS_MAC
     // Build a serial-number -> port map on macOS
@@ -141,6 +177,15 @@ MyTcpSocket::MyTcpSocket(QObject *parent,
     } catch (const mqtt::exception &e) {
         printf("MQTT publish error: %s\n", e.what());
     }
+
+    // ---------------------------------------------------------------------
+    // Deferred startup using a timer (ensures constructor returns first)
+    // ---------------------------------------------------------------------
+    timerStart = new QTimer(this);
+    timerStart->setSingleShot(false);
+    connect(timerStart, SIGNAL(timeout()), this, SLOT(doStart()));
+    timerStart->start(400);                             // first step after 200 ms
+
 }
 
 /**
@@ -148,10 +193,11 @@ MyTcpSocket::MyTcpSocket(QObject *parent,
  */
 MyTcpSocket::~MyTcpSocket()
 {
+#ifndef Q_OS_IOS
     TransponderSerPort->close();
     RadarSerPort->close();
     INSSerPort->close();
-
+#endif
     qDebug() << "Stopped socket...";
 }
 
@@ -555,6 +601,47 @@ void MyTcpSocket::connectedIMU()
         m_msgBoxIMUx->hide();
         delete m_msgBoxIMUx;
     }
+#endif  // !Q_OS_IOS
+
+    // --------------------------------------------------------------------------------
+    // Check is the IMU sensor in connected on the wlan...
+    if(IMUconnected == false)
+    {
+        // Show result for BT device
+        NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(tr("Looking for wlan IMU!"));
+        m_msgBoxIMU->show();
+        QCoreApplication::processEvents();
+        QThread::msleep(1000);
+        m_msgBoxIMU->hide();
+        delete m_msgBoxIMU;
+
+        if(m_imu_address != "")
+        {
+            // somewhere in ctor or init:
+            static void*_this = this;
+            m_imuClient = new TcpClient(this);
+            connect(m_imuClient, &TcpClient::connected, this, []() {qDebug() << "IMU TCP connected";});
+            connect(m_imuClient, &TcpClient::disconnected, this, []() {qDebug() << "IMU TCP disconnected";});
+            connect(m_imuClient, &TcpClient::errorOccurred, this, [](const QString &err) {qWarning() << "IMU TCP error:" << err;});
+            connect(m_imuClient, &TcpClient::dataReceived,this, [](const QByteArray &data)
+            {
+                // qDebug() << "IMU says:" << data;
+                WitSerialDataIn(_this, data, data.length()); //uint8_t ucData)
+            });
+
+            m_imuClient->connectTo(QHostAddress(m_imu_address), 23);
+            m_imuClient->sendData("Host connected...\r\n");
+
+        }else{
+            m_msgBoxIMU = new NoButtonMessageBox(tr("Not found IMU on wlan!"));
+            m_msgBoxIMU->show();
+            QCoreApplication::processEvents();
+            QThread::msleep(1000);
+            m_msgBoxIMU->hide();
+            delete m_msgBoxIMU;
+        }
+    }
+#ifndef Q_OS_IOS
 
     // ---------------------------------------------------------------------
     // 3) Radar (USB serial)
@@ -599,7 +686,7 @@ void MyTcpSocket::connectedIMU()
     QThread::msleep(1000);
     m_msgBoxIMU->hide();
     delete m_msgBoxIMU;
-#endif  // !Q_OS_IOS
+#endif
 }
 
 // ============================================================================
@@ -960,7 +1047,9 @@ void MyTcpSocket::handleUpdate(const std::string &ID, float value)
  */
 void MyTcpSocket::readyWrite(char *data)
 {
+#ifndef Q_OS_IOS
     if (Transponderstat) {
         TransponderSerPort->send(data);
     }
+#endif
 }
