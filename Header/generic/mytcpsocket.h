@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QList>
 #include <QHostAddress>
+#include <QNetworkInterface>
 
 #include "ekfNavINS.h"
 #include "rotation_matrix.h"
@@ -20,6 +21,7 @@
 #include "bleuart.h"
 #include "mqttclient.h"
 #include "tcpclient.h"
+#include "ssdp.h"
 
 // Look for an external IMU over Bluetooth
 #ifndef Q_OS_IOS
@@ -56,10 +58,8 @@
 
 #ifdef Q_OS_IOS
 // iOS: iPhone layout
-#include "ui_mainwindow_port_new.h"
-#define SCREEN MainWindow_port_new
-//#define SCREEN MainWindow_port_iPhone
-//#include "ui_mainwindow_port_iPhone.h"
+#define SCREEN MainWindow_port_iPhone
+#include "ui_mainwindow_port_iPhone.h"
 #define simGPS false
 #else
 // Desktop: new layout, GPS simulation enabled
@@ -181,6 +181,8 @@ public:
                          void (*rety)(void *, bool use_imu) = nullptr);
     ~MyTcpSocket();
 
+    void ssdpConfig();
+
     /**
      * @brief Send a raw ASCII command to the transponder, if connected.
      *
@@ -199,7 +201,7 @@ public:
     void (*ret_imu)(void *, bool use_imu) = nullptr;
 
     /// Callback invoked when serial data arrives from transponder.
-    void (*ret)(void *, const char *data, uint32_t size) = nullptr;
+    void (*ret_transponder)(void *, const char *data, uint32_t size) = nullptr;
 
     /**
      * @brief Try to connect and initialize the transponder.
@@ -214,6 +216,13 @@ public:
      * BT IMU → USB IMU → Radar, with status dialogs along the way.
      */
     void connectedIMU();
+
+    /**
+     * @brief Try to connect and initialize RADAR (Net or USB).
+     *
+     * Radar, with status dialogs along the way.
+     */
+    void connectedRadar();
 
     /**
      * @brief Android: periodically bump external display backlight to max.
@@ -269,6 +278,9 @@ public:
     QMap<QString, QString> map;
 #endif
 
+    QString m_address  = "239.255.0.1";
+    quint16 MCAST_PORT = 4210;
+
 #if not defined(Q_OS_ANDROID) && not defined(Q_OS_IOS)
     /**
      * @brief Configure a QSerialPort with given port name.
@@ -284,6 +296,7 @@ public:
 
     QList<QSerialPortInfo> serialport; ///< Cached list of available serial ports.
 #endif
+    SsdpDiscoverer *disc = nullptr;
 
     /// Current serial port name (used by some legacy code).
     QString sport;
@@ -414,6 +427,8 @@ public:
 
 
 private:
+    QUdpSocket *m_multicastSender = nullptr;
+
     // ---------------------------------------------------------------------
     // Hardware communication backends
     // ---------------------------------------------------------------------

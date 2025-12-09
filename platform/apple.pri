@@ -44,7 +44,7 @@ macx {
         ./Source/generic/mainwindow.cpp \
         ./Source/generic/mytcpsocket.cpp \
         ./Source/generic/ins_driver.cpp \
-        ./Source/generic/multicastlistner.cpp \
+        ./Source/generic/ssdp.cpp \
         ./Source/generic/tcpclient.cpp \
         ./Source/driver/rotation_matrix.cpp \
         ./Source/driver/gpx_parse.cpp \
@@ -55,9 +55,11 @@ macx {
         ./Source/driver/geoid_helper.cpp \
         ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
 
+#        ./Source/generic/multicastlistner.cpp \
+
 
     HEADERS += \
-        ./Header/generic/multicastlistner.h \
+        ./Header/generic/ssdp.h \
         ./Header/generic/QuickWidget.h \
         ./Header/generic/mainwindow.h \
         ./Header/generic/mytcpsocket.h \
@@ -73,13 +75,14 @@ macx {
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
 
+#        ./Header/generic/multicastlistner.h \
 
 }
 
 # ----------------
 # iOS
 # ----------------
-# HUSK: User Script Sandboxind = NO must be set in XCODE...
+# HUSK: User Script Sandboxing = NO must be set in XCODE...
 ios {
     message(This is iPhone....)
 
@@ -138,7 +141,7 @@ ios {
         $$PWD/../Source/generic/mainwindow.cpp \
         $$PWD/../Source/generic/mytcpsocket.cpp \
         $$PWD/../Source/generic/INS_driver.cpp \
-        $$PWD/../Source/generic/multicastlistner.cpp \
+        $$PWD/../Source/generic/ssdp.cpp\
         $$PWD/../Source/generic/mytcpsocket.cpp \
         $$PWD/../Source/generic/tcpclient.cpp \
         $$PWD/../EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
@@ -148,13 +151,15 @@ ios {
         $$PWD/../Source/driver/wit_c_sdk.c \
         $$PWD/../Source/driver/geoid_helper.cpp \
 
+#        $$PWD/../Source/generic/multicastlistner.cpp \
+
 #$$PWD/../Source/generic/myNativeWrapperFunctions.mm \
 
 
     HEADERS += \
         ./Header/generic/mainwindow.h \
         ./Header/generic/mytcpsocket.h \
-        ./Header/generic/multicastlistner.h \
+        ./Header/generic/ssdp.h \
         ./Header/generic/mytcpsocket.h \
         ./Header/generic/REG.h \
         ./Header/generic/tcpclient.h \
@@ -164,6 +169,8 @@ ios {
         ./Header/driver/gpx_parse.h \
         ./Header/driver/mqttclient.h \
         ./Header/driver/wit_c_sdk.h \
+
+#./Header/generic/multicastlistner.h \
 
 # WidgetAI.h \
 

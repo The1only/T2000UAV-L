@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow_port_new</class>
- <widget class="QMainWindow" name="MainWindow_port_new">
+ <class>MainWindow_port_iPhone</class>
+ <widget class="QMainWindow" name="MainWindow_port_iPhone">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>870</width>
+    <width>713</width>
     <height>380</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>805</width>
+    <width>712</width>
     <height>380</height>
    </size>
   </property>
@@ -43,7 +43,7 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>871</width>
+      <width>711</width>
       <height>381</height>
      </rect>
     </property>
@@ -446,7 +446,7 @@ padding: 5px;
        <rect>
         <x>250</x>
         <y>170</y>
-        <width>341</width>
+        <width>311</width>
         <height>161</height>
        </rect>
       </property>
@@ -496,7 +496,7 @@ selection-color: rgb(253, 255, 135);
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>331</width>
+          <width>301</width>
           <height>111</height>
          </rect>
         </property>
@@ -528,7 +528,7 @@ selection-color: rgb(253, 255, 135);
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>321</width>
+          <width>301</width>
           <height>121</height>
          </rect>
         </property>
@@ -558,7 +558,7 @@ selection-color: rgb(253, 255, 135);
        <widget class="QPushButton" name="pushButton_19">
         <property name="geometry">
          <rect>
-          <x>210</x>
+          <x>190</x>
           <y>85</y>
           <width>111</width>
           <height>41</height>
@@ -632,7 +632,7 @@ QPushButton:pressed {
        <widget class="QPushButton" name="pushButton_12">
         <property name="geometry">
          <rect>
-          <x>210</x>
+          <x>190</x>
           <y>0</y>
           <width>111</width>
           <height>41</height>
@@ -706,7 +706,7 @@ QPushButton:pressed {
        <widget class="QPushButton" name="reconnect_now">
         <property name="geometry">
          <rect>
-          <x>110</x>
+          <x>100</x>
           <y>43</y>
           <width>111</width>
           <height>40</height>
@@ -747,7 +747,7 @@ QPushButton:pressed {
        <rect>
         <x>250</x>
         <y>0</y>
-        <width>391</width>
+        <width>321</width>
         <height>161</height>
        </rect>
       </property>
@@ -772,9 +772,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="pushButton_Ident">
       <property name="geometry">
        <rect>
-        <x>660</x>
+        <x>570</x>
         <y>10</y>
-        <width>131</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
@@ -810,9 +810,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="pushButton_stby">
       <property name="geometry">
        <rect>
-        <x>660</x>
+        <x>570</x>
         <y>70</y>
-        <width>131</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
@@ -847,9 +847,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="pushButton_norm">
       <property name="geometry">
        <rect>
-        <x>660</x>
+        <x>570</x>
         <y>130</y>
-        <width>131</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
@@ -884,9 +884,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="pushButton_alt">
       <property name="geometry">
        <rect>
-        <x>660</x>
+        <x>570</x>
         <y>190</y>
-        <width>131</width>
+        <width>91</width>
         <height>51</height>
        </rect>
       </property>
@@ -921,10 +921,10 @@ QPushButton:pressed {
      <widget class="QLCDNumber" name="lcdNumber_2">
       <property name="geometry">
        <rect>
-        <x>600</x>
-        <y>250</y>
-        <width>191</width>
-        <height>101</height>
+        <x>560</x>
+        <y>290</y>
+        <width>111</width>
+        <height>61</height>
        </rect>
       </property>
       <property name="font">
@@ -986,7 +986,7 @@ padding: 5px;
      <widget class="QPushButton" name="select_gyro_page">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -1008,7 +1008,7 @@ padding: 5px;
      <widget class="QPushButton" name="select_camera_from_transponder">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -1030,7 +1030,7 @@ padding: 5px;
      <widget class="QLabel" name="label_17">
       <property name="geometry">
        <rect>
-        <x>520</x>
+        <x>480</x>
         <y>150</y>
         <width>71</width>
         <height>20</height>
@@ -1146,7 +1146,7 @@ padding: 5px;
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>18</hour>
+        <hour>14</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -1245,8 +1245,8 @@ padding: 5px;
        <rect>
         <x>220</x>
         <y>0</y>
-        <width>571</width>
-        <height>381</height>
+        <width>431</width>
+        <height>351</height>
        </rect>
       </property>
       <property name="verticalScrollBarPolicy">
@@ -1285,7 +1285,7 @@ padding: 5px;
      <widget class="QLabel" name="speed">
       <property name="geometry">
        <rect>
-        <x>450</x>
+        <x>390</x>
         <y>10</y>
         <width>111</width>
         <height>21</height>
@@ -1312,7 +1312,7 @@ padding: 5px;
       <property name="geometry">
        <rect>
         <x>230</x>
-        <y>327</y>
+        <y>320</y>
         <width>81</width>
         <height>21</height>
        </rect>
@@ -1337,8 +1337,8 @@ padding: 5px;
      <widget class="QLabel" name="pitch">
       <property name="geometry">
        <rect>
-        <x>690</x>
-        <y>327</y>
+        <x>550</x>
+        <y>320</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -1363,7 +1363,7 @@ padding: 5px;
      <widget class="QPushButton" name="select_dumy_page2">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -1385,7 +1385,7 @@ padding: 5px;
      <widget class="QPushButton" name="select_transponder_page">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -1471,7 +1471,7 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>240</x>
-        <y>300</y>
+        <y>290</y>
         <width>51</width>
         <height>21</height>
        </rect>
@@ -1495,8 +1495,8 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_9">
       <property name="geometry">
        <rect>
-        <x>710</x>
-        <y>300</y>
+        <x>570</x>
+        <y>290</y>
         <width>61</width>
         <height>21</height>
        </rect>
@@ -1520,7 +1520,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_10">
       <property name="geometry">
        <rect>
-        <x>450</x>
+        <x>390</x>
         <y>40</y>
         <width>111</width>
         <height>21</height>
@@ -1545,7 +1545,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_11">
       <property name="geometry">
        <rect>
-        <x>680</x>
+        <x>540</x>
         <y>40</y>
         <width>101</width>
         <height>21</height>
@@ -1570,7 +1570,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="altitude">
       <property name="geometry">
        <rect>
-        <x>680</x>
+        <x>540</x>
         <y>10</y>
         <width>91</width>
         <height>21</height>
@@ -1596,8 +1596,8 @@ QPushButton:pressed {
      <widget class="QLabel" name="temp">
       <property name="geometry">
        <rect>
-        <x>450</x>
-        <y>330</y>
+        <x>390</x>
+        <y>320</y>
         <width>111</width>
         <height>21</height>
        </rect>
@@ -1622,8 +1622,8 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_12">
       <property name="geometry">
        <rect>
-        <x>440</x>
-        <y>300</y>
+        <x>380</x>
+        <y>290</y>
         <width>121</width>
         <height>21</height>
        </rect>
@@ -1648,9 +1648,9 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>200</x>
-        <y>0</y>
-        <width>601</width>
-        <height>391</height>
+        <y>10</y>
+        <width>461</width>
+        <height>351</height>
        </rect>
       </property>
       <property name="readOnly">
@@ -1711,7 +1711,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="baro_alt">
       <property name="geometry">
        <rect>
-        <x>680</x>
+        <x>540</x>
         <y>80</y>
         <width>91</width>
         <height>21</height>
@@ -1737,7 +1737,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_16">
       <property name="geometry">
        <rect>
-        <x>680</x>
+        <x>540</x>
         <y>100</y>
         <width>101</width>
         <height>21</height>
@@ -1818,7 +1818,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_transponder_page_2">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -1840,7 +1840,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_dumy_page2_2">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -1862,9 +1862,9 @@ QPushButton:pressed {
      <widget class="WidgetAI" name="widgetai" native="true">
       <property name="geometry">
        <rect>
-        <x>470</x>
+        <x>450</x>
         <y>110</y>
-        <width>301</width>
+        <width>211</width>
         <height>261</height>
        </rect>
       </property>
@@ -1878,9 +1878,9 @@ QPushButton:pressed {
      <widget class="WidgetTC" name="widgetTC" native="true">
       <property name="geometry">
        <rect>
-        <x>300</x>
+        <x>280</x>
         <y>0</y>
-        <width>191</width>
+        <width>161</width>
         <height>181</height>
        </rect>
       </property>
@@ -1896,7 +1896,7 @@ QPushButton:pressed {
        <rect>
         <x>0</x>
         <y>120</y>
-        <width>321</width>
+        <width>291</width>
         <height>251</height>
        </rect>
       </property>
@@ -1910,9 +1910,9 @@ QPushButton:pressed {
      <widget class="WidgetASI" name="widgetASI" native="true">
       <property name="geometry">
        <rect>
-        <x>270</x>
+        <x>260</x>
         <y>180</y>
-        <width>241</width>
+        <width>201</width>
         <height>191</height>
        </rect>
       </property>
@@ -1928,7 +1928,7 @@ QPushButton:pressed {
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>141</width>
+        <width>131</width>
         <height>131</height>
        </rect>
       </property>
@@ -1942,9 +1942,9 @@ QPushButton:pressed {
      <widget class="WidgetHI" name="widgetHI" native="true">
       <property name="geometry">
        <rect>
-        <x>670</x>
+        <x>540</x>
         <y>1</y>
-        <width>131</width>
+        <width>121</width>
         <height>121</height>
        </rect>
       </property>
@@ -1958,7 +1958,7 @@ QPushButton:pressed {
      <widget class="QRadioButton" name="radioButton">
       <property name="geometry">
        <rect>
-        <x>510</x>
+        <x>430</x>
         <y>10</y>
         <width>21</width>
         <height>31</height>
@@ -1987,7 +1987,7 @@ color: rgb(255, 255, 255);
      <widget class="QRadioButton" name="radioButton_2">
       <property name="geometry">
        <rect>
-        <x>510</x>
+        <x>440</x>
         <y>39</y>
         <width>31</width>
         <height>31</height>
@@ -2022,7 +2022,7 @@ color: rgb(255, 255, 255);
      <widget class="QRadioButton" name="radioButton_3">
       <property name="geometry">
        <rect>
-        <x>510</x>
+        <x>450</x>
         <y>69</y>
         <width>21</width>
         <height>31</height>
@@ -2054,9 +2054,9 @@ color: rgb(255, 255, 255);
      <widget class="QLabel" name="label_18">
       <property name="geometry">
        <rect>
-        <x>540</x>
+        <x>480</x>
         <y>70</y>
-        <width>101</width>
+        <width>41</width>
         <height>31</height>
        </rect>
       </property>
@@ -2080,9 +2080,9 @@ color: rgb(255, 255, 255);
      <widget class="QLabel" name="label_19">
       <property name="geometry">
        <rect>
-        <x>540</x>
+        <x>470</x>
         <y>40</y>
-        <width>101</width>
+        <width>41</width>
         <height>31</height>
        </rect>
       </property>
@@ -2105,9 +2105,9 @@ color: rgb(255, 255, 255);
      <widget class="QLabel" name="label_20">
       <property name="geometry">
        <rect>
-        <x>540</x>
+        <x>450</x>
         <y>10</y>
-        <width>101</width>
+        <width>91</width>
         <height>31</height>
        </rect>
       </property>
@@ -2130,8 +2130,8 @@ color: rgb(255, 255, 255);
      <widget class="QDial" name="dial">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>50</y>
+        <x>200</x>
+        <y>40</y>
         <width>81</width>
         <height>81</height>
        </rect>
@@ -2173,7 +2173,7 @@ color: rgb(255, 255, 255);
      <widget class="QLineEdit" name="doubleSpinBox">
       <property name="geometry">
        <rect>
-        <x>150</x>
+        <x>130</x>
         <y>60</y>
         <width>71</width>
         <height>21</height>
@@ -2198,7 +2198,7 @@ color: rgb(255, 255, 255);
      <widget class="QPushButton" name="reset_altitude_3">
       <property name="geometry">
        <rect>
-        <x>210</x>
+        <x>130</x>
         <y>10</y>
         <width>71</width>
         <height>31</height>
@@ -2238,7 +2238,6 @@ QPushButton:pressed {
      <zorder>widgetai</zorder>
      <zorder>widgetASI</zorder>
      <zorder>widgetHI</zorder>
-     <zorder>radioButton</zorder>
      <zorder>radioButton_2</zorder>
      <zorder>radioButton_3</zorder>
      <zorder>label_18</zorder>
@@ -2250,12 +2249,13 @@ QPushButton:pressed {
      <zorder>widgetALT</zorder>
      <zorder>reset_altitude_3</zorder>
      <zorder>widgetVSI</zorder>
+     <zorder>radioButton</zorder>
     </widget>
     <widget class="QWidget" name="page_7">
      <widget class="QPushButton" name="select_transponder_page_3">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -2277,7 +2277,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_from_4_to_5">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -2309,9 +2309,9 @@ QPushButton:pressed {
      <widget class="WidgetEHSI" name="widgetEHSI" native="true">
       <property name="geometry">
        <rect>
-        <x>439</x>
+        <x>409</x>
         <y>-1</y>
-        <width>361</width>
+        <width>251</width>
         <height>361</height>
        </rect>
       </property>
@@ -2320,7 +2320,7 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>390</x>
-        <y>290</y>
+        <y>280</y>
         <width>71</width>
         <height>71</height>
        </rect>
@@ -2363,7 +2363,7 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>390</x>
-        <y>260</y>
+        <y>250</y>
         <width>71</width>
         <height>21</height>
        </rect>
@@ -2389,7 +2389,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_from_5_to_6">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -2411,7 +2411,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_transponder_page_4">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -2435,7 +2435,7 @@ QPushButton:pressed {
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>801</width>
+        <width>661</width>
         <height>341</height>
        </rect>
       </property>
@@ -2471,7 +2471,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_29">
       <property name="geometry">
        <rect>
-        <x>660</x>
+        <x>550</x>
         <y>220</y>
         <width>111</width>
         <height>41</height>
@@ -2500,7 +2500,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_transponder_page2">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -2522,7 +2522,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_gyro_page2">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -2545,9 +2545,9 @@ QPushButton:pressed {
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>40</y>
-        <width>311</width>
-        <height>311</height>
+        <y>50</y>
+        <width>271</width>
+        <height>301</height>
        </rect>
       </property>
       <property name="font">
@@ -2576,10 +2576,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <widget class="QTextEdit" name="textEdit_2">
       <property name="geometry">
        <rect>
-        <x>330</x>
-        <y>40</y>
-        <width>461</width>
-        <height>311</height>
+        <x>290</x>
+        <y>50</y>
+        <width>371</width>
+        <height>301</height>
        </rect>
       </property>
       <property name="font">
@@ -2652,7 +2652,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <widget class="QPushButton" name="pushButton_15">
       <property name="geometry">
        <rect>
-        <x>529</x>
+        <x>510</x>
         <y>10</y>
         <width>151</width>
         <height>31</height>
@@ -2692,9 +2692,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_transponder_page2_2">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -2714,9 +2714,9 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_gyro_page2_2">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
-        <width>51</width>
+        <width>41</width>
         <height>161</height>
        </rect>
       </property>
@@ -2738,7 +2738,7 @@ QPushButton:pressed {
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>781</width>
+        <width>611</width>
         <height>331</height>
        </rect>
       </property>
@@ -2781,7 +2781,7 @@ QPushButton:pressed {
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>871</width>
+        <width>671</width>
         <height>351</height>
        </rect>
       </property>
@@ -2792,7 +2792,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_UTC">
       <property name="geometry">
        <rect>
-        <x>90</x>
+        <x>70</x>
         <y>10</y>
         <width>101</width>
         <height>21</height>
@@ -2817,7 +2817,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_Speed">
       <property name="geometry">
        <rect>
-        <x>710</x>
+        <x>550</x>
         <y>10</y>
         <width>81</width>
         <height>21</height>
@@ -2843,7 +2843,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_Bearing">
       <property name="geometry">
        <rect>
-        <x>110</x>
+        <x>80</x>
         <y>143</y>
         <width>101</width>
         <height>30</height>
@@ -2868,8 +2868,8 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_Pitch">
       <property name="geometry">
        <rect>
-        <x>700</x>
-        <y>156</y>
+        <x>540</x>
+        <y>140</y>
         <width>81</width>
         <height>21</height>
        </rect>
@@ -2893,7 +2893,7 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_Roll">
       <property name="geometry">
        <rect>
-        <x>400</x>
+        <x>350</x>
         <y>302</y>
         <width>101</width>
         <height>21</height>
@@ -2918,9 +2918,9 @@ QPushButton:pressed {
      <widget class="QLabel" name="label_TMP">
       <property name="geometry">
        <rect>
-        <x>730</x>
-        <y>260</y>
-        <width>51</width>
+        <x>560</x>
+        <y>270</y>
+        <width>41</width>
         <height>21</height>
        </rect>
       </property>
@@ -2982,7 +2982,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_transponder_page_camera">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -3004,7 +3004,7 @@ QPushButton:pressed {
      <widget class="QPushButton" name="select_page2_map">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -3382,7 +3382,7 @@ QPushButton:pressed {
        <rect>
         <x>370</x>
         <y>220</y>
-        <width>350</width>
+        <width>291</width>
         <height>55</height>
        </rect>
       </property>
@@ -3404,7 +3404,7 @@ Only to be used on ground !</string>
        <rect>
         <x>370</x>
         <y>280</y>
-        <width>350</width>
+        <width>291</width>
         <height>55</height>
        </rect>
       </property>
@@ -3465,7 +3465,7 @@ barometer</string>
        <rect>
         <x>390</x>
         <y>80</y>
-        <width>350</width>
+        <width>271</width>
         <height>55</height>
        </rect>
       </property>
@@ -3488,7 +3488,7 @@ then use this.</string>
      <widget class="QPushButton" name="select_transponder_page2_3">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>10</y>
         <width>41</width>
         <height>161</height>
@@ -3510,7 +3510,7 @@ then use this.</string>
      <widget class="QPushButton" name="select_gyro_page2_3">
       <property name="geometry">
        <rect>
-        <x>810</x>
+        <x>670</x>
         <y>180</y>
         <width>41</width>
         <height>161</height>
@@ -3534,7 +3534,7 @@ then use this.</string>
        <rect>
         <x>70</x>
         <y>0</y>
-        <width>721</width>
+        <width>581</width>
         <height>361</height>
        </rect>
       </property>

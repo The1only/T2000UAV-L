@@ -38,8 +38,15 @@
 	<string>${IPHONEOS_DEPLOYMENT_TARGET}</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Qt LE scanner wants to access your Bluetooth adapter</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_ssdp._udp</string>
+		<string>_http._tcp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>The camera is used to record voice memos.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app discovers sensors on your local network.</string>
 	<key>NSLocationAlwaysAndWhenInUsageDescription</key>
 	<string>Always and in usage permissions</string>
 	<key>NSLocationAlwaysUsageDescription</key>
@@ -48,6 +55,8 @@
 	<string>When in use permissions</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Need to use this</string>
+	<key>NSTerjeNilsen</key>
+	<string>This is a test.</string>
 	<key>UILaunchStoryboardName</key>
 	<string></string>
 	<key>UIStatusBarStyle</key>
@@ -56,5 +65,7 @@
 	<array>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>com.apple.developer.networking.multicast</key>
+	<true/>
 </dict>
 </plist>

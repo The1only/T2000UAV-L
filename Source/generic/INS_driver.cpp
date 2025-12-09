@@ -60,13 +60,15 @@ void AutoSetBaud(int baud)
 {
     (void)baud;
 #ifndef Q_OS_IOS
-    if(baud == QSerialPort::Baud9600){
-        WitSetUartBaud(WIT_BAUD_9600);
-        serialPorts->setBaudrate(QSerialPort::Baud9600);
-    }
-    if(baud == QSerialPort::Baud115200){
-        WitSetUartBaud(WIT_BAUD_115200);
-        serialPorts->setBaudrate(QSerialPort::Baud115200);
+    if(serialPorts){
+        if(baud == QSerialPort::Baud9600){
+            WitSetUartBaud(WIT_BAUD_9600);
+            serialPorts->setBaudrate(QSerialPort::Baud9600);
+        }
+        if(baud == QSerialPort::Baud115200){
+            WitSetUartBaud(WIT_BAUD_115200);
+            serialPorts->setBaudrate(QSerialPort::Baud115200);
+        }
     }
 #endif
 }
@@ -89,12 +91,14 @@ static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
     (void)uiSize;
 
 #ifndef Q_OS_IOS
-    if(serialPorts != nullptr){
-        serialPorts->send(reinterpret_cast<const char*>(p_data),static_cast<unsigned short>(uiSize));
-    }
-    else{
-        if(serialPortb != nullptr)
-        serialPortb->send(reinterpret_cast<const char*>(p_data),static_cast<unsigned short>(uiSize));
+    if(serialPorts){
+        if(serialPorts != nullptr){
+            serialPorts->send(reinterpret_cast<const char*>(p_data),static_cast<unsigned short>(uiSize));
+        }
+        else{
+            if(serialPortb != nullptr)
+            serialPortb->send(reinterpret_cast<const char*>(p_data),static_cast<unsigned short>(uiSize));
+        }
     }
 #endif
 }

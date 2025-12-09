@@ -15,6 +15,7 @@
 #include <QTimer>
 #include <QThread>
 #include <QHostAddress>
+#include <QNetworkInterface>
 
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
@@ -46,7 +47,8 @@
 #include <QMap>
 #include <unistd.h>   // usleep
 #include "REG.h"
-#include "multicastlistner.h"
+#include "ssdp.h"
+//#include "multicastlistner.h"
 
 
 // Enable internal radar simulator (used when real radar is not present)
@@ -76,58 +78,23 @@ MyTcpSocket::MyTcpSocket(QObject *parent,
                          void (*rety)(void *, bool use_imu))
     : QObject(parent)
 {
-    this->ret      = retx;  // C callback for transponder data
+    this->ret_transponder   = retx;  // C callback for transponder data
     this->ret_imu  = rety;  // C callback to notify IMU status
     this->text     = s;
     this->parent   = parent;
 
     //-------------------------------------------------------------
     // Set up the multicast listern to find wlan sensors...
-    // in some QObject-based class:
-    MulticastListener *listener = new MulticastListener(this);
-
-    connect(listener, &MulticastListener::messageReceived,
-            this, [this](const QString &msg, const QHostAddress &sender, quint16 port) {
-                qDebug() << "Multicast from" << sender.toString() << ":" << port << "->" << msg;
-
-                QString local = msg;
-                QStringList pieces = local.split( " ");
-                if(pieces.length() > 0)
-                {
-                    if(pieces.at(0) == "WTGAHRS1"){
-                        qDebug() << "WTGAHRS1 found at: " << pieces.at(1);
-                        m_imu_address = pieces.at(1);
-                    }
-                    if(pieces.at(0) == "RADAR"){
-                        qDebug() << "WTGAHRS1 found at: " << pieces.at(1);
-                        m_radar_address = pieces.at(1);
-                    }
-                    if(pieces.at(0) == "TRANSPONDER"){
-                        qDebug() << "WTGAHRS1 found at: " << pieces.at(1);
-                        m_transponder_address = pieces.at(1);
-                    }
-                }
-            });
-
-    connect(listener, &MulticastListener::errorOccurred,
-            this, [](const QString &err) {
-                qWarning() << "Multicast error:" << err;
-            });
-
-    if (!listener->start(QStringLiteral("239.255.0.1"), 4210)) {
-        qWarning() << "Failed to start raw multicast listener";
-    }
+    ssdpConfig();
 
     // ---------------------------------------------------------------------
     // Serial / Bluetooth COM objects
     // ---------------------------------------------------------------------
-
-
 #ifndef Q_OS_IOS
     // Transponder serial port
     TransponderSerPort = new ComQt(parent);
     TransponderSerPort->setParent(this);
-    TransponderSerPort->setRxCallback(ret);             // register C callback
+    TransponderSerPort->setRxCallback(ret_transponder);             // register C callback
 
     // Radar serial port
     RadarSerPort = new ComQt(this);
@@ -184,7 +151,7 @@ MyTcpSocket::MyTcpSocket(QObject *parent,
     timerStart = new QTimer(this);
     timerStart->setSingleShot(false);
     connect(timerStart, SIGNAL(timeout()), this, SLOT(doStart()));
-    timerStart->start(400);                             // first step after 200 ms
+    timerStart->start(500);                             // first step after 200 ms
 
 }
 
@@ -201,7 +168,42 @@ MyTcpSocket::~MyTcpSocket()
     qDebug() << "Stopped socket...";
 }
 
-// ============================================================================
+/**
+ * @brief multicastConfig. Sends multicast...
+ */
+void MyTcpSocket::ssdpConfig()
+{
+    disc = new SsdpDiscoverer(this);
+
+    connect(disc, &SsdpDiscoverer::deviceFound,
+            this, [this](const QHostAddress &addr, quint16 port, const QString &st)
+            {
+        /*
+                qDebug() << "SSDP device found:"
+                         << "IP="  << addr.toString()
+                         << "PORT="<< QString::number(port)
+                         << "ST="  << st;
+        */
+                // ---------- Match device type by ST ----------
+                if (st == "IMU") {
+                    m_imu_address = addr.toString();
+                    qDebug() << "IMU FOUND:" << m_imu_address;
+                }
+                else if (st == "RADAR") {
+                    m_radar_address = addr.toString();
+                    qDebug() << "RADAR FOUND:" << m_radar_address;
+                }
+                else if (st == "TRANSPONDER") {
+                    m_transponder_address = addr.toString();
+                    qDebug() << "TRANSPONDER FOUND:" << m_transponder_address;
+                }
+                else {
+                    qDebug() << "Unknown SSDP service type:" << st;
+                }
+            });
+}
+
+//====================================================================
 // Configuration
 // ============================================================================
 
@@ -336,57 +338,56 @@ QString MyTcpSocket::findPort(QString targetSerial)
  */
 void MyTcpSocket::doStart()
 {
+    static int delay = 0;
+    static int send_boot = 10;
+
     static int state = 0;
+    timerStart->stop();
 
-    if (state == 0) {
-        // Step 0: IMU init
-        timerStart->stop();
+    switch(state){
+    case 0:
+        disc->startDiscovery(5000);  // listen for 5 seconds
+        // Wait for a total of 2.5 seconds...
+        if(send_boot++ > 20){
+            send_boot = 0;
+            ++state;
+        }
+        QCoreApplication::processEvents();
+        break;
+    case 1:
         connectedIMU();          // try to find & initialize IMU / INS
-        timerStart->start(200);
         ++state;
-    } else if (state == 1) {
-        // Step 1: Transponder init
-        timerStart->stop();
-
-        NoButtonMessageBox *m_msgBoxTrans =
-            new NoButtonMessageBox(tr("Looking for USB Transponder!"));
-        m_msgBoxTrans->show();
-        QCoreApplication::processEvents();
-
+        break;
+    case 2:
+        connectedRadar();          // try to find & initialize IMU / INS
+        ++state;
+        break;
+    case 3:
         connected();             // try to find & initialize transponder
-
-        QCoreApplication::processEvents();
-        QThread::msleep(1000);
-        QCoreApplication::processEvents();
-
-        m_msgBoxTrans->hide();
-        delete m_msgBoxTrans;
-
-        // Show second status message depending on detection result
-        if (!Transponderstat) {
-            m_msgBoxTrans =
-                new NoButtonMessageBox(tr("Transponder not found!"));
-        } else {
-            m_msgBoxTrans =
-                new NoButtonMessageBox(tr("Transponder found and connected..."));
-        }
-        m_msgBoxTrans->show();
-        QCoreApplication::processEvents();
-        QThread::msleep(2000);
-        m_msgBoxTrans->hide();
-        delete m_msgBoxTrans;
-
-        // Notify IMU connection state through callback
-        this->ret_imu(this->parent, IMUconnected);
-
-        timerStart->start(500);
         ++state;
-    } else if (state == 2) {
-        // Step 2: Keep retrying transponder if not connected
-        if (!Transponderstat) {
-            connected();
+        break;
+    case 4:
+        if(delay++ > 15){
+            delay = 0;
+            setbacklit();     // Android: periodically force bright backlight
         }
-        // Keep timer running, used for backlight and other periodic tasks
+        /*
+        switch(delay){
+        case 5:
+            if(!IMUconnected){
+                connectedIMU();          // try to find & initialize IMU / INS
+            }
+        case 10:
+            if(!Radarstat){
+                connectedRadar();          // try to find & initialize IMU / INS
+            }
+        case 14:
+            if (!Transponderstat){
+                connected();
+            }
+        }
+        */
+        break;
     }
 
     // ---------------------------------------------------------------------
@@ -425,9 +426,7 @@ void MyTcpSocket::doStart()
     Transponderstat = true;
 #endif  // SIMULATE_RADAR
 
-#ifndef Q_OS_MAC
-    setbacklit();     // Android: periodically force bright backlight
-#endif
+    timerStart->start(500);
 }
 
 // ============================================================================
@@ -476,8 +475,8 @@ void MyTcpSocket::setbacklit()
  *
  * Order:
  *   1. Bluetooth IMU (WT901 BLE) if enabled.
- *   2. Serial IMU (WTGAHRS3).
- *   3. Radar (USB serial).
+ *   2. Serial IMU WTGAHRS1/3.
+ *   3. Wlan IMU WTGAHRS1/3.
  */
 void MyTcpSocket::connectedIMU()
 {
@@ -489,9 +488,6 @@ void MyTcpSocket::connectedIMU()
     // 1) Bluetooth IMU (WT901BLE67), if compiled with USE_BT_IMU
     // ---------------------------------------------------------------------
 #if defined(USE_BT_IMU)
-    NoButtonMessageBox *m_msgBoxIMU =
-        new NoButtonMessageBox(tr("Looking for Bluetooth device WT901BLE67!"));
-    m_msgBoxIMU->show();
 
     // Wait for BT scan to finish
     int timeout = 5*10;
@@ -503,7 +499,6 @@ void MyTcpSocket::connectedIMU()
 
     if (bluetootPort->open("", 0)) {
         // Launch INS driver in BT mode
-//        INS_driver(static_cast<void *>(this), nullptr, bluetootPort,reinterpret_cast<void *>(doIMU));
         INS_driver(static_cast<void *>(this), nullptr, bluetootPort,reinterpret_cast<void *>(parseIMU));
 
         IMUconnected = false;
@@ -521,36 +516,25 @@ void MyTcpSocket::connectedIMU()
         IMUconnected = false;
     }
 
-    m_msgBoxIMU->hide();
-    delete m_msgBoxIMU;
-
     // Show result for BT device
-    if (!IMUconnected) {
-        m_msgBoxIMU = new NoButtonMessageBox(
-            tr("Bluetooth device WT901BLE67 not found!"));
-    } else {
-        m_msgBoxIMU = new NoButtonMessageBox(
+    if (IMUconnected)
+    {
+        NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(
             tr("Bluetooth device WT901BLE67 found and connected..."));
+        m_msgBoxIMU->show();
+        QCoreApplication::processEvents();
+        QThread::msleep(1000);
+        m_msgBoxIMU->hide();
+        delete m_msgBoxIMU;
     }
-    m_msgBoxIMU->show();
-    QCoreApplication::processEvents();
-    QThread::msleep(1000);
-    m_msgBoxIMU->hide();
-    delete m_msgBoxIMU;
 #endif  // USE_BT_IMU
 
     // ---------------------------------------------------------------------
     // 2) USB IMU / INS device WTGAHRS3 (serial)
     // ---------------------------------------------------------------------
 #ifndef Q_OS_IOS
-    NoButtonMessageBox *m_msgBoxIMUx = nullptr;
-
-    if (!IMUconnected) {
-        m_msgBoxIMUx = new NoButtonMessageBox(tr("Looking for USB device WTGAHRS1/WTGAHRS3!"));
-        m_msgBoxIMUx->show();
-        QCoreApplication::processEvents();
-        QThread::msleep(500);
-
+    if (!IMUconnected)
+    {
 #ifdef Q_OS_ANDROID
         if (INSSerPort->open(_IMU_id, QSerialPort::Baud9600))
 #else
@@ -560,7 +544,6 @@ void MyTcpSocket::connectedIMU()
 #endif
         {
             // Launch INS driver in serial mode
-    //        INS_driver(static_cast<void *>(this), INSSerPort, nullptr,reinterpret_cast<void *>(doIMU));
             INS_driver(static_cast<void *>(this), INSSerPort, nullptr,reinterpret_cast<void *>(parseIMU));
 
             for (int delay = 0; delay < 10; ++delay) {
@@ -581,25 +564,15 @@ void MyTcpSocket::connectedIMU()
             }
         }
 
-        QCoreApplication::processEvents();
-        QThread::msleep(1000);
-
-        m_msgBoxIMUx->hide();
-        delete m_msgBoxIMUx;
-
         // IMU result message
-        if (!IMUconnected) {
-            m_msgBoxIMUx =
-                new NoButtonMessageBox(tr("USB device WTGAHRS3 not found!"));
-        } else {
-            m_msgBoxIMUx =
-                new NoButtonMessageBox(tr("USB device WTGAHRS3 found and connected..."));
+        if (IMUconnected) {
+            NoButtonMessageBox *m_msgBoxIMUx = new NoButtonMessageBox(tr("Serial device WTGAHRS3 found and connected..."));
+            m_msgBoxIMUx->show();
+            QCoreApplication::processEvents();
+            QThread::msleep(1000);
+            m_msgBoxIMUx->hide();
+            delete m_msgBoxIMUx;
         }
-        m_msgBoxIMUx->show();
-        QCoreApplication::processEvents();
-        QThread::msleep(1000);
-        m_msgBoxIMUx->hide();
-        delete m_msgBoxIMUx;
     }
 #endif  // !Q_OS_IOS
 
@@ -607,14 +580,6 @@ void MyTcpSocket::connectedIMU()
     // Check is the IMU sensor in connected on the wlan...
     if(IMUconnected == false)
     {
-        // Show result for BT device
-        NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(tr("Looking for wlan IMU!"));
-        m_msgBoxIMU->show();
-        QCoreApplication::processEvents();
-        QThread::msleep(1000);
-        m_msgBoxIMU->hide();
-        delete m_msgBoxIMU;
-
         if(m_imu_address != "")
         {
             // somewhere in ctor or init:
@@ -631,25 +596,30 @@ void MyTcpSocket::connectedIMU()
 
             m_imuClient->connectTo(QHostAddress(m_imu_address), 23);
             m_imuClient->sendData("Host connected...\r\n");
+            IMUconnected = true;
 
-        }else{
-            m_msgBoxIMU = new NoButtonMessageBox(tr("Not found IMU on wlan!"));
+            INS_driver(static_cast<void *>(this), nullptr, nullptr,reinterpret_cast<void *>(parseIMU));
+
+            NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(tr("Found IMU on wlan!"));
             m_msgBoxIMU->show();
             QCoreApplication::processEvents();
             QThread::msleep(1000);
             m_msgBoxIMU->hide();
             delete m_msgBoxIMU;
+
         }
     }
-#ifndef Q_OS_IOS
 
+    // Notify IMU connection state through callback
+    this->ret_imu(this->parent, IMUconnected);
+}
+
+void MyTcpSocket::connectedRadar()
+{
     // ---------------------------------------------------------------------
-    // 3) Radar (USB serial)
+    // 3) Radar (USB serial and NET)
     // ---------------------------------------------------------------------
-    m_msgBoxIMU = new NoButtonMessageBox(tr("Looking for NRA24 RADAR!"));
-    m_msgBoxIMU->show();
-    QCoreApplication::processEvents();
-    QThread::msleep(500);
+#ifndef Q_OS_IOS
 
 #ifdef Q_OS_ANDROID
     if (RadarSerPort->open(_radar_id, QSerialPort::Baud115200)) {
@@ -661,32 +631,53 @@ void MyTcpSocket::connectedIMU()
     } else {
         if (RadarSerPort->open(radar_name, QSerialPort::Baud115200)) {
 #endif
-        Radarstat = true;
-    } else {
-        Radarstat = false;
+            Radarstat = true;
+
+        } else {
+            Radarstat = false;
+        }
+    #ifndef Q_OS_ANDROID
     }
-#ifndef Q_OS_ANDROID
-}
-#endif
-
-    QCoreApplication::processEvents();
-    QThread::msleep(1000);
-
-    m_msgBoxIMU->hide();
-    delete m_msgBoxIMU;
+    #endif
 
     // Radar result message
-    if (!Radarstat) {
-        m_msgBoxIMU = new NoButtonMessageBox(tr("USB RADAR not found!"));
-    } else {
-        m_msgBoxIMU = new NoButtonMessageBox(tr("USB RADAR found and connected..."));
+    if (Radarstat) {
+        NoButtonMessageBox *m_msgBoxRadar = new NoButtonMessageBox(tr("Serial RADAR found and connected..."));
+        QCoreApplication::processEvents();
+        QThread::msleep(1000);
+        m_msgBoxRadar->hide();
+        delete m_msgBoxRadar;
+
     }
-    m_msgBoxIMU->show();
-    QCoreApplication::processEvents();
-    QThread::msleep(1000);
-    m_msgBoxIMU->hide();
-    delete m_msgBoxIMU;
 #endif
+
+    if (!Radarstat)
+    {
+        if(m_radar_address != "")
+        {
+            // somewhere in ctor or init:
+            static void*_this = this;
+            m_radarClient = new TcpClient(this);
+            connect(m_radarClient, &TcpClient::connected, this, []() {qDebug() << "Radar TCP connected";});
+            connect(m_radarClient, &TcpClient::disconnected, this, []() {qDebug() << "Radar TCP disconnected";});
+
+            connect(m_radarClient, &TcpClient::errorOccurred, this, [](const QString &err) {qWarning() << "Radar TCP error:" << err;});
+            connect(m_radarClient, &TcpClient::dataReceived,this, [](const QByteArray &data){
+                doRadar(_this, data, data.length());
+            });
+
+            m_radarClient->connectTo(QHostAddress(m_radar_address), 23);
+            m_radarClient->sendData("Host connected...\r\n");
+            Radarstat = true;
+
+            NoButtonMessageBox *m_msgBoxRadar = new NoButtonMessageBox(tr("Found Radar on wlan!"));
+            m_msgBoxRadar->show();
+            QCoreApplication::processEvents();
+            QThread::msleep(1000);
+            m_msgBoxRadar->hide();
+            delete m_msgBoxRadar;
+        }
+    }
 }
 
 // ============================================================================
@@ -717,7 +708,13 @@ void MyTcpSocket::connected()
 
         // Initial version query
         readyWrite(const_cast<char *>("v=?\n"));
-        QThread::usleep(500);
+
+        NoButtonMessageBox *m_msgBoxTrans = new NoButtonMessageBox(tr("Transponder found and connected..."));
+        m_msgBoxTrans->show();
+        QCoreApplication::processEvents();
+        QThread::msleep(2000);
+        m_msgBoxTrans->hide();
+        delete m_msgBoxTrans;
 
         // Setup periodic transponder polling
         if (timerAlt) {
@@ -732,6 +729,34 @@ void MyTcpSocket::connected()
         Transponderstat = false;
     }
 #endif
+    if (!Transponderstat)
+    {
+        if(m_transponder_address != "")
+        {
+            // somewhere in ctor or init:
+            static void*_this = this;
+            m_transponderClient = new TcpClient(this);
+            connect(m_transponderClient, &TcpClient::connected, this, []() {qDebug() << "Transponder TCP connected";});
+            connect(m_transponderClient, &TcpClient::disconnected, this, []() {qDebug() << "Transponder TCP disconnected";});
+
+            connect(m_transponderClient, &TcpClient::errorOccurred, this, [](const QString &err) {qWarning() << "Transponder TCP error:" << err;});
+            connect(m_transponderClient, &TcpClient::dataReceived,this, [this](const QByteArray &data){
+                this->ret_transponder(this->parent, data, data.length());
+            });
+
+            m_transponderClient->connectTo(QHostAddress(m_transponder_address), 23);
+            m_transponderClient->sendData("Host connected...\r\n");
+            Transponderstat = true;
+
+            NoButtonMessageBox *m_msgBoxTransponder = new NoButtonMessageBox(tr("Found Transponder on wlan!"));
+            m_msgBoxTransponder->show();
+            QCoreApplication::processEvents();
+            QThread::msleep(1000);
+            m_msgBoxTransponder->hide();
+            delete m_msgBoxTransponder;
+
+        }
+    }
 }
 
 // ============================================================================
@@ -1047,9 +1072,15 @@ void MyTcpSocket::handleUpdate(const std::string &ID, float value)
  */
 void MyTcpSocket::readyWrite(char *data)
 {
-#ifndef Q_OS_IOS
     if (Transponderstat) {
-        TransponderSerPort->send(data);
-    }
+        if(m_transponderClient != nullptr){
+//            qDebug() << "Sending: " << data;
+            m_transponderClient->sendData(data);
+        }
+        else{
+#ifndef Q_OS_IOS
+            TransponderSerPort->send(data);
 #endif
+        }
+    }
 }

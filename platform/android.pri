@@ -37,7 +37,7 @@ android {
         ./Source/generic/main.cpp \
         ./Source/generic/mainwindow.cpp \
         ./Source/generic/mytcpsocket.cpp \
-        ./Source/generic/multicastlistner.cpp \
+        ./Source/generic/ssdp.cpp\
         ./Source/generic/lockhelper.cpp \
         ./Source/generic/tcpclient.cpp \
         ./Source/driver/rotation_matrix.cpp \
@@ -50,6 +50,7 @@ android {
         ./Source/driver/geoid_helper.cpp \
         ./EKF_IMU_GPS/ekf_nav_ins/src/ekfNavINS.cpp \
 
+#       ./Source/generic/multicastlistner.cpp \
 
 
     HEADERS += \
@@ -58,7 +59,7 @@ android {
         ./Header/generic/mytcpsocket.h \
         ./Header/generic/lockhelper.h \
         ./Header/generic/reg.h \
-        ./Header/generic/multicastlistner.h \
+        ./Header/generic/ssdp.h\
         ./Header/generic/tcpclient.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
@@ -69,6 +70,7 @@ android {
         ./Header/driver/bleuart.h \
         ./Header/driver/geoid_helper.h \
 
+#       ./Header/generic/multicastlistner.h \
 
     # Paho for Android (your original paths)
     PAHO_ROOT = /Users/terjenilsen/Dropbox/Sportsfly/transponder/third_party/paho/$$ANDROID_TARGET_ARCH

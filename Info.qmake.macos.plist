@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>This app discovers local sensors and needs LAN access.</string>
+        <key>com.apple.developer.networking.multicast</key>
+        <true/>
         <key>NSLocationAlwaysUsageDescription</key>
         <string>Program requires GPS</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -11,7 +15,7 @@
         <key>NSMicrophoneUsageDescription</key>
         <string>This app uses your Microphone to allow Voice over IP communication with the Program Admin system</string>
         <key>NSLocationUsageDescription</key>
-        <string></string>
+        <string>For test</string>
         <key>NSCameraUsageDescription</key>
         <string>Need to access your camera to capture a photo add and update profile picture.</string>
         <key>NSPhotoLibraryUsageDescription</key>
@@ -38,6 +42,7 @@
         <array>
             <string>bluetooth-central</string>
         </array>
-
+        <key>TerjeNilsen</key>
+        <string>This is a test.</string>
 </dict>
 </plist>

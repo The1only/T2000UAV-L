@@ -1,12 +1,15 @@
 #include "geoid_helper.h"
 #include <iostream>
 
-#ifdef USE_GEOGRAPHICLIB
+// Remove for now... file not found error....
+#ifdef Q_OS_IOS
+#undef USE_GEOGRAPHICLIB
+#endif
+
 // GeographicLib headers
 //#include <Geoid.hpp>
 #include <GeographicLib/Geoid.hpp>
 using namespace GeographicLib;
-#endif
 
 struct GeoidHelper::Impl {
 #ifdef USE_GEOGRAPHICLIB

@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent)
     _widgetEHSI ( Q_NULLPTR )
 {
 
-#ifdef Q_OS_IOS
+#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
     // Documents directory (user-visible, backed up)
     QString documentsPath = LOG_DIR;
     QDir dir(documentsPath);
@@ -71,13 +71,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->setupUi(this);
 
-#ifdef Q_OS_IOS
+// The splash screen does not make sense on a PC... but it works if you need it...
+//#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+#if defined(Q_OS_IOS)
     QPixmap splashPixmap(":/images/splash.png");  // Or use a file path
     splash = new QSplashScreen(splashPixmap);
     splash->autoFillBackground();
 //    splash->showMessage("Initializing Flight IMU...", Qt::AlignTop | Qt::AlignCenter, Qt::black);
     splash->show();
 #endif
+
 
 #if defined(Q_OS_ANDROID) && defined(USE_KeepAwakeHelper)
     helper = new KeepAwakeHelper();
@@ -388,51 +391,21 @@ void MainWindow::setButtonIcon(QString iconPath, QPushButton* button)
 // Call back funtion from the sensor handler...
 void MainWindow::setIMU(void *parent, bool use_imu)
 {
+    static bool allready_run = false;
     MainWindow* local = (MainWindow*)parent;
     QList<QSensor*> mySensorList;
 
     local->m_use_imu = use_imu;
-    if(use_imu) qDebug() << "Found a sensors...";
+    if(use_imu) qDebug() << "Found sensors...";
     else qDebug() << "NOT Found any sensors...";
 
-    // If we got external air preassure...
-    if(local->mysocket->m_pressure_raw > 1.0)
+    if(allready_run == false)
     {
-        qDebug() << "Found a sensor QPressureSensor";
-        local->ui->radioButton_3->setChecked(true);
+        allready_run = true;
 
-        // If we got both a preassure sensor and the Transponder ...
-        if( local->mysocket->Transponderstat == true)
+        // If we got external air preassure...
+        if(local->mysocket->m_pressure_raw > 1.0)
         {
-            local->mysocket->readyWrite((char*)"d=s\r\n");
-            local->mysocket->TransponderstatWithBarometer = true;
-
-            QString x = local->ui->use_built_inn_barometer->styleSheet();
-            x.replace(QString("1 #080"), QString("1 #800"));
-            local->ui->use_built_inn_barometer->setText("Use Built In\nbarometer");
-            local->ui->use_built_inn_barometer->setStyleSheet(x);
-            local->ui->use_built_inn_barometer->update();
-        }
-    }
-
-    for (const QByteArray &type : QSensor::sensorTypes())
-    {
-        qDebug() << "Found a sensor type:" << type;
-
-        for (const QByteArray &identifier : QSensor::sensorsForType(type))
-        {
-            qDebug() << "    " << "Found a sensor of that type:" << identifier;
-            QSensor* sensor = new QSensor(type, local);
-            sensor->setIdentifier(identifier);
-            mySensorList.append(sensor);
-        }
-
-        if(!strncmp(type,"QPressureSensor",strlen("QPressureSensor")) && local->mysocket->m_pressure_raw < 1.0)
-        {
-            local->m_pressure_sensor = new QPressureSensor();
-            connect(local->m_pressure_sensor, SIGNAL(readingChanged()), local, SLOT(onPressureReadingChanged()));
-            local->m_pressure_sensor->start();
-            local->m_pressure_sensor->setDataRate(4);
             qDebug() << "Found a sensor QPressureSensor";
             local->ui->radioButton_3->setChecked(true);
 
@@ -450,152 +423,186 @@ void MainWindow::setIMU(void *parent, bool use_imu)
             }
         }
 
-        if(!strncmp(type,"QOrientationSensor",strlen("QOrientationSensor")))
+        for (const QByteArray &type : QSensor::sensorTypes())
         {
-            local->m_orientation_sensor = new QOrientationSensor();
-            local->m_orientation_sensor->setDataRate(1);
-            connect(local->m_orientation_sensor, SIGNAL(readingChanged()), local, SLOT(onOrientationReadingChanged()));
-            local->m_orientation_sensor->start();
-            qDebug() << "Found a sensor QRotationSensor";
-        }
+            qDebug() << "Found a sensor type:" << type;
 
-        if(!strncmp(type,"QAmbientTemperatureSensor",strlen("QAmbientTemperatureSensor")))
-        {
-            local->m_temp_sensor = new QAmbientTemperatureSensor();
-            local->m_temp_sensor->setDataRate(1);
-            connect(local->m_temp_sensor, SIGNAL(readingChanged()), local, SLOT(onTempReadingChanged()));
-            local->m_temp_sensor->start();
-            qDebug() << "Found a sensor QAmbientTemperatureReading";
-        }
+            for (const QByteArray &identifier : QSensor::sensorsForType(type))
+            {
+                qDebug() << "    " << "Found a sensor of that type:" << identifier;
+                QSensor* sensor = new QSensor(type, local);
+                sensor->setIdentifier(identifier);
+                mySensorList.append(sensor);
+            }
 
+            if(!strncmp(type,"QPressureSensor",strlen("QPressureSensor")) && local->mysocket->m_pressure_raw < 1.0)
+            {
+                local->m_pressure_sensor = new QPressureSensor();
+                connect(local->m_pressure_sensor, SIGNAL(readingChanged()), local, SLOT(onPressureReadingChanged()));
+                local->m_pressure_sensor->start();
+                local->m_pressure_sensor->setDataRate(4);
+                qDebug() << "Found a sensor QPressureSensor";
+                local->ui->radioButton_3->setChecked(true);
+
+                // If we got both a preassure sensor and the Transponder ...
+                if( local->mysocket->Transponderstat == true)
+                {
+                    local->mysocket->readyWrite((char*)"d=s\r\n");
+                    local->mysocket->TransponderstatWithBarometer = true;
+
+                    QString x = local->ui->use_built_inn_barometer->styleSheet();
+                    x.replace(QString("1 #080"), QString("1 #800"));
+                    local->ui->use_built_inn_barometer->setText("Use Built In\nbarometer");
+                    local->ui->use_built_inn_barometer->setStyleSheet(x);
+                    local->ui->use_built_inn_barometer->update();
+                }
+            }
+
+            if(!strncmp(type,"QOrientationSensor",strlen("QOrientationSensor")))
+            {
+                local->m_orientation_sensor = new QOrientationSensor();
+                local->m_orientation_sensor->setDataRate(1);
+                connect(local->m_orientation_sensor, SIGNAL(readingChanged()), local, SLOT(onOrientationReadingChanged()));
+                local->m_orientation_sensor->start();
+                qDebug() << "Found a sensor QRotationSensor";
+            }
+
+            if(!strncmp(type,"QAmbientTemperatureSensor",strlen("QAmbientTemperatureSensor")))
+            {
+                local->m_temp_sensor = new QAmbientTemperatureSensor();
+                local->m_temp_sensor->setDataRate(1);
+                connect(local->m_temp_sensor, SIGNAL(readingChanged()), local, SLOT(onTempReadingChanged()));
+                local->m_temp_sensor->start();
+                qDebug() << "Found a sensor QAmbientTemperatureReading";
+            }
+
+            // If we do not have an external IMU...
+            if(local->m_use_imu  == false)
+            {
+                if(!strncmp(type,"QRotationSensor",strlen("QRotationSensor")))
+                {
+                    local->m_rotation_sensor = new QRotationSensor();
+                    local->m_rotation_sensor->setDataRate(50);
+                    connect(local->m_rotation_sensor, SIGNAL(readingChanged()), local, SLOT(onRotationReadingChanged()));
+                    local->m_rotation_sensor->start();
+                    qDebug() << "Found a sensor QRotationSensor";
+                }
+
+                if(!strncmp(type,"QCompass",strlen("QCompass")))
+                {
+                    local->m_compass_sensor = new QCompass();
+                    connect(local->m_compass_sensor, SIGNAL(readingChanged()), local, SLOT(onCompassReadingChanged()));
+                    local->m_compass_sensor->start();
+                    local->m_compass_sensor->setDataRate(50);
+                    qDebug() << "Found a sensor QCompass";
+                }
+
+                if(!strncmp(type,"QAccelerometer",strlen("QAccelerometer")))
+                {
+                    local->m_accel_sensor = new QAccelerometer();
+                    local->m_accel_sensor->setDataRate(50);
+                    connect(local->m_accel_sensor, SIGNAL(readingChanged()), local, SLOT(onAccelerometerReadingChanged()));
+                    local->m_accel_sensor->start();
+                    qDebug() << "Found a sensor QAccelerometerReading";
+                }
+
+                if(!strncmp(type,"QGyroscope",strlen("QGyroscope")))
+                {
+                    local->m_gyro_sensor = new QGyroscope();
+                    local->m_gyro_sensor->setDataRate(50);
+                    connect(local->m_gyro_sensor, SIGNAL(readingChanged()), local, SLOT(onGyroReadingChanged()));
+                    local->m_gyro_sensor->start();
+                    qDebug() << "Found a sensor QGyroscopeReading";
+                }
+
+                if(!strncmp(type,"QMagnetometer",strlen("QMagnetometer")))
+                {
+                    local->m_mag_sensor = new QMagnetometer();
+                    local->m_mag_sensor->setDataRate(50);
+                    connect(local->m_mag_sensor, SIGNAL(readingChanged()), local, SLOT(onMagReadingChanged()));
+                    local->m_mag_sensor->start();
+                    qDebug() << "Found a sensor QMagnetometerReading";
+                }
+            }
+            /*
+            else{
+                if(!strncmp(type,"QRotationSensor",strlen("QRotationSensor")))
+                {
+                    local->m_rotation_sensor = new QRotationSensor();
+                    local->m_rotation_sensor->setDataRate(4);
+                    connect(local->m_rotation_sensor, SIGNAL(readingChanged()), local, SLOT(onRotationReadingChanged()));
+                    local->m_rotation_sensor->start();
+                    qDebug() << "Found a sensor QRotationSensor";
+                }
+            }
+            */
+
+        }
         // If we do not have an external IMU...
-        if(local->m_use_imu  == false)
+        if(use_imu == false)
         {
-            if(!strncmp(type,"QRotationSensor",strlen("QRotationSensor")))
-            {
-                local->m_rotation_sensor = new QRotationSensor();
-                local->m_rotation_sensor->setDataRate(50);
-                connect(local->m_rotation_sensor, SIGNAL(readingChanged()), local, SLOT(onRotationReadingChanged()));
-                local->m_rotation_sensor->start();
-                qDebug() << "Found a sensor QRotationSensor";
-            }
-
-            if(!strncmp(type,"QCompass",strlen("QCompass")))
-            {
-                local->m_compass_sensor = new QCompass();
-                connect(local->m_compass_sensor, SIGNAL(readingChanged()), local, SLOT(onCompassReadingChanged()));
-                local->m_compass_sensor->start();
-                local->m_compass_sensor->setDataRate(50);
-                qDebug() << "Found a sensor QCompass";
-            }
-
-            if(!strncmp(type,"QAccelerometer",strlen("QAccelerometer")))
-            {
-                local->m_accel_sensor = new QAccelerometer();
-                local->m_accel_sensor->setDataRate(50);
-                connect(local->m_accel_sensor, SIGNAL(readingChanged()), local, SLOT(onAccelerometerReadingChanged()));
-                local->m_accel_sensor->start();
-                qDebug() << "Found a sensor QAccelerometerReading";
-            }
-
-            if(!strncmp(type,"QGyroscope",strlen("QGyroscope")))
-            {
-                local->m_gyro_sensor = new QGyroscope();
-                local->m_gyro_sensor->setDataRate(50);
-                connect(local->m_gyro_sensor, SIGNAL(readingChanged()), local, SLOT(onGyroReadingChanged()));
-                local->m_gyro_sensor->start();
-                qDebug() << "Found a sensor QGyroscopeReading";
-            }
-
-            if(!strncmp(type,"QMagnetometer",strlen("QMagnetometer")))
-            {
-                local->m_mag_sensor = new QMagnetometer();
-                local->m_mag_sensor->setDataRate(50);
-                connect(local->m_mag_sensor, SIGNAL(readingChanged()), local, SLOT(onMagReadingChanged()));
-                local->m_mag_sensor->start();
-                qDebug() << "Found a sensor QMagnetometerReading";
+            QString data = "IMU NOT found...";
+            local->ui->listView->appendPlainText(data);
+            QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
+            if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
+                l_file->write(data.toLocal8Bit()+"\n");
+                l_file->close();
             }
         }
-        /*
         else{
-            if(!strncmp(type,"QRotationSensor",strlen("QRotationSensor")))
+            QString data = "IMU found and connected...";
+            local->ui->listView->appendPlainText(data);
+            local->ekf.m_use_gpt = 0;
+            QString x = local->ui->reset_att->styleSheet();
+            x.replace(QString("1 ##888"), QString("1 #f00"));
+            x.replace(QString("1 #0F0"),  QString("1 #f00"));
+            local->ui->reset_att->setStyleSheet(x);
+            local->ui->reset_att->update();
+            QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
+            if( l_file->open(QIODevice::ReadWrite | QIODevice::Append ))
             {
-                local->m_rotation_sensor = new QRotationSensor();
-                local->m_rotation_sensor->setDataRate(4);
-                connect(local->m_rotation_sensor, SIGNAL(readingChanged()), local, SLOT(onRotationReadingChanged()));
-                local->m_rotation_sensor->start();
-                qDebug() << "Found a sensor QRotationSensor";
+                l_file->write(data.toLocal8Bit()+"\n");
+                l_file->close();
             }
+            local->m_calibrate = 2;
         }
-        */
 
-    }
-    // If we do not have an external IMU...
-    if(local->m_use_imu  == false)
-    {
-        QString data = "IMU NOT found...";
-        local->ui->listView->appendPlainText(data);
-        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
-        if( l_file->open(QIODevice::ReadWrite | QIODevice::Append )){
-            l_file->write(data.toLocal8Bit()+"\n");
-            l_file->close();
-        }
-    }
-    else{
-        QString data = "IMU found and connected...";
-        local->ui->listView->appendPlainText(data);
-        local->ekf.m_use_gpt = 0;
-        QString x = local->ui->reset_att->styleSheet();
-        x.replace(QString("1 ##888"), QString("1 #f00"));
-        x.replace(QString("1 #0F0"),  QString("1 #f00"));
-        local->ui->reset_att->setStyleSheet(x);
-        local->ui->reset_att->update();
-        QFile *l_file = new QFile(QString(LOG_DIR)+ QString(FLIGHTLOG));
-        if( l_file->open(QIODevice::ReadWrite | QIODevice::Append ))
+        qDebug() << mySensorList;
+
+        if(local->ui->radioButton_3->isChecked() == false)
         {
-            l_file->write(data.toLocal8Bit()+"\n");
-            l_file->close();
+            local->ui->radioButton_3->setCheckable(false);
+            local->ui->dial->hide();
+            local->ui->dial_2->hide();
+            local->ui->doubleSpinBox->hide();
+            local->ui->doubleSpinBox_2->hide();
+
+            QString x = local->ui->label_18->styleSheet();
+            x.replace(QString("135"), QString("80"));
+            local->ui->label_18->setStyleSheet(x);
+            local->ui->label_18->update();
         }
+
+        local->m_Display = new QTimer(local);
+        local->m_Display->setSingleShot(false);
+        connect(local->m_Display, SIGNAL(timeout()), local, SLOT(onReadingChanged()));
+        local->m_Display->start(100);
+
+        local->m_IMU = new QTimer(local);
+        local->m_IMU->setSingleShot(false);
+        connect(local->m_IMU, SIGNAL(timeout()), local, SLOT(EKF()));
+        local->m_IMU->start(20);
+        local->m_dt = QDateTime::currentMSecsSinceEpoch();
+
+    #if defined(Q_OS_ANDROID) && defined(USE_KeepAwakeHelper)
+        //local->helper = new KeepAwakeHelper();
+        //local->helper->EnableKeepAwakeHelper();
+    #endif
+
+    //    local->m_msgBox->hide();
+    //    QCoreApplication::processEvents();
+        local->m_msgBox->show();
     }
-
-    qDebug() << mySensorList;
-
-    if(local->ui->radioButton_3->isChecked() == false)
-    {
-        local->ui->radioButton_3->setCheckable(false);
-        local->ui->dial->hide();
-        local->ui->dial_2->hide();
-        local->ui->doubleSpinBox->hide();
-        local->ui->doubleSpinBox_2->hide();
-
-        QString x = local->ui->label_18->styleSheet();
-        x.replace(QString("135"), QString("80"));
-        local->ui->label_18->setStyleSheet(x);
-        local->ui->label_18->update();
-    }
-
-    if(local->mysocket->IMUconnected == true){
-        local->m_calibrate = 2;
-    }
-    local->m_Display = new QTimer(local);
-    local->m_Display->setSingleShot(false);
-    connect(local->m_Display, SIGNAL(timeout()), local, SLOT(onReadingChanged()));
-    local->m_Display->start(100);
-
-    local->m_IMU = new QTimer(local);
-    local->m_IMU->setSingleShot(false);
-    connect(local->m_IMU, SIGNAL(timeout()), local, SLOT(EKF()));
-    local->m_IMU->start(20);    
-    local->m_dt = QDateTime::currentMSecsSinceEpoch();
-
-#if defined(Q_OS_ANDROID) && defined(USE_KeepAwakeHelper)
-    //local->helper = new KeepAwakeHelper();
-    //local->helper->EnableKeepAwakeHelper();
-#endif
-
-//    local->m_msgBox->hide();
-//    QCoreApplication::processEvents();
-    local->m_msgBox->show();
     QCoreApplication::processEvents();
 }
 
@@ -965,13 +972,13 @@ void MainWindow::AccelerometerRead()
         {
             if(mysocket->IMUconnected == false){
 #ifdef Q_OS_MAC
-                m_first = 2;
+                m_first = 6;
 #else
                 m_first = 200;
 #endif
             }
             else{
-                m_first = 2;
+                m_first = 6;
             }
             // Store install orientation...
             m_install = Vector3d(0,-mysocket->AngleY*DEG_TO_RAD,0);
@@ -1086,7 +1093,7 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         this->mysocket->m_longitude = geoCoordinate.longitude();
 
         // ... TERJE
-        GeoidHelper geo;
+        static GeoidHelper geo;
         auto result = geo.compensatedHeight(this->mysocket->m_latitude , this->mysocket->m_longitude, geoCoordinate.altitude(), 0.5);
         /*
         if (result) {
@@ -1094,7 +1101,8 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
                      << "Compensated height:" << result->h_compensated;
         }
         */
-        this->mysocket->m_altitude  = result->h_compensated;
+        if(result.has_value())
+            this->mysocket->m_altitude  = result->h_compensated;
 
         // BE AWARE THIS IS WGS-84 prox. compensated N AND NOT AMSL (see level) ...
         //      this->m_altitude  = (geoCoordinate.altitude()-40.0)*3.2808399;
@@ -1158,7 +1166,7 @@ void MainWindow::calcPosition(double vel_D)
             this->mysocket->m_longitude = pt.longitude;
 
             // ... TERJE
-            GeoidHelper geo;
+            static GeoidHelper geo;
             auto result = geo.compensatedHeight(this->mysocket->m_latitude , this->mysocket->m_longitude, pt.elevation, 0.5);
             /*
             if (result) {
@@ -1167,7 +1175,8 @@ void MainWindow::calcPosition(double vel_D)
                          << "Bearing:" << this->m_gpsbearing;
             }
             */
-            this->mysocket->m_altitude  = result->h_compensated*3.2808399;
+            if(result.has_value())
+                this->mysocket->m_altitude  = result->h_compensated*3.2808399;
 
           //  this->m_altitude  = pt.elevation*3.2808399; // Make feet from meters...
             this->m_gpsspeed  = 25+(sin(l_speed)*20); //pt.speed;  // For now we use a created speed...
@@ -1423,10 +1432,13 @@ void MainWindow::onReadingChanged()
         {
             m_first--;
 
-#ifdef Q_OS_IOS
-            if(m_first == 20){
+#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+
+            if(m_first == 5 && splash != nullptr ){
+                splash->hide(); // Hides splash screen
                 splash->finish(this); // Hides splash screen
                 delete(splash);
+                splash = nullptr;
             }
 #endif
             /*
@@ -2352,7 +2364,6 @@ void MainWindow::addnext(int x)
 
 void MainWindow::setmode(int m)
 {
-#ifndef Q_OS_IOS
     if(mysocket != NULL)
     {
         switch(m){
@@ -2362,7 +2373,6 @@ void MainWindow::setmode(int m)
         case 3: mysocket->readyWrite((char*)"s=c\r\n"); break;
         }
     }
-#endif
     mode = m;
 }
 
@@ -2393,10 +2403,7 @@ void MainWindow::on_pushButton_16_clicked()
     //    QString msg = QString("c=%1\r\n").arg(num);
     qDebug() << data;
 
-#ifndef Q_OS_IOS
     mysocket->readyWrite(data);
-#endif
-
 }
 
 void MainWindow::on_pushButton_18_clicked()
@@ -2413,18 +2420,13 @@ void MainWindow::on_pushButton_18_clicked()
     snprintf(data,100,"c=%d\r\n",7000);
     qDebug() << data;
 
-#ifndef Q_OS_IOS
     mysocket->readyWrite(data);
-#endif
 }
 
 
 void MainWindow::on_pushButton_Ident_clicked()
 {
-#ifndef Q_OS_IOS
     mysocket->readyWrite((char*)"i=s\r\n");
-#endif
-
 }
 
 // Set mode...
@@ -2436,9 +2438,7 @@ void MainWindow::on_pushButton_12_clicked(){setalt(0);}
 void MainWindow::on_pushButton_13_clicked(){setalt(1);}
 
 void MainWindow::on_pushButton_off_clicked(){
-#ifndef Q_OS_IOS
     mysocket->readyWrite((char*)"p=?\r\n");
-#endif
 }
 
 //-------------------------------------------------------------
