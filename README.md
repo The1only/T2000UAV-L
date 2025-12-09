@@ -2,15 +2,17 @@
 
 Witmotion WTGAHRS3/1/BT + MicroAir T2000UAV-L + NRA24 NanoRadar user interface for Linux, Mac, Windows, Android, and IOS
 
-This software creates a bridge from a user app to the devices Transponder.
-On PC and Android one can use USB-Serial and connect with cable or Bluetooth, However NOT on IOS (iPhone/iPad) these are restricted.  
+This software creates a bridge to all the devices.
+On PC and Android one can use USB-Serial and connect with cable or Bluetooth. However NOT on IOS (iPhone/iPad) these are restricted.  
 On all systems one can use WLan bridges using ARDUINO and SSDP over Broadcast.
 
 It includes tree artificial horizon versions, camera, map, list of used frequencies and call signs, a RADAR, and a Transponder Mode C screen.
-The system supports both external IMU and internal Android and IOS IMU. 
-It can be used in a split screen on a pad together with Skydemon etc. 
+In addition up to 4 screens can be connected at the same time (Android + iPhone + iPad etc. in any combination)
+The system supports both external IMU and internal Android and IOS IMU (prety bad on all devices). 
+It can be used in a split screen on a pad together with Skydemon etc.
+Soon to come an Autopilot interface (the screen is there already).
 
-Takeoff and landing is automatically logged, as is the local QNH (by calculating it from the GPS altitude when at ground/not moving). 
+Takeoff and landing is automatically logged so screen and log file, as is the local QNH (by calculating it from the GPS altitude when at ground/not moving). 
 
 <img width="867" height="410" alt="Screenshot 2025-10-24 at 14 13 30" src="https://github.com/user-attachments/assets/e9bac420-f465-4934-8e1d-e7a1b7004baf" />
 <img width="865" height="410" alt="Screenshot 2025-10-24 at 14 18 13" src="https://github.com/user-attachments/assets/9b340342-3944-4415-bb72-3d4a53b99011" />
