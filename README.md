@@ -1,11 +1,16 @@
-# T2000UAV-L used in Sports Planes...
-MicroAir T2000UAV-L user interface for Linux, Mac, Windows, Android, and IOS
+# IMU / Radar / Transponder for Sports planes
 
-This software creates a bridge from a user app to the T2000UAV Transponder.
+Witmotion WTGAHRS3/1/BT + MicroAir T2000UAV-L + NRA24 NanoRadar user interface for Linux, Mac, Windows, Android, and IOS
 
-It also includes an artificial horizon, camera, map, list of used frequencies, and call signs.
-The system supports both external IMU and internal Android IMU. 
+This software creates a bridge from a user app to the devices Transponder.
+On PC and Android one can use USB-Serial and connect with cable or Bluetooth, However NOT on IOS (iPhone/iPad) these are restricted.  
+On all systems one can use WLan bridges using ARDUINO and SSDP over Broadcast.
+
+It includes tree artificial horizon versions, camera, map, list of used frequencies and call signs, a RADAR, and a Transponder Mode C screen.
+The system supports both external IMU and internal Android and IOS IMU. 
 It can be used in a split screen on a pad together with Skydemon etc. 
+
+Takeoff and landing is automatically logged, as is the local QNH (by calculating it from the GPS altitude when at ground/not moving). 
 
 <img width="867" height="410" alt="Screenshot 2025-10-24 at 14 13 30" src="https://github.com/user-attachments/assets/e9bac420-f465-4934-8e1d-e7a1b7004baf" />
 <img width="865" height="410" alt="Screenshot 2025-10-24 at 14 18 13" src="https://github.com/user-attachments/assets/9b340342-3944-4415-bb72-3d4a53b99011" />
