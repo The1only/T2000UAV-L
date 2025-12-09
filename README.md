@@ -12,7 +12,7 @@ The system supports both external IMU and internal Android and IOS IMU (prety ba
 It can be used in a split screen on a pad together with Skydemon etc.
 Soon to come an Autopilot interface (the screen is there already).
 
-Takeoff and landing is automatically logged so screen and log file, as is the local QNH (by calculating it from the GPS altitude when at ground/not moving). 
+Takeoff and landing is automatically logged to screen and log file, as is the local QNH (by calculating it from the GPS altitude when at ground/not moving). 
 
 <img width="867" height="410" alt="Screenshot 2025-10-24 at 14 13 30" src="https://github.com/user-attachments/assets/e9bac420-f465-4934-8e1d-e7a1b7004baf" />
 <img width="865" height="410" alt="Screenshot 2025-10-24 at 14 18 13" src="https://github.com/user-attachments/assets/9b340342-3944-4415-bb72-3d4a53b99011" />
