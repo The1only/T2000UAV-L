@@ -7,7 +7,7 @@ On PC and Android one can use USB-Serial and connect with cable or Bluetooth. Ho
 On all systems one can use WLan bridges using ARDUINO and SSDP over Broadcast.
 
 We uses the ESP32S3 as Sensor simulator and sensor inteface. 
-Also the ESP32C6 works, the ESP32C3 is a low cost solution, I have seen some working some not.
+Also the ESP32C6 works, the ESP32C3 is a low cost solution, using Wlan I have seen some working some not, USB seems fine for all.
 
 It includes tree artificial horizon versions, camera, map, list of used frequencies and call signs, a RADAR, and a Transponder Mode C screen.
 In addition up to 4 screens can be connected at the same time (Android + iPhone + iPad etc. in any combination)
