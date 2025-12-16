@@ -9,14 +9,14 @@ void setup()
   Lvgl_Init();
  // SD_Init();   
 
- // Lvgl_Example1();     
+  Lvgl_Example1();     
   // lv_demo_widgets();               
   // lv_demo_benchmark();          
   // lv_demo_keypad_encoder();     
   // lv_demo_music();  
   // lv_demo_stress();   
 
-  Wireless_Test2();  
+//  Wireless_Test2();  
 }
 
 void loop()

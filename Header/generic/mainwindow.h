@@ -271,14 +271,6 @@ public:
     double takeoff_longitude = 0.0;
     double takeoff_altitude  = 0.0;
 
-    // GPS velocity vector
-    double m_gpsspeed   = 0.0; ///< GPS speed [m/s].
-    double m_gpsbearing = 0.0; ///< GPS course [deg].
-    double m_vel_N      = 0.0; ///< North velocity [m/s].
-    double m_vel_E      = 0.0; ///< East velocity [m/s].
-    double m_vel_D      = 0.0; ///< Down velocity [m/s].
-    bool   m_vel_active = false;
-
     /// Transponder-reported altitude (feet or meters depending on mode).
     double m_tansALT = 0.0;
 
@@ -494,6 +486,7 @@ private:
     double m_roll          = 0.0;
     double m_yaw           = 0.0;
 
+
     /// Calibration message box during IMU calibration.
     NoButtonMessageBox *m_msgBoxCalibrating = nullptr;
 
@@ -601,6 +594,7 @@ private slots:
     void on_reset_altitude_3_clicked();
     void on_reset_altitude_2_clicked();
     void on_reset_heading_2_clicked();
+    void on_use_ins_only_clicked();
 
     // Camera
     void takePicture();

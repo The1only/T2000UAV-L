@@ -123,7 +123,7 @@ static void CopeWitData(uint8_t ucIndex, uint16_t *p_data, uint32_t uiLen)
           uiReg1 = LonL;
         break;
         case WIT_VELOCITY:
-          uiReg1 = GPSHeight;
+          uiReg1 = GPSVL; //GPSHeight;
         break;
         case WIT_QUATER:
           uiReg1 = q0;

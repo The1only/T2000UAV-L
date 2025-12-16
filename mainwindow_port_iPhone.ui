@@ -1146,7 +1146,7 @@ padding: 5px;
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>14</hour>
+        <hour>12</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -3424,9 +3424,9 @@ Only to be used in air !</string>
      <widget class="QPushButton" name="use_built_inn_barometer">
       <property name="geometry">
        <rect>
-        <x>380</x>
+        <x>370</x>
         <y>10</y>
-        <width>151</width>
+        <width>281</width>
         <height>51</height>
        </rect>
       </property>
@@ -3463,7 +3463,7 @@ barometer</string>
      <widget class="QLabel" name="label_25">
       <property name="geometry">
        <rect>
-        <x>390</x>
+        <x>370</x>
         <y>80</y>
         <width>271</width>
         <height>55</height>
@@ -3481,6 +3481,44 @@ barometer</string>
        <string>If there is an Transponder connected,
 and a barometer in the Android device,
 then use this.</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="use_ins_only">
+      <property name="geometry">
+       <rect>
+        <x>370</x>
+        <y>160</y>
+        <width>281</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+color: #333;
+border: 2px solid #555;
+border-radius: 15px;
+border-style: outset;
+background: qradialgradient(
+cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
+radius: 1.35, stop: 0 #fff, stop: 1 #080
+);
+padding: 5px;
+}
+
+QPushButton:pressed {
+    background-color: rgb(224, 0, 0);
+    border-style: inset;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Using any sensor...</string>
       </property>
      </widget>
     </widget>

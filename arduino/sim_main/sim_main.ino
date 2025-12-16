@@ -31,7 +31,7 @@
 #define SENSOR_IMU 2
 #define SENSOR_TRANSPONDER 3
 
-#define SENSOR_V SENSOR_RADAR  // set this manually or with build flags
+#define SENSOR_V SENSOR_IMU  // set this manually or with build flags
 
 #if SENSOR_V == SENSOR_RADAR
 #define SENSOR "RADAR"  //"IMU"              ///< Sensor identifier reported in SSDP USN
@@ -50,10 +50,15 @@
 #define MAX_SRV_CLIENTS 4  ///< Maximum simultaneous Telnet clients
 #define USE_SERIAL true    ///< Use UART bridge instead of IMU simulation
 
+// --- Put these helpers somewhere (top of file) ---
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // -----------------------------------------------------------------------------
 // Timing / LED
 // -----------------------------------------------------------------------------
-
+#define LED 8
 static const uint16_t PERIOD_MS = 20;  ///< Loop delay when simulating IMU (~50 Hz)
 
 // -----------------------------------------------------------------------------
@@ -79,11 +84,11 @@ String serialLine;  ///< Input buffer for USB-serial commands
 WiFiMulti wifiMulti;  ///< Manages multiple fallback WiFi APs
 
 // Hardcoded fallback Wi-Fi APs (optional)
-const char *ssid1 = "Altibox177449";
-const char *pass1 = "HheX9Xac";
+const char *ssid2 = "Altibox177449";
+const char *pass2 = "HheX9Xac";
 
-const char *ssid2 = "Hvattum";
-const char *pass2 = "Jordvarme@2023@";
+const char *ssid1 = "Hvattum";
+const char *pass1 = "Jordvarme@2023@";
 
 const char *ssid3 = "Aeros2";
 const char *pass3 = "Terjenilsen1";
@@ -136,8 +141,49 @@ int16_t clamp16(long v) {
  * @param deg Angle in degrees (±180)
  * @return int16_t Scaled Q15 value
  */
+// scale degrees -> protocol int16 (±180°)
 int16_t angle_to_q15(float deg) {
   return clamp16((long)(deg * 32768.0f / 180.0f));
+}
+
+/**
+ * @brief Convert Celsius temperature into the WIT format raw value.
+ * @param celsius Temperature
+ * @return uint16_t Encoded temperature
+ */
+uint16_t make_temp_raw(float celsius = 25.0f) {
+  float raw = (celsius - 36.53f) * 340.0f;
+  long r = (long)(raw);
+  if (r < 0) r = 0;
+  if (r > 65535) r = 65535;
+  return (uint16_t)r;
+}
+
+
+// --- Simulator encoding helpers (MATCH PARSER) ---
+
+int16_t sim_accel_g(float g) {
+  return clamp16((long)(g / 16.0f * 32768.0f));
+}
+
+int16_t sim_gyro_dps(float dps) {
+  return clamp16((long)(dps / 2000.0f * 32768.0f));
+}
+
+int16_t sim_angle_deg(float deg) {
+  return clamp16((long)(deg / 180.0f * 32768.0f));
+}
+
+int16_t sim_temp_c(float c) {
+  return (int16_t)(c * 100.0f);
+}
+
+uint32_t sim_pressure_pa(float pa) {
+  return (uint32_t)(pa * 100.0f);
+}
+// scale pressure hPa -> protocol int16 (hPa * 10)
+int16_t hpa_to_q10(float hpa) {
+  return clamp16((long)(hpa * 10.0f));
 }
 
 /**
@@ -154,19 +200,46 @@ int16_t g_to_q15(float g) {
   return clamp16((long)(g * 32768.0f / 16.0f));
 }
 
-/**
- * @brief Convert Celsius temperature into the WIT format raw value.
- * @param celsius Temperature
- * @return uint16_t Encoded temperature
- */
-uint16_t make_temp_raw(float celsius = 25.0f) {
-  float raw = (celsius - 36.53f) * 340.0f;
-  long r = (long)(raw);
-  if (r < 0) r = 0;
-  if (r > 65535) r = 65535;
-  return (uint16_t)r;
+// Send a 32-bit value split across two consecutive registers
+void sendPacket32(uint8_t pid, uint32_t value) {
+  int16_t low = (int16_t)(value & 0xFFFF);
+  int16_t high = (int16_t)((value >> 16) & 0xFFFF);
+
+  // WIT convention: X=low, Y=high, Z=unused
+  sendPacket(pid, low, high, 0, make_temp_raw(25.0f));
 }
 
+// 4x16-bit payload (the last 16-bit uses the temp slot)
+static void sendPacket4(uint8_t pid, int16_t a, int16_t b, int16_t c, int16_t d) {
+  sendPacket(pid, a, b, c, (uint16_t)d);
+}
+
+static inline uint16_t lo16(uint32_t v) {
+  return (uint16_t)(v & 0xFFFF);
+}
+static inline uint16_t hi16(uint32_t v) {
+  return (uint16_t)((v >> 16) & 0xFFFF);
+}
+
+/**
+ * Encode degrees -> NMEA ddmm.mmmm scaled integer.
+ * Example: 59.9123 deg -> 5954.7380 (ddmm.mmmm)
+ * We scale by 10000 to keep 4 decimals in minutes.
+ *
+ * IMPORTANT: This must match what your nmea_ddmm_to_deg() expects.
+ * If your real sensor uses a different scaling, adjust SCALE.
+ */
+static int32_t deg_to_ddmm_scaled(double deg) {
+  const double SCALE = 10000.0;  // ddmm.mmmm * 10000
+  double a = fabs(deg);
+  int d = (int)a;
+  double minutes = (a - d) * 60.0;
+  double ddmm = (double)(d * 100) + minutes;  // ddmm.mmmm (as double)
+  int32_t raw = (int32_t)llround(ddmm * SCALE);
+  // If you need signed hemisphere support, you can keep sign:
+  if (deg < 0) raw = -raw;
+  return raw;
+}
 /**
  * @brief Send an 11-byte WIT IMU packet to all Telnet clients.
  *
@@ -190,12 +263,16 @@ void sendPacket(uint8_t pid, int16_t x, int16_t y, int16_t z, uint16_t tRaw) {
 
   pkt[0] = 0x55;
   pkt[1] = pid;
+
   pkt[2] = x & 0xFF;
   pkt[3] = (x >> 8) & 0xFF;
+
   pkt[4] = y & 0xFF;
   pkt[5] = (y >> 8) & 0xFF;
+
   pkt[6] = z & 0xFF;
   pkt[7] = (z >> 8) & 0xFF;
+
   pkt[8] = tRaw & 0xFF;
   pkt[9] = (tRaw >> 8) & 0xFF;
 
@@ -213,6 +290,13 @@ void sendPacket(uint8_t pid, int16_t x, int16_t y, int16_t z, uint16_t tRaw) {
 // -----------------------------------------------------------------------------
 // Wi-Fi Credential Management (NVS)
 // -----------------------------------------------------------------------------
+void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
+  Serial.print("WiFiEvent:");
+  if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+    Serial.print("DISCONNECTED reason=");
+    Serial.println(info.wifi_sta_disconnected.reason);
+  }
+}
 
 /**
  * @brief Loads Wi-Fi SSID/password from ESP32 NVS storage.
@@ -265,8 +349,8 @@ void clearCredentials() {
  * @brief Adds stored Wi-Fi credentials (if any) and hardcoded fallback APs.
  */
 void addAccessPoints() {
-  // if (hasStoredWifi)
-  //   wifiMulti.addAP(storedSsid.c_str(), storedPass.c_str());
+  if (hasStoredWifi)
+    wifiMulti.addAP(storedSsid.c_str(), storedPass.c_str());
 
   wifiMulti.addAP(ssid0, pass0);
   wifiMulti.addAP(ssid1, pass1);
@@ -398,13 +482,13 @@ void handleTelnetToSerial(bool &activeFlag) {
       while (serverClients[i].available()) {
         char ch = serverClients[i].read();
         activeFlag = true;
-        Serial.print((char)ch);
+        //Serial.print((char)ch);
 
 
 #if SENSOR_V == SENSOR_TRANSPONDER
         handle_data(ch);
 #else
-        Serial1.write(ch);
+      //  Serial1.write(ch);
 
         // Wee need to spy on the communication to ba able to adapt to the changes...
         uint8_t inChar = ch;
@@ -422,11 +506,11 @@ void handleTelnetToSerial(bool &activeFlag) {
           case 2:
             switch (inChar) {
               case 0x63:
-                Serial1.begin(15200);
+              //  Serial1.begin(15200);
                 state = 0;
                 break;
               case 0x64:
-                Serial1.begin(9600);
+              //  Serial1.begin(9600);
                 state = 0;
                 break;
               case 0x27:
@@ -574,14 +658,15 @@ void handleSerialConfig() {
  */
 void setup() {
 
-  pinMode(8, OUTPUT);
+  // Set up LED...
+  pinMode(LED, OUTPUT);
 
   Serial.begin(9600);
   loadStoredCredentials();
   addAccessPoints();
 
   Serial.println("Hitt a key to stop booting...");
-  for (int i = 0; i < 4000; i++) {
+  for (int i = 0; i < 5000; i++) {
     if (Serial.available()) {
       while (1) handleSerialConfig();
     }
@@ -589,24 +674,45 @@ void setup() {
   }
   Serial.println("booting...");
 
+  WiFi.onEvent(WiFiEvent);
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect(true);    // clear old connection
+  delay(100);
+
+  // --- optional one-time scan to verify SSID exists ---
+  Serial.println("Scanning for networks...");
+  int n = WiFi.scanNetworks();
+  if (n <= 0) {
+    Serial.println("No networks found");
+  } else {
+    Serial.printf("%d networks found:\n", n);
+    for (int i = 0; i < n; ++i) {
+      Serial.printf("  %2d: %s (%d dBm)%s\n",
+                    i + 1,
+                    WiFi.SSID(i).c_str(),
+                    WiFi.RSSI(i),
+                    (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? "" : " *");
+    }
+  }
+  Serial.println("----");
+
   if (!connectWiFi()) {
     Serial.println("WiFi failed, rebooting...");
     ESP.restart();
   }
 
   ssdpUdp.beginMulticast(SSDP_MCAST_ADDR, SSDP_PORT);
-
   server.begin();
   server.setNoDelay(true);
 
 #if SENSOR_V == SENSOR_RADAR
-  Serial1.begin(115200);
+//  Serial1.begin(115200);
   setupRADAR();
 #elif SENSOR_V == SENSOR_TRANSPONDER
-  Serial1.begin(9600);
+//  Serial1.begin(9600);
   setupTRANSPONDER();
 #else
-  Serial1.begin(9600);
+ // Serial1.begin(9600);
 #endif
 
   Serial.print("v1.0 ");
@@ -624,20 +730,11 @@ void setup() {
  *   - Telnet server operations  
  *   - Optional IMU simulation (if SIMULATE defined)
  */
-void loop() 
-{
-  static int sleep=0;
-
-  if(++sleep == 10){
-    sleep = 0;
-    digitalWrite(8, LOW);
-  }
-  if(sleep == 5)
-    digitalWrite(8, HIGH);
- 
-
+void loop() {
+  static int sleep = 0;
   bool hasclient = false;
-  int t = millis();
+  int tx = millis();
+
   if (wifiMulti.run() != WL_CONNECTED) {
     Serial.println("WiFi lost!");
     delay(500);
@@ -646,7 +743,6 @@ void loop()
 
   // If there are client connected, then keep sending SSDP messages.
   // The reason for this is tha tthe iPhone and iPad does not send SSDP requests, but can receive...
-
   for (int i = 0; i < MAX_SRV_CLIENTS; i++) {
     if (serverClients[i] && serverClients[i].connected()) {
       hasclient = true;
@@ -655,9 +751,17 @@ void loop()
 
   if (!hasclient) {
     static int td = 0;
-    if (t - td > 2500) {
-      td = t;
+    static bool xx = false;
+    if (tx - td > 2500) {
+      td = tx;
       send_ssdp_blind();
+      xx = !xx;
+      if(xx) {
+        digitalWrite(LED, LOW);
+      }
+      else{
+        digitalWrite(LED, HIGH);
+      }
     }
   }
 
@@ -673,26 +777,155 @@ void loop()
   handleTelnetToSerial(active);
   handleSerialToTelnet();
   delay(100);
-#endif
+#endif @
 
 #if SENSOR_V == SENSOR_IMU
-  #ifndef SIMULATE
-    handleTelnetToSerial(active);
-    handleSerialToTelnet();
-  #else
-    float tf = t * 0.001f;
+#ifndef SIMULATE
+  handleTelnetToSerial(active);
+  handleSerialToTelnet();
+#else
 
-    float roll = 60.0f * sinf(2 * 3.14159f * 0.2f * tf);
-    float pitch = 30.0f * sinf(2 * 3.14159f * 0.1f * tf);
-    float yaw = fmodf(tf * 20.0f, 360.0f) - 180.0f;
+  if (hasclient) {
+    static int tdo = 0;
+    if (tx - tdo > 50) {
+      tdo = tx;
 
-    sendPacket(0x53,
-              angle_to_q15(roll),
-              angle_to_q15(pitch),
-              angle_to_q15(yaw),
-              make_temp_raw(25.0f));
+      static float offset=0.0;
 
-    delay(PERIOD_MS);
-  #endif
+      // ---- Time base ----
+      const float tf = millis() * 0.001f;  // seconds
+
+      // ---- Angle signals (deg) ----
+      // (You asked to half roll angular rate -> use 0.1 Hz if it was 0.2 Hz)
+      const float f_roll = 0.02f;  // Hz
+      const float f_pitch = 0.1f;  // Hz
+      const float f_yaw = 0.02f;   // Hz
+      const float W_roll = 2.0f * (float)M_PI * f_roll;
+      const float W_pitch = 2.0f * (float)M_PI * f_pitch;
+      const float W_yaw = 0.5f * (float)M_PI * f_pitch;
+
+      const float roll = 50.0f * sinf(W_roll * tf);    // deg
+      const float pitch = 20.0f * sinf(W_pitch * tf);  // deg
+      const float yaw = 100.0f * sinf(W_yaw * tf);   // deg
+                                                       //    const float yaw   = fmodf(tf * 20.0f, 360.0f) - 180.0f;         // deg (20 deg/s)
+
+      // ---- Gyro rates (deg/s) = time-derivative of angles ----
+      const float roll_rate_dps = 30.0f * W_roll * cosf(W_roll * tf);
+      const float pitch_rate_dps = 10.0f * W_pitch * cosf(W_pitch * tf);
+      const float yaw_rate_dps = 30.0f * W_yaw * cosf(W_yaw * tf);
+      //    const float yaw_rate_dps   = 20.0f;
+
+      // Convert to raw (±2000 dps -> 32768)
+      // Match your parser sign conventions:
+      //   AsZ from GX+0 (no sign flip)
+      //   AsY from GX+1 BUT parser flips sign => store -pitch_rate here
+      //   AsX from GX+2 (no sign flip)
+      const int16_t gx_raw = clamp16((long)(roll_rate_dps * 32768.0f / 2000.0f));    // maps to AsZ
+      const int16_t gy_raw = clamp16((long)(-pitch_rate_dps * 32768.0f / 2000.0f));  // maps to AsY after parser's -1
+      const int16_t gz_raw = clamp16((long)(yaw_rate_dps * 32768.0f / 2000.0f));     // maps to AsX
+
+      // ---- Accelerometer (gravity projected into body frame) ----
+      // Only gravity (no linear accel). g matches your parser.
+      const float g = 9.825f;
+
+      const float roll_r = roll * (float)DEG_TO_RAD;
+      const float pitch_r = pitch * (float)DEG_TO_RAD;
+
+      // gravity in body axes (m/s^2)
+      const float ax_ms2 = -sinf(pitch_r) * g;
+      const float ay_ms2 = -sinf(roll_r) * cosf(pitch_r) * g;
+      const float az_ms2 = cosf(roll_r) * cosf(pitch_r) * g;
+
+      // Convert m/s^2 -> raw for ±16g:
+      // Parser does: Acc? = ((raw/32768)*16)*g   (then AccX has extra -1)
+      // So: raw = acc/(g*16) * 32768
+      const int16_t ax_raw = clamp16((long)(ax_ms2 / (g * 16.0f) * 32768.0f));
+      const int16_t ay_raw = clamp16((long)(ay_ms2 / (g * 16.0f) * 32768.0f));
+      const int16_t az_raw = clamp16((long)(az_ms2 / (g * 16.0f) * 32768.0f));
+
+      // ---- Temperature ----
+      const uint16_t t_raw = make_temp_raw(25.0f);
+
+      // ---------- Pressure (Pa) ----------
+      float pressure_pa =
+        90662.5f +  // midpoint
+        10662.5f * sinf(2.0f * M_PI * (1.0f / 360.0f) * tf);
+      // Range: 80000 ↔ 101325 Pa
+
+      uint32_t p_raw = sim_pressure_pa(pressure_pa) / 100;
+
+      // ---------- GPS simulation ----------
+      const double baseLat = 59.9127;  // Oslo-ish (change)
+      const double baseLon = 10.7461;
+
+      const double gpsRadiusDeg = 0.002;                   // ~200 m-ish (roughly)
+      const double gpsOmega = 2.0 * M_PI * (1.0 / 120.0);  // one loop every 120 s
+
+      double lat = baseLat + gpsRadiusDeg * sin(gpsOmega * tf);
+      double lon = baseLon + gpsRadiusDeg * cos(gpsOmega * tf);
+
+      // Encode as NMEA ddmm.mmmm * 10000 (32-bit)
+      int32_t lat_raw32 = deg_to_ddmm_scaled(lat);
+      int32_t lon_raw32 = deg_to_ddmm_scaled(lon);
+
+      // Altitude in meters -> D0Status is /10.0 in parser, so store *10
+      float alt_m = 120.0f + 20.0f * sinf(2.0f * (float)M_PI * (1.0f / 180.0f) * tf);  // 100..140m
+      int16_t alt_raw = (int16_t)clamp16((long)(alt_m * 10.0f));
+
+      // GPS yaw in degrees -> parser does /100.0, so store *100
+      float gps_yaw_deg = yaw;  // you already simulate yaw
+      int16_t gpsYaw_raw = (int16_t)clamp16((long)(gps_yaw_deg * 100.0f));
+
+      // GPS speed (your parser does join32()/100.0)
+      // So store speed*100 as 32-bit. Choose units you want (e.g. knots, m/s) but be consistent.
+      // Example: 12.3 (units) -> raw=1230
+      float ttt = tf;
+      float delta = 0.03f * (float)M_PI * ttt;
+      float speed_units = offset + 20000.0f * sinf(delta);
+      if(speed_units < 0) speed_units*=-1;
+      uint32_t speed_raw32 = (uint32_t)lroundf(speed_units);
+//      Serial.print("raw100=");
+  //    Serial.println(speed_units);
+
+      // ---- Send WIT packets ----
+      // 0x51 Acc, 0x52 Gyro, 0x53 Angles
+      sendPacket(0x51, ax_raw, ay_raw, az_raw, t_raw);
+      delay(PERIOD_MS);
+
+      sendPacket(0x52, gx_raw, gy_raw, gz_raw, t_raw);
+      delay(PERIOD_MS);
+
+      // AngleZ in your parser has an extra -1, so store -yaw to match
+      sendPacket(0x53,
+                 angle_to_q15(roll),
+                 angle_to_q15(pitch),
+                 angle_to_q15(-yaw),
+                 t_raw);
+      delay(PERIOD_MS);
+
+      // Send pressure as 32-bit value split into PressureL / PressureH
+      sendPacket32(0x56, p_raw);  // helper that writes L/H regs
+      delay(PERIOD_MS);
+
+      // ----- Send GPS packets -----
+      // 0x57: Lon32 + Lat32  (x=LonL,y=LonH,z=LatL,t=LatH)
+      sendPacket4(0x57,
+                  (int16_t)lo16((uint32_t)lon_raw32),
+                  (int16_t)hi16((uint32_t)lon_raw32),
+                  (int16_t)lo16((uint32_t)lat_raw32),
+                  (int16_t)hi16((uint32_t)lat_raw32));
+      delay(PERIOD_MS);
+
+      // 0x58: Speed32 + GPSYaw16 + Alt16  (x=GPSVL,y=GPSVH,z=GPSYAW,t=D0Status)
+      sendPacket4(0x58,
+                  (int16_t)lo16(speed_raw32),
+                  (int16_t)hi16(speed_raw32),
+                  gpsYaw_raw,
+                  alt_raw);
+      delay(PERIOD_MS);
+    }
+  }
+
+#endif
 #endif
 }

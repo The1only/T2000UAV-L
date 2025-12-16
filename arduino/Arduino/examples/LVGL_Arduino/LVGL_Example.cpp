@@ -242,12 +242,14 @@ void IRAM_ATTR example1_increase_lvgl_tick(lv_timer_t * t)
   lv_textarea_set_placeholder_text(SD_Size, buf);
   snprintf(buf, sizeof(buf), "%d MB\r\n", Flash_Size);
   lv_textarea_set_placeholder_text(FlashSize, buf);
+  /*
   if(Scan_finish)
     snprintf(buf, sizeof(buf), "W: %d  B: %d    OK.\r\n",WIFI_NUM,BLE_NUM);
     // snprintf(buf, sizeof(buf), "WIFI: %d     ..OK.\r\n",WIFI_NUM);
   else
     snprintf(buf, sizeof(buf), "W: %d  B: %d\r\n",WIFI_NUM,BLE_NUM);
     // snprintf(buf, sizeof(buf), "WIFI: %d  \r\n",WIFI_NUM);
+    */
   lv_textarea_set_placeholder_text(Wireless_Scan, buf);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -396,12 +396,16 @@ void MainWindow::setIMU(void *parent, bool use_imu)
     QList<QSensor*> mySensorList;
 
     local->m_use_imu = use_imu;
-    if(use_imu) qDebug() << "Found sensors...";
-    else qDebug() << "NOT Found any sensors...";
+    if(use_imu) qDebug() << "Found IMU/INS sensor...";
+    else qDebug() << "NOT Found any IMU/INS sensors...";
 
     if(allready_run == false)
     {
         allready_run = true;
+        for(int i=0; i < 2000; i++){
+            QCoreApplication::processEvents();
+            QThread::msleep(1);
+        }
 
         // If we got external air preassure...
         if(local->mysocket->m_pressure_raw > 1.0)
@@ -811,7 +815,7 @@ void MainWindow::doClock()
     else{
         // If more than 30Km/t we are taking off...
         double alt;
-        if(m_pressure_reader)
+        if(m_pressure_reader || this->mysocket->m_pressure_raw > 1.0)
         {
             alt = this->mysocket->m_preasure_alt;
         }
@@ -845,7 +849,7 @@ void MainWindow::doClock()
     static double vario = 0;
     double var;
 
-    if(m_pressure_reader)
+    if(m_pressure_reader || this->mysocket->m_pressure_raw > 1.0)
     {
         m_vario = this->mysocket->m_preasure_alt - vario;
         vario = this->mysocket->m_preasure_alt;
@@ -1043,7 +1047,7 @@ double MainWindow::setQNH()
         // Known altitude in feet (e.g. GPS)
         double feet_gps = this->mysocket->m_altitude;
 
-        // Calculate the sea-level pressure (QNH) in hPa
+        // Calculate the sea-level pressure in hPa
         double qnh_hpa = this->mysocket->m_pressure_raw /
                          std::pow(1.0 - (feet_gps / 145366.45), 1.0 / 0.190284);
 
@@ -1058,6 +1062,10 @@ double MainWindow::setQNH()
                  << " Calc.GPS.Alt:" << mysocket->m_preasure_QNH; // << " Test: " << test;
 
         ui->doubleSpinBox->setText(QString("%1").arg(qnh_hpa));
+
+       _widgetALT->setPressure((float)qnh_hpa/100.0);
+        _widgetALT->redraw();
+
         return qnh_hpa;
     }
     else return 1013.25;
@@ -1108,8 +1116,8 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         //      this->m_altitude  = (geoCoordinate.altitude()-40.0)*3.2808399;
         //    qDebug() << "GPS Alt:  " << this->m_altitude ;
 
-        this->m_gpsspeed   = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
-        m_gpsbearing = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+        this->mysocket->m_gpsspeed   = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
+        mysocket->m_gpsbearing = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
         vel_D        = -geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
 
         calcPosition(vel_D);
@@ -1158,7 +1166,7 @@ void MainWindow::calcPosition(double vel_D)
             TrackPoint pt = points.takeFirst();
 
             // From last position to current position what was the bearing...
-            this->m_gpsbearing= getBearing(this->mysocket->m_latitude,this->mysocket->m_longitude,pt.latitude,pt.longitude);
+            this->mysocket->m_gpsbearing= getBearing(this->mysocket->m_latitude,this->mysocket->m_longitude,pt.latitude,pt.longitude);
             // Upside down for testing south direction...
   //          m_gpsbearing      = getBearing(pt.latitude,pt.longitude,this->m_latitude,this->m_longitude);
 
@@ -1179,7 +1187,7 @@ void MainWindow::calcPosition(double vel_D)
                 this->mysocket->m_altitude  = result->h_compensated*3.2808399;
 
           //  this->m_altitude  = pt.elevation*3.2808399; // Make feet from meters...
-            this->m_gpsspeed  = 25+(sin(l_speed)*20); //pt.speed;  // For now we use a created speed...
+            this->mysocket->m_gpsspeed  = 25+(sin(l_speed)*20); //pt.speed;  // For now we use a created speed...
             dt                = pt.dt;
             vel_D             = 0;
 
@@ -1203,13 +1211,13 @@ void MainWindow::calcPosition(double vel_D)
     if(has_pos == true)
     {
         m_geopos = true;
-        mysocket->m_speed    = this->m_gpsspeed*3.6;
+        mysocket->m_speed    = this->mysocket->m_gpsspeed*3.6;
 
-        if(this->m_gpsspeed > 2.5 && !isnan(m_gpsbearing))
+        if(this->mysocket->m_gpsspeed > 2.5 && !isnan(mysocket->m_gpsbearing))
         {
             static double old_bearing = 0;
 
-            m_bearing    = m_gpsbearing;
+            m_bearing    = mysocket->m_gpsbearing;
 
             double delta_bearing = m_bearing - old_bearing;
             if (delta_bearing > 180) delta_bearing -= 360;
@@ -1222,7 +1230,7 @@ void MainWindow::calcPosition(double vel_D)
             double alpha = 0.1;
             filtered_turn_rate = alpha * turn_rate_derivated + (1 - alpha) * filtered_turn_rate;
 
-            double a_c_exp = this->m_gpsspeed * filtered_turn_rate * DEG_TO_RAD;
+            double a_c_exp = this->mysocket->m_gpsspeed * filtered_turn_rate * DEG_TO_RAD;
             m_roll_angle = -atan2(a_c_exp, ekf.Gval);
 
             m_total_accel = sqrt(ekf.Gval); //sqrt((ekf.Gval*ekf.Gval)); // + (a_c_exp*a_c_exp)); //    # magnitude of net acceleration
@@ -1241,16 +1249,16 @@ void MainWindow::calcPosition(double vel_D)
             roll_blended_ok = false;
         }
         // Get velocity vector...
-        if(!(isnan(this->m_gpsspeed) || isnan(m_gpsbearing) || isnan(vel_D)))
+        if(!(isnan(this->mysocket->m_gpsspeed) || isnan(this->mysocket->m_gpsbearing) || isnan(vel_D)))
         {
-            this->m_vel_N  = cos(m_gpsbearing*DEG_TO_RAD)*this->m_gpsspeed;
-            this->m_vel_E  = sin(m_gpsbearing*DEG_TO_RAD)*this->m_gpsspeed;
-            this->m_vel_D  = vel_D;
-            this->m_vel_active = true;
+            this->mysocket->m_vel_N  = cos(mysocket->m_gpsbearing*DEG_TO_RAD)*this->mysocket->m_gpsspeed;
+            this->mysocket->m_vel_E  = sin(mysocket->m_gpsbearing*DEG_TO_RAD)*this->mysocket->m_gpsspeed;
+            this->mysocket->m_vel_D  = vel_D;
+            this->mysocket->m_vel_active = true;
         }
         else{
-            this->m_vel_E=this->m_vel_N=this->m_vel_D=0.0;
-            this->m_vel_active = false;
+            this->mysocket->m_vel_E=this->mysocket->m_vel_N=this->mysocket->m_vel_D=0.0;
+            this->mysocket->m_vel_active = false;
         }
 
      //   ui->quickWidget->rootObject()->setProperty("lat", this->m_latitude);
@@ -1276,7 +1284,7 @@ void MainWindow::calcPosition(double vel_D)
                 // qDebug() << "set takeoff alt";
             }
             // As long as we do not move, but got altitude...
-            if(this->m_gpsspeed < 0.5)
+            if(this->mysocket->m_gpsspeed < 0.5)
             {
                 first = true;
                 // qDebug() << "reset takeoff alt";
@@ -1348,11 +1356,11 @@ void MainWindow::EKF()
             double vel_N = 0.0;
             double vel_E = 0.0;
             double vel_D = 0.0;
-            if (this->m_vel_active == true)
+            if (this->mysocket->m_vel_active == true)
             {
-                vel_N = this->m_vel_N;
-                vel_E = this->m_vel_E;
-                vel_D = this->m_vel_D;
+                vel_N = this->mysocket->m_vel_N;
+                vel_E = this->mysocket->m_vel_E;
+                vel_D = this->mysocket->m_vel_D;
             }
 
             // update kalmanfilter
@@ -2034,7 +2042,7 @@ void MainWindow::onReadingChanged()
                 ui->speed->setText(QString("%1").arg(abs(mysocket->m_speed), 0, 'f', 1));
             }
 
-#ifndef Q_OS_MAC
+//#ifndef Q_OS_MAC
             if(mysocket->IMUconnected == true)
             {
                 ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
@@ -2044,7 +2052,7 @@ void MainWindow::onReadingChanged()
                 ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
             }
             else if(m_rotation_sensor != nullptr)
-#endif
+//#endif
             {
                 ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
                 ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
@@ -2903,7 +2911,12 @@ void MainWindow::on_dial_valueChanged(int qnh)
 {
     ui->doubleSpinBox->setText(QString("%1").arg(qnh/100.0));
     ui->doubleSpinBox_2->setText(QString("%1").arg(qnh/100.0));
+
     ui->dial_2->setSliderPosition(qnh);
+
+    _widgetALT->setPressure((float)qnh/100.0);
+    _widgetALT->redraw();
+
 }
 
 void MainWindow::on_dial_2_valueChanged(int qnh)
@@ -2945,6 +2958,25 @@ void MainWindow::on_reset_heading_2_clicked()
 {
     qDebug() << "Heading. ";
 
+}
+
+void MainWindow::on_use_ins_only_clicked()
+{
+    QString x = ui->use_ins_only->styleSheet();
+
+    this->mysocket->use_ins_only = !this->mysocket->use_ins_only;
+    if(this->mysocket->use_ins_only == true)
+    {
+        x.replace(QString("1 #080"), QString("1 #800"));
+        ui->use_built_inn_barometer->setText("Using any sensor...");
+
+    }
+    else{
+        x.replace(QString("1 #800"), QString("1 #080"));
+        ui->use_built_inn_barometer->setText("Using INS only...");
+    }
+    ui->use_ins_only->setStyleSheet(x);
+    ui->use_ins_only->update();
 }
 
 void MainWindow::on_use_built_inn_barometer_clicked()

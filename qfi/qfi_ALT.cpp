@@ -43,7 +43,7 @@ qfi_ALT::qfi_ALT( QWidget *parent ) :
     _itemCase   ( Q_NULLPTR ),
 
     _altitude (  0.0 ),
-    _pressure ( 28.0 ),
+    _pressure ( 1013.25 ),
 
     _scaleX ( 1.0 ),
     _scaleY ( 1.0 ),
@@ -119,8 +119,8 @@ void qfi_ALT::setPressure( double pressure )
 {
     _pressure = pressure;
 
-    if ( _pressure < 28.0 ) _pressure = 28.0;
-    if ( _pressure > 31.5 ) _pressure = 31.5;
+    if ( _pressure < 400.0 ) _pressure = 400.0;
+    if ( _pressure > 1013.50 ) _pressure = 1013.50;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -200,7 +200,7 @@ void qfi_ALT::reset()
     _itemCase   = Q_NULLPTR;
 
     _altitude =  0.0;
-    _pressure = 28.0;
+    _pressure = 1013.25;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -211,7 +211,7 @@ void qfi_ALT::updateView()
 
     double angleH1 = _altitude * 0.036;
     double angleH2 = ( altitude % 1000 ) * 0.36;
-    double angleF1 = ( _pressure - 28.0 ) * 100.0;
+    double angleF1 = ( _pressure - 1013.25 ) * 100.0;
     double angleF3 = _altitude * 0.0036;
 
     _itemHand_1->setRotation(   angleH1 );

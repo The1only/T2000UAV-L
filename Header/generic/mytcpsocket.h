@@ -409,6 +409,14 @@ public:
     double m_latitude      = 0.0; ///< GPS latitude [deg].
     double m_longitude     = 0.0; ///< GPS longitude [deg].
 
+    // GPS velocity vector
+    double m_gpsspeed   = 0.0; ///< GPS speed [m/s].
+    double m_gpsbearing = 0.0; ///< GPS course [deg].
+    double m_vel_N      = 0.0; ///< North velocity [m/s].
+    double m_vel_E      = 0.0; ///< East velocity [m/s].
+    double m_vel_D      = 0.0; ///< Down velocity [m/s].
+    bool   m_vel_active = false;
+
     /// Barometric altitude [feet].
     double m_preasure_alt  = 0.0;
     /// Barometric pressure [hPa].
@@ -424,6 +432,8 @@ public:
     /// Ground speed [km/h].
     double m_speed  = 0.0;
 
+
+    bool use_ins_only      = false;
 
 
 private:
@@ -442,9 +452,9 @@ private:
     QString m_radar_address = "";
     QString m_transponder_address = "";
 
-    TcpClient *m_imuClient = nullptr;
-    TcpClient *m_radarClient = nullptr;
-    TcpClient *m_transponderClient = nullptr;
+    QTcpSocket *m_imuClient = nullptr;
+    QTcpSocket *m_radarClient = nullptr;
+    QTcpSocket *m_transponderClient = nullptr;
 
 signals:
     /**
