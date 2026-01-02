@@ -31,6 +31,7 @@ FORMS += \
     remoteselector.ui \
     mainwindow_phone.ui \
     mainwindow_port_iPhone.ui \
+    mainwindow_port_screen.ui \
     mainwindow_small.ui
 
 # ---- common installs (optional) ----
@@ -39,6 +40,7 @@ INSTALLS += target
 # ---- common extra .pri you already include ----
 include($$PWD/qfi/qfi.pri)
 include($$PWD/example/example.pri)
+include($$PWD/docs/doxygen.pri)
 
 # ---- platform-specific includes ----
 macx|ios {
@@ -51,6 +53,11 @@ android {
 
 DISTFILES += \
     platform/android.pri \
-    platform/apple.pri
+    platform/apple.pri \
+    docs/doxygen.pri
 
-
+# To build...
+#qmake DEFINES+=BUILD_DOCS
+# make doc
+# make doc-pdf
+# latexmk -pdf refman.tex
