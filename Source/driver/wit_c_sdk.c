@@ -1,3 +1,10 @@
+/**
+ * @file wit_c_sdk.cpp
+ * @brief Implementation of IMU decoder.
+ *
+ * Contains the implementation details for the IMU.
+ */
+
 #include "wit_c_sdk.h"
 
 static SerialWrite p_WitSerialWriteFunc = NULL;

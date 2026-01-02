@@ -1,3 +1,10 @@
+/**
+ * @file geoid_helper.cpp
+ * @brief Geoid helper implementation.
+ *
+ * Contains the private implementation details for geoid calculations.
+ */
+
 #include "geoid_helper.h"
 #include <iostream>
 

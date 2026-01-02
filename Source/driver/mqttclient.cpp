@@ -1,99 +1,9 @@
-#ifdef V5
-
-#include "mqttclient.h"
-#include <iostream>
-
-// -----------------------------------------------------------------------------
-//  MqttClient (V5-style usage, but still via async_client)
-// -----------------------------------------------------------------------------
-
-MqttClient::MqttClient(const std::string& server, const std::string& clientId)
-    : client_(server, clientId)
-    , cb_(this)   // Important: callback holds back-reference to this
-{
-    // Register our callback with the underlying Paho client
-    client_.set_callback(cb_);
-}
-
-void MqttClient::connect()
-{
-    try {
-        // Simple synchronous connect (blocks until result)
-        client_.connect()->wait();
-        std::cout << "Connected to broker.\n";
-    }
-    catch (const mqtt::exception& e) {
-        std::cerr << "Connect failed: " << e.what() << '\n';
-    }
-}
-
-void MqttClient::disconnect()
-{
-    try {
-        client_.disconnect()->wait();
-        std::cout << "Disconnected from broker.\n";
-    }
-    catch (const mqtt::exception& e) {
-        std::cerr << "Disconnect failed: " << e.what() << '\n';
-    }
-}
-
-void MqttClient::sendMessage(const std::string& topic, const std::string& message)
-{
-    try {
-        // QoS 1, not retained
-        client_.publish(topic, message.c_str(), message.length(), 1, false);
-        std::cout << "eMove App Sent: " << message << '\n';
-    }
-    catch (const mqtt::exception& e) {
-        std::cerr << "Publish failed: " << e.what() << '\n';
-    }
-}
-
-void MqttClient::subscribe(const std::string& topic)
-{
-    try {
-        client_.subscribe(topic, 1)->wait();
-        std::cout << "Subscribed to client topic: " << topic << '\n';
-    }
-    catch (const mqtt::exception& e) {
-        std::cerr << "Subscribe failed: " << e.what() << '\n';
-    }
-}
-
-void MqttClient::setMessageHandler(
-    std::function<void(const std::string&, const std::string&)> handler)
-{
-    userMessageHandler_ = std::move(handler);
-}
-
-void MqttClient::handleIncoming(const std::string& topic,
-                                const std::string& payload)
-{
-    // Forward incoming messages to user handler if registered
-    if (userMessageHandler_) {
-        userMessageHandler_(topic, payload);
-    }
-}
-
-// -----------------------------------------------------------------------------
-//  Callback (Paho callback implementation, V5 branch)
-// -----------------------------------------------------------------------------
-
-void MqttClient::Callback::message_arrived(mqtt::const_message_ptr msg)
-{
-    if (owner_) {
-        owner_->handleIncoming(msg->get_topic(), msg->to_string());
-    }
-}
-
-void MqttClient::Callback::connection_lost(const std::string& cause)
-{
-    std::cerr << "MQTT client connection lost: " << cause << std::endl;
-    // Optional: you could add auto-reconnect logic here if desired.
-}
-
-#else   // ------------------------------- non-V5 branch ------------------------
+/**
+ * @file mqttclient.cpp
+ * @brief Implementation of MqttClient.
+ *
+ * Contains the implementation details for the MqttClient class.
+ */
 
 #include "mqttclient.h"
 #include <stdexcept>
@@ -150,7 +60,8 @@ void MqttClient::sendMessage(const std::string& topic,
     msg->set_retained(retained);
 
     // Block until publish completes (simple, but fine for your usage)
-    client_.publish(msg)->wait();
+    if(client_.is_connected())
+        client_.publish(msg)->wait();
 }
 
 void MqttClient::subscribe(const std::string& topic, int qos)
@@ -180,4 +91,3 @@ void MqttClient::Callback::connection_lost(const std::string& cause)
     (void)cause;
 }
 
-#endif  // V5

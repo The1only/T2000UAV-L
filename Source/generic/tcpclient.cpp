@@ -1,3 +1,10 @@
+/**
+ * @file tcpclient.cpp
+ * @brief Implementation of TcpClient.
+ *
+ * Contains the implementation details for the TcpClient class.
+ */
+
 #include "tcpclient.h"
 #include <QDebug>
 

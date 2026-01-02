@@ -1,3 +1,10 @@
+/**
+ * @file blueuart.cpp
+ * @brief Implementation of ComBt.
+ *
+ * Contains the implementation details for the ComBt class.
+ */
+
 #include <QDebug>
 #include "bleuart.h"   // your class header
 #include <unistd.h>   // usleep

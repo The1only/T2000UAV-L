@@ -1,4 +1,10 @@
-//
+/**
+ * @file mainwindow.cpp
+ * @brief Implementation of MainWindow.
+ *
+ * Contains the implementation details for the MainWindow class.
+ */
+
 #include <QtCore/QLoggingCategory>
 #include <QQmlContext>
 #include <QGuiApplication>
@@ -302,7 +308,7 @@ MainWindow::MainWindow(QWidget *parent)
     currentIndex = ui->stackedWidget->currentIndex();
 
     m_msgBox = new NoButtonMessageBox(tr("Please wait for the system to boot!"));
-//    m_msgBox->show();
+    m_msgBox->show();
 
     showImage();
 
@@ -318,6 +324,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::showImage()
 {
+    /*
     auto *view = ui->graphicsView_3;                 // <-- use one view consistently
     QGraphicsScene *scene = view->scene();
     if (!scene) {
@@ -335,6 +342,7 @@ void MainWindow::showImage()
     QGraphicsPixmapItem *item = scene->addPixmap(pix);
     item->setTransformationMode(Qt::SmoothTransformation);
     scene->setSceneRect(item->boundingRect());
+    view->fitInView(item, Qt::IgnoreAspectRatio);
 
     view->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
@@ -349,9 +357,10 @@ void MainWindow::showImage()
     ui->fly_home->setFlat(true); // optional
     QSize f = ui->fly_home->size();
     ui->fly_home->setIconSize(f);
-
+*/
     //-----------------------------------------------
-    view = ui->graphicsView_2;                 // <-- use one view consistently
+    // To be able to set the opacity, we can NOT do this in the UI editor...
+    auto *view = ui->graphicsView_2;                 // <-- use one view consistently
     QGraphicsScene *m_graphScen = view->scene();
     if (!m_graphScen) {
         m_graphScen = new QGraphicsScene(view);
@@ -365,7 +374,7 @@ void MainWindow::showImage()
     }
 
     m_graphScen->clear();
-    item = m_graphScen->addPixmap(pix2);
+    QGraphicsPixmapItem *item = m_graphScen->addPixmap(pix2);
     item->setTransformationMode(Qt::SmoothTransformation);
     item->setOpacity(0.5);  //
     m_graphScen->setSceneRect(item->boundingRect());
@@ -374,6 +383,7 @@ void MainWindow::showImage()
     QTimer::singleShot(0, view, [view, item]{
         view->fitInView(item, Qt::IgnoreAspectRatio);
     });
+
 
 }
 
@@ -407,10 +417,10 @@ void MainWindow::setIMU(void *parent, bool use_imu)
             QThread::msleep(1);
         }
 
-        // If we got external air preassure...
-        if(local->mysocket->m_pressure_raw > 1.0)
+        // If we got external air preassure as part of the IMU or standalone...
+        if(local->mysocket->m_pressure_raw > 1.0 )
         {
-            qDebug() << "Found a sensor QPressureSensor";
+            qDebug() << "Found a external sensor QPressureSensor";
             local->ui->radioButton_3->setChecked(true);
 
             // If we got both a preassure sensor and the Transponder ...
@@ -439,26 +449,29 @@ void MainWindow::setIMU(void *parent, bool use_imu)
                 mySensorList.append(sensor);
             }
 
-            if(!strncmp(type,"QPressureSensor",strlen("QPressureSensor")) && local->mysocket->m_pressure_raw < 1.0)
-            {
-                local->m_pressure_sensor = new QPressureSensor();
-                connect(local->m_pressure_sensor, SIGNAL(readingChanged()), local, SLOT(onPressureReadingChanged()));
-                local->m_pressure_sensor->start();
-                local->m_pressure_sensor->setDataRate(4);
-                qDebug() << "Found a sensor QPressureSensor";
-                local->ui->radioButton_3->setChecked(true);
-
-                // If we got both a preassure sensor and the Transponder ...
-                if( local->mysocket->Transponderstat == true)
+            // If we does NOT have an external sensor...
+            if(!local->ui->radioButton_3->isChecked()){
+                if(!strncmp(type,"QPressureSensor",strlen("QPressureSensor")))
                 {
-                    local->mysocket->readyWrite((char*)"d=s\r\n");
-                    local->mysocket->TransponderstatWithBarometer = true;
+                    local->m_pressure_sensor = new QPressureSensor();
+                    connect(local->m_pressure_sensor, SIGNAL(readingChanged()), local, SLOT(onPressureReadingChanged()));
+                    local->m_pressure_sensor->start();
+                    local->m_pressure_sensor->setDataRate(4);
+                    qDebug() << "Found a sensor QPressureSensor";
+                    local->ui->radioButton_3->setChecked(true);
 
-                    QString x = local->ui->use_built_inn_barometer->styleSheet();
-                    x.replace(QString("1 #080"), QString("1 #800"));
-                    local->ui->use_built_inn_barometer->setText("Use Built In\nbarometer");
-                    local->ui->use_built_inn_barometer->setStyleSheet(x);
-                    local->ui->use_built_inn_barometer->update();
+                    // If we got both a preassure sensor and the Transponder ...
+                    if( local->mysocket->Transponderstat == true)
+                    {
+                        local->mysocket->readyWrite((char*)"d=s\r\n");
+                        local->mysocket->TransponderstatWithBarometer = true;
+
+                        QString x = local->ui->use_built_inn_barometer->styleSheet();
+                        x.replace(QString("1 #080"), QString("1 #800"));
+                        local->ui->use_built_inn_barometer->setText("Use Built In\nbarometer");
+                        local->ui->use_built_inn_barometer->setStyleSheet(x);
+                        local->ui->use_built_inn_barometer->update();
+                    }
                 }
             }
 
@@ -813,27 +826,20 @@ void MainWindow::doClock()
         }
     }
     else{
-        // If more than 30Km/t we are taking off...
-        double alt;
-        if(m_pressure_reader || this->mysocket->m_pressure_raw > 1.0)
-        {
-            alt = this->mysocket->m_preasure_alt;
-        }
-        else{
-            if(this->mysocket->m_altitude > 0.1) alt = this->mysocket->m_altitude;
-            else alt = 0;
+        double alt = this->mysocket->m_altitude;
+
+        // If we are usimng GPS the forse it to be set...
+        if(!this->ui->radioButton_2->isChecked()){
+            if( this->mysocket->m_pressure_raw > 1.0 )
+            {
+                alt = this->mysocket->m_preasure_alt;
+            }
         }
 
-        if(this->ui->radioButton_2->isChecked()){
-            if(this->mysocket->m_altitude > 0.1) alt = this->mysocket->m_altitude;
-            else alt = 0;
-        }
-
-        if( mysocket->m_speed > 20.0 && alt > (m_alt + 5) )
+        // If more than 40Km/t we are taking off...
+        if( mysocket->m_speed > 40.0 )
         {
             m_takeoff = true;
-
-            qDebug() << "takeoff...";
 
             this->takeoff_latitude  = this->mysocket->m_latitude;
             this->takeoff_longitude = this->mysocket->m_longitude;
@@ -849,7 +855,7 @@ void MainWindow::doClock()
     static double vario = 0;
     double var;
 
-    if(m_pressure_reader || this->mysocket->m_pressure_raw > 1.0)
+    if( this->mysocket->m_pressure_raw > 1.0 )
     {
         m_vario = this->mysocket->m_preasure_alt - vario;
         vario = this->mysocket->m_preasure_alt;
@@ -877,13 +883,16 @@ void MainWindow::doClock()
         positionUpdated(x);
     }
     // If we got an IMU with preassure...
-    if(m_pressure_sensor == nullptr && mysocket->m_pressure_raw > 1){
-        onPressureReadingChanged();
+    if(mysocket->m_pressure_raw > 1.0 ){
+        if(this->mysocket->Altimeter_data.temperature != 0.0){
+            m_temp = this->mysocket->Altimeter_data.temperature;
+        }
+        afterPressureReadingChanged();
     }
 
     // If we got an IMU with GPS...
     if(mysocket->m_altitude > 0){
-        calcPosition(mysocket->FW_Speed);
+        calcPosition(mysocket->Donwn_Speed);
     }
 }
 
@@ -1006,27 +1015,28 @@ void MainWindow::AccelerometerRead()
 
 void MainWindow::onPressureReadingChanged()
 {
-    //    qDebug() << "  onPressureReadingChanged  ";
-    static bool first = true;
-
     if(m_pressure_sensor != nullptr){
         m_pressure_reader = m_pressure_sensor->reading();
         this->mysocket->m_pressure_raw = m_pressure_reader->pressure()/100.0;
     }else{
-        this->mysocket->m_pressure_raw= mysocket->m_pressure_raw;
+        this->mysocket->m_pressure_raw = m_pressure_reader->pressure()/100.0;
     }
-  //  qDebug() << m_pressure_raw;
+    afterPressureReadingChanged();
+}
 
-  //  if( this->m_speed < 1.0){ first = true; }
+void MainWindow::afterPressureReadingChanged()
+{
+    static int first = 30;
 
+    // If we got an altitude...
     if( this->mysocket->m_altitude > 0.1)
     {
-        // Sett takeoff altitude...
-        if(first)
-        {
-            first = false;
-            m_alt = this->mysocket->m_altitude;
-            setQNH();
+        // Sett takeoff altitude automatically...
+        if(first){
+            first--;
+            if(first == 1){
+                on_reset_altitude_2_clicked();
+            }
         }
     }
 
@@ -1034,7 +1044,8 @@ void MainWindow::onPressureReadingChanged()
     const double qnh_hpa_ui = ui->doubleSpinBox->text().toDouble();  // sea-level pressure
 //    const double qnh_hpa_ui = m_pressure_raw + (ui->doubleSpinBox->text().toDouble() - 1013.25);  // sea-level pressure
 
-    // If you want *indicated altitude* (baro matched to QNH):
+    //  Meters: 44330.0f * (1.0f - pow(pressure_hPa / qnh, 0.1903f));
+    // Feet ...
     this->mysocket->m_preasure_alt = 145366.45 * (1.0 - std::pow(this->mysocket->m_pressure_raw / qnh_hpa_ui, 0.190284));
     ui->baro_alt->setText(QString::number(this->mysocket->m_preasure_alt));
 }
@@ -1043,7 +1054,6 @@ double MainWindow::setQNH()
 {
     if( this->mysocket->m_altitude > 0.1)
     {
-
         // Known altitude in feet (e.g. GPS)
         double feet_gps = this->mysocket->m_altitude;
 
@@ -1054,6 +1064,8 @@ double MainWindow::setQNH()
         // Pressure offset in millibars (hPa) to add to m_pressure_raw
         double pressure_offset = qnh_hpa - this->mysocket->m_pressure_raw;
 
+        //  Meters: 44330.0f * (1.0f - pow(pressure_hPa / qnh, 0.1903f));
+        // Feet ...
         // Check: this should now yield GPS altitude
         mysocket->m_preasure_QNH  = 145366.45 * (1.0 - std::pow(this->mysocket->m_pressure_raw / qnh_hpa, 0.190284));
 
@@ -1116,9 +1128,9 @@ void MainWindow::positionUpdated(QGeoPositionInfo geoPositionInfo)
         //      this->m_altitude  = (geoCoordinate.altitude()-40.0)*3.2808399;
         //    qDebug() << "GPS Alt:  " << this->m_altitude ;
 
-        this->mysocket->m_gpsspeed   = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
-        mysocket->m_gpsbearing = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
-        vel_D        = -geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
+        this->mysocket->m_gpsspeed  = geoPositionInfo.attribute(QGeoPositionInfo::GroundSpeed);
+        mysocket->m_gpsbearing      = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
+        vel_D                       = -geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
 
         calcPosition(vel_D);
     }
@@ -1259,36 +1271,6 @@ void MainWindow::calcPosition(double vel_D)
         else{
             this->mysocket->m_vel_E=this->mysocket->m_vel_N=this->mysocket->m_vel_D=0.0;
             this->mysocket->m_vel_active = false;
-        }
-
-     //   ui->quickWidget->rootObject()->setProperty("lat", this->m_latitude);
-     //   ui->quickWidget->rootObject()->setProperty("lon", this->m_longitude);
-        /*
-        qDebug() << "Lat: " << this->m_latitude << " Lon: " << this->m_longitude;
-        qDebug() << "m_speed     = " << m_speed << Qt::endl;
-        qDebug() << "m_latitude  = " << m_latitude << Qt::endl;
-        qDebug() << "m_longitude = " << m_longitude << Qt::endl;
-        qDebug() << "m_altitude  = " << m_altitude << Qt::endl;
-        qDebug() << "m_head      = " << m_head << Qt::endl;
-*/
-        // set ground altitude...
-        if(isnan(this->mysocket->m_altitude))
-        {
-            this->mysocket->m_altitude = 0;
-        }else{
-            // Set takeoff altitude...
-            if(first && this->ui->radioButton_2->isChecked())
-            {
-                first = false;
-                m_alt = this->mysocket->m_altitude;
-                // qDebug() << "set takeoff alt";
-            }
-            // As long as we do not move, but got altitude...
-            if(this->mysocket->m_gpsspeed < 0.5)
-            {
-                first = true;
-                // qDebug() << "reset takeoff alt";
-            }
         }
     }
     else{
@@ -1440,15 +1422,15 @@ void MainWindow::onReadingChanged()
         {
             m_first--;
 
-#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
-
             if(m_first == 5 && splash != nullptr ){
+#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
                 splash->hide(); // Hides splash screen
                 splash->finish(this); // Hides splash screen
                 delete(splash);
                 splash = nullptr;
-            }
 #endif
+                m_msgBox->hide();
+            }
             /*
             if(m_first == 73){
                 m_msgBox->hide();
@@ -1603,6 +1585,7 @@ void MainWindow::onReadingChanged()
                 }else{
                     _widgetALT->setAltitude(m_tansALT);
                 }
+
                 _widgetALT->redraw();
 
                 if(mysocket->m_speed >= 0 && mysocket->m_speed < 300)
@@ -2048,7 +2031,7 @@ void MainWindow::onReadingChanged()
                 ui->roll->setText(QString("%1").arg(abs(roll_att), 0, 'f', 0));
                 ui->pitch->setText(QString("%1").arg((pitch_att), 0, 'f', 0));
                 ui->temp->setText(QString("%1").arg(mysocket->Temp, 0, 'f', 0));
-                ui->temperature->setText(QString("%1").arg(mysocket->FW_Speed, 0, 'f', 1));
+                ui->temperature->setText(QString("%1").arg(mysocket->m_gpsspeed, 0, 'f', 1));
                 ui->compass->setText(QString("%1").arg(m_head, 0, 'f', 0));
             }
             else if(m_rotation_sensor != nullptr)
@@ -2889,31 +2872,34 @@ void MainWindow::on_fly_home_clicked()
 {
     static bool pingpong=true;
 
-    qDebug() << "FlyHome... ";
+//    qDebug() << "FlyHome... ";
   //  ui->quickWidget->rootObject()->setProperty("zoomLevel", 5); // 18);
 
     if(pingpong){
-        ui->quickWidget->raise();
+        mysocket->mqtt->sendMessage("xplane/engage", "Activate");
+        ui->Autopilot_status->setText("Activated");
+
+//        ui->quickWidget->raise();
         ui->fly_home->raise();
         ui->select_transponder_page2_2->raise();
         ui->select_gyro_page2_2->raise();
-        pingpong=false;
     }else{
-        ui->graphicsView_3->raise();
+        mysocket->mqtt->sendMessage("xplane/engage", "Deactivate");
+        ui->Autopilot_status->setText("Deactivated");
+
+ //       ui->graphicsView_3->raise();
         ui->fly_home->raise();
         ui->select_transponder_page2_2->raise();
         ui->select_gyro_page2_2->raise();
-        pingpong=true;
     }
+    pingpong= !pingpong;
 }
 
 void MainWindow::on_dial_valueChanged(int qnh)
 {
     ui->doubleSpinBox->setText(QString("%1").arg(qnh/100.0));
     ui->doubleSpinBox_2->setText(QString("%1").arg(qnh/100.0));
-
     ui->dial_2->setSliderPosition(qnh);
-
     _widgetALT->setPressure((float)qnh/100.0);
     _widgetALT->redraw();
 
@@ -2924,6 +2910,8 @@ void MainWindow::on_dial_2_valueChanged(int qnh)
     ui->doubleSpinBox_2->setText(QString("%1").arg(qnh/100.0));
     ui->doubleSpinBox->setText(QString("%1").arg(qnh/100.0));
     ui->dial->setSliderPosition(qnh);
+    _widgetALT->setPressure((float)qnh/100.0);
+    _widgetALT->redraw();
 }
 
 void MainWindow::on_use_gps_in_attitude_clicked()

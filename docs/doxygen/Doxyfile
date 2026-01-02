@@ -1,0 +1,93 @@
+PROJECT_NAME = "My Qt Project"
+
+# Output goes to docs/html
+OUTPUT_DIRECTORY = ..
+
+GENERATE_HTML = YES
+GENERATE_LATEX = NO
+
+# Show source files
+SHOW_FILES = YES
+
+# Warnings
+WARN_IF_UNDOCUMENTED = YES
+WARN_LOGFILE = doxygen_warnings.log
+
+# Crawl the entire source tree
+INPUT = \
+    ../../Source \
+    ../../Header \
+    ../../example \
+    .
+
+RECURSIVE = YES
+
+# Parse all relevant source types
+FILE_PATTERNS = \
+    *.h \
+    *.hpp \
+    *.cpp \
+    *.c \
+    *.cxx \
+    *.dox
+
+# Exclude junk
+EXCLUDE = \
+    ../../build \
+    ../../.git \
+    ../../third_party \
+    ../../external \
+    ../../Source/UI_Backup \
+    ../../Source/Archive.zip
+
+# Extract everything (including implementation)
+EXTRACT_ALL = YES
+EXTRACT_STATIC = YES
+
+# Qt-friendly
+OPTIMIZE_OUTPUT_FOR_C = YES
+QT_AUTOBRIEF = YES
+
+# Enable Graphviz
+HAVE_DOT = YES
+DOT_PATH =
+
+# Graph types
+CLASS_DIAGRAMS = YES
+CLASS_GRAPH = YES
+COLLABORATION_GRAPH = YES
+INCLUDE_GRAPH = YES
+INCLUDED_BY_GRAPH = YES
+
+# Call graphs (optional, heavier)
+CALL_GRAPH = YES
+CALLER_GRAPH = YES
+
+# Graph appearance
+DOT_IMAGE_FORMAT = svg
+INTERACTIVE_SVG = YES
+
+# Graph limits (important for large projects)
+DOT_GRAPH_MAX_NODES = 50
+MAX_DOT_GRAPH_DEPTH = 2
+
+MACRO_EXPANSION = YES
+EXPAND_ONLY_PREDEF = YES
+
+PREDEFINED = \
+    Q_OBJECT \
+    signals=public \
+    slots= \
+    Q_SIGNALS=public \
+    Q_SLOTS=
+
+GENERATE_HTML  = YES
+GENERATE_LATEX = YES
+
+LATEX_OUTPUT = latex
+USE_PDFLATEX = YES
+PDF_HYPERLINKS = YES
+
+LATEX_BATCHMODE = YES
+DOT_IMAGE_FORMAT = pdf
+

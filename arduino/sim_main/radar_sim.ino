@@ -52,6 +52,8 @@ byte myData[] = {0xAA, 0xAA, 0x0C, 0x07,   0x01, 0xA0, 0x1, 0x01, 0x01, 0x01, 0x
 
 void setupRADAR() 
 {
+ // Serial1.begin(115200);
+
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
   sendCommand(command);

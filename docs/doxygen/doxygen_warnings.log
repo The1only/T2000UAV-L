@@ -1,0 +1,44 @@
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/driver/bleuart.cpp:2: warning: the name 'blueuart.cpp' supplied as the argument in the \file statement is not an input file
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/driver/gpx_parse.cpp:2: warning: the name 'gpx_parser.cpp' supplied as the argument in the \file statement is not an input file
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/driver/wit_c_sdk.c:2: warning: the name 'wit_c_sdk.cpp' supplied as the argument in the \file statement is not an input file
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:955: warning: argument 'parent' of command @param is not found in the argument list of join32(uint16_t lo, uint16_t hi)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:955: warning: argument 'data' of command @param is not found in the argument list of join32(uint16_t lo, uint16_t hi)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:955: warning: argument 'length' of command @param is not found in the argument list of join32(uint16_t lo, uint16_t hi)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:955: warning: The following parameters of join32(uint16_t lo, uint16_t hi) are not documented:
+  parameter 'lo'
+  parameter 'hi'
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:78: warning: argument parent from the argument list of MyTcpSocket::MyTcpSocket has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:78: warning: argument s from the argument list of MyTcpSocket::MyTcpSocket has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:78: warning: argument retx from the argument list of MyTcpSocket::MyTcpSocket has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:78: warning: argument rety from the argument list of MyTcpSocket::MyTcpSocket has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:1045: warning: argument parent from the argument list of MyTcpSocket::doRadar has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:1045: warning: argument data from the argument list of MyTcpSocket::doRadar has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:1045: warning: argument length from the argument list of MyTcpSocket::doRadar has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:1153: warning: argument 'value' of command @param is not found in the argument list of MyTcpSocket::handleUpdate(const std::string &ID, const std::string &invalue)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:1153: warning: argument ID from the argument list of MyTcpSocket::handleUpdate has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:1153: warning: The following parameter of MyTcpSocket::handleUpdate(const std::string &ID, const std::string &invalue) is not documented:
+  parameter 'invalue'
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Header/generic/mytcpsocket.h:501: warning: argument 'data' of command @param is not found in the argument list of MyTcpSocket::parseIMU(void *parent, uint32_t uiReg, uint16_t sReg[])
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Header/generic/mytcpsocket.h:501: warning: argument 'length' of command @param is not found in the argument list of MyTcpSocket::parseIMU(void *parent, uint32_t uiReg, uint16_t sReg[])
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Header/generic/mytcpsocket.h:501: warning: The following parameters of MyTcpSocket::parseIMU(void *parent, uint32_t uiReg, uint16_t sReg[]) are not documented:
+  parameter 'uiReg'
+  parameter 'sReg'
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:1286: warning: argument data from the argument list of MyTcpSocket::readyWrite has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:246: warning: argument imu from the argument list of MyTcpSocket::setSerialPorts has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:246: warning: argument transponder from the argument list of MyTcpSocket::setSerialPorts has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/Source/generic/mytcpsocket.cpp:246: warning: argument radar from the argument list of MyTcpSocket::setSerialPorts has multiple @param documentation sections
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/example/WidgetEADI.h:109: warning: argument 'normalized' of command @param is not found in the argument list of WidgetEADI::setDots(double dotH, double dotV, bool visibleH, bool visibleV)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/example/WidgetEADI.h:109: warning: argument 'deviation' of command @param is not found in the argument list of WidgetEADI::setDots(double dotH, double dotV, bool visibleH, bool visibleV)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/example/WidgetEADI.h:109: warning: The following parameters of WidgetEADI::setDots(double dotH, double dotV, bool visibleH, bool visibleV) are not documented:
+  parameter 'dotH'
+  parameter 'dotV'
+  parameter 'visibleH'
+  parameter 'visibleV'
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/example/WidgetEADI.h:119: warning: argument 'FD' of command @param is not found in the argument list of WidgetEADI::setFD(double roll, double pitch, bool visible=true)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/example/WidgetEADI.h:119: warning: The following parameters of WidgetEADI::setFD(double roll, double pitch, bool visible=true) are not documented:
+  parameter 'roll'
+  parameter 'pitch'
+  parameter 'visible'
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/example/WidgetEADI.h:101: warning: argument 'normalized' of command @param is not found in the argument list of WidgetEADI::setTurnRate(double turnRate)
+/Users/terjenilsen/Dropbox/Sportsfly/transponder/T2000UAV-L-17_11_25_Serial_IMU_only/example/WidgetEADI.h:101: warning: The following parameter of WidgetEADI::setTurnRate(double turnRate) is not documented:
+  parameter 'turnRate'

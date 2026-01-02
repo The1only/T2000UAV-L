@@ -60,7 +60,6 @@ macx {
 
     HEADERS += \
         ./Header/generic/ssdp.h \
-        ./Header/generic/QuickWidget.h \
         ./Header/generic/mainwindow.h \
         ./Header/generic/mytcpsocket.h \
         ./Header/generic/reg.h \
@@ -75,6 +74,7 @@ macx {
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS.h \
         ./EKF_IMU_GPS/ekf_nav_ins/inc/ekfNavINS_quart.h \
 
+# ./example/Headers/QuickWidget.h \
 #        ./Header/generic/multicastlistner.h \
 
 }
@@ -187,3 +187,12 @@ ios {
 ios: QMAKE_INFO_PLIST = Info.plist
 macos: QMAKE_INFO_PLIST = Info.qmake.macos.plist
 
+# ----------------------------------
+DOXYGEN = doxygen
+DOXYFILE = $$PWD/docs/Doxyfile
+
+doxygen.target = doc
+doxygen.commands = $$DOXYGEN $$DOXYFILE
+doxygen.CONFIG += no_link
+
+QMAKE_EXTRA_TARGETS += doxygen

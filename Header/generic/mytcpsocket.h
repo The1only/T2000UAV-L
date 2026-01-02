@@ -44,31 +44,30 @@
 // UI selection / simulation flags
 // -----------------------------------------------------------------------------
 #ifdef Q_OS_ANDROID
-
 // Android: main window layout
 #define SCREEN MainWindow_port_new
 #include "ui_mainwindow_port_new.h"
-
 #include "lockhelper.h"
-
-// Do we want to simulate the GPS using a GPX file?
 #define simGPS false
 
-#else   // not Android
-
-#ifdef Q_OS_IOS
-// iOS: iPhone layout
+#elif defined(Q_OS_IOS)
+// If IOS for apple...
 #define SCREEN MainWindow_port_iPhone
 #include "ui_mainwindow_port_iPhone.h"
 #define simGPS false
+
+#elif defined(Q_OS_MAC)
+// If MAC or PC screen...
+#include "ui_mainwindow_port_screen.h"
+#define SCREEN MainWindow_port_screen
+#define simGPS false
+
 #else
 // Desktop: new layout, GPS simulation enabled
 #include "ui_mainwindow_port_new.h"
 #define SCREEN MainWindow_port_new
 #define simGPS false
 #endif
-
-#endif  // Q_OS_ANDROID
 
 // STX/ETX used for framing protocols (if needed elsewhere)
 static constexpr char STX = 0x02;
@@ -83,6 +82,12 @@ static constexpr char ETX = 0x03;
 // ============================================================================
 // NoButtonMessageBox
 // ============================================================================
+struct AltimeterData {
+    float pressure;
+    float temperature;
+    float relative;
+    float altitude;
+};
 
 /**
  * @brief Small frameless dialog for transient status messages.
@@ -225,6 +230,13 @@ public:
     void connectedRadar();
 
     /**
+     * @brief Try to connect and initialize RADAR (Net or USB).
+     *
+     * Radar, with status dialogs along the way.
+     */
+    void connectedAltitude();
+
+    /**
      * @brief Android: periodically bump external display backlight to max.
      *
      * No-op on non-Android platforms.
@@ -251,7 +263,11 @@ public:
      * @param ID    Topic name (e.g. "xplane/roll").
      * @param value Parsed float payload.
      */
-    void handleUpdate(const std::string &ID, float value);
+    void handleUpdate(const std::string &ID, const std::string &value);
+
+
+    void parseAltimeterLine(const QString &line);
+    AltimeterData Altimeter_data = {0,0,0,0};
 
 #ifdef Q_OS_MAC
     /**
@@ -369,6 +385,7 @@ public:
 #else
     bool Transponderstat = false;  ///< True if transponder is connected and open.
 #endif
+    bool Altitudestat = false;   ///< For convenience on macOS (no USB check yet).
 
     bool  Radarstat = false;       ///< True if radar device is connected.
     float rPos   = 0.0f;           ///< Raw radar "position" / bearing.
@@ -405,7 +422,7 @@ public:
     double Temp = -100.0;      ///< IMU temperature [°C].
 
     // GPS / altitude
-    double m_altitude      = 0.0; ///< GPS altitude [feet] (geoid-compensated).
+    double m_altitude      = -100.0; ///< GPS altitude [feet] (geoid-compensated).
     double m_latitude      = 0.0; ///< GPS latitude [deg].
     double m_longitude     = 0.0; ///< GPS longitude [deg].
 
@@ -424,13 +441,12 @@ public:
     /// Raw barometric pressure [hPa] before offsets.
     double m_pressure_raw  = 0.0;
 
-    double FW_Speed     = 0.0; ///< Forward speed [m/s].
+    /// Ground speed [km/h].
+    double m_speed  = 0.0;
     double Donwn_Speed  = 0.0; ///< Vertical speed (down) [m/s].
 
     int Orient = 0;            ///< Orientation mode / sensor orientation index.
 
-    /// Ground speed [km/h].
-    double m_speed  = 0.0;
 
 
     bool use_ins_only      = false;
@@ -451,10 +467,12 @@ private:
     QString m_imu_address = "";
     QString m_radar_address = "";
     QString m_transponder_address = "";
+    QString m_altimeter_address = "";
 
     QTcpSocket *m_imuClient = nullptr;
     QTcpSocket *m_radarClient = nullptr;
     QTcpSocket *m_transponderClient = nullptr;
+    QTcpSocket *m_altimeterClient = nullptr;
 
 signals:
     /**
@@ -503,7 +521,7 @@ private:
     // Internal timers
     // ---------------------------------------------------------------------
     QTimer *timer      = nullptr; ///< Generic timer (used elsewhere).
-    QTimer *timerAlt   = nullptr; ///< Transponder polling timer.
+    QTimer *timerTRANS = nullptr; ///< Transponder polling timer.
     QTimer *timerIMU   = nullptr; ///< IMU-related timer (if used).
     QTimer *java       = nullptr; ///< Android Java helper timer (if used).
     QTimer *timerStart = nullptr; ///< Startup state-machine timer.

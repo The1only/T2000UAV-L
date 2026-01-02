@@ -1,3 +1,10 @@
+/**
+ * @file serialport.cpp
+ * @brief Implementation of ComQt.
+ *
+ * Contains the implementation details for the ComQt class.
+ */
+
 #include "serialport.h"
 #include <QtSerialPort/QSerialPortInfo>
 #include <QDebug>

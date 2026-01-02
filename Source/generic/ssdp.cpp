@@ -1,4 +1,11 @@
-// SsdpDiscoverer.cpp
+/**
+ * @file ssdp.cpp
+ * @brief Implementation of SSDP discovery support.
+ *
+ * Contains the internal implementation details of SsdpDiscoverer,
+ * including socket setup, multicast handling, and datagram parsing.
+ */
+
 #include "ssdp.h"
 #include <QDebug>
 #include <QHostAddress>
@@ -6,6 +13,30 @@
 #include <QVariant>
 #include <unistd.h>   // usleep
 
+/**
+ * @brief SSDP (Simple Service Discovery Protocol) helper class.
+ *
+ * This class provides basic SSDP discovery support using UDP multicast.
+ * It can listen for SSDP NOTIFY messages and process incoming discovery
+ * traffic.
+ *
+ * Responsibilities:
+ * - Managing a UDP socket bound to the SSDP multicast group
+ * - Receiving and parsing SSDP datagrams
+ *
+ * Non-responsibilities:
+ * - Parsing device description XML
+ * - Managing device lifetimes
+ * - Thread synchronization
+ *
+ * Threading:
+ * - Must be used from the thread it is created in
+ *
+ * Typical usage:
+ * - Create an instance
+ * - Start listening for SSDP traffic
+ * - React to parsed SSDP messages
+ */
 SsdpDiscoverer::SsdpDiscoverer(QObject *parent)
     : QObject(parent)
 {
@@ -21,14 +52,33 @@ SsdpDiscoverer::SsdpDiscoverer(QObject *parent)
 
         connect(&m_socket, &QUdpSocket::readyRead,
                 this, &SsdpDiscoverer::onReadyRead);
-
- //       m_timer.setSingleShot(true);
- //       connect(&m_timer, &QTimer::timeout,
- //               this, &SsdpDiscoverer::onDiscoveryTimeout);
-
 }
 
-// Must for some reason be run....
+/**
+ * @brief Sends an SSDP M-SEARCH discovery request.
+ *
+ * Constructs and transmits a single SSDP M-SEARCH request to the
+ * standard SSDP multicast group in order to actively discover
+ * compatible devices or services on the local network.
+ *
+ * The request uses the following SSDP headers:
+ * - @c HOST : SSDP multicast address and port
+ * - @c MAN  : "ssdp:discover" (required for discovery requests)
+ * - @c MX   : Maximum wait time (in seconds) for responses
+ * - @c ST   : Search target (custom service type)
+ *
+ * Responses, if any, are delivered asynchronously via the UDP socket
+ * and processed elsewhere in the class.
+ *
+ * @param durationMs Requested discovery duration in milliseconds.
+ *        Currently unused by this implementation; discovery consists
+ *        of sending a single M-SEARCH request.
+ *
+ * @note This function does not block and does not wait for responses.
+ * @note A failure to send the datagram is reported via qWarning().
+ *
+ * @sa onReadyRead()
+ */
 void SsdpDiscoverer::startDiscovery(int durationMs)
 {
     // SSDP M-SEARCH request
@@ -50,14 +100,39 @@ void SsdpDiscoverer::startDiscovery(int durationMs)
         qWarning() << "Failed to send SSDP M-SEARCH:"
                    << m_socket.error()
                    << m_socket.errorString();
-    } else {
-      //  qDebug() << "Sent SSDP M-SEARCH for" << SSDP_ST;
     }
-  //  qDebug() << req;
-
- //   m_timer.start(durationMs); // keep listening for replies
 }
 
+/**
+ * @internal
+ * @brief Processes incoming SSDP UDP datagrams.
+ *
+ * This slot is invoked when the underlying UDP socket reports that
+ * one or more datagrams are available for reading. All pending
+ * datagrams are drained from the socket and processed sequentially.
+ *
+ * Each datagram is interpreted as a UTF-8 encoded SSDP message and
+ * parsed using a minimal, line-based approach. The following SSDP
+ * headers are extracted if present:
+ * - @c ST       (Search Target)
+ * - @c USN      (Unique Service Name)
+ * - @c LOCATION (Device description URL)
+ *
+ * Parsing is intentionally simple and tolerant; headers are matched
+ * case-insensitively and no validation of message structure is
+ * performed beyond basic prefix checks.
+ *
+ * If the received @c ST header matches the configured search target,
+ * the @c deviceFound() signal is emitted.
+ *
+ * @note This function performs no blocking operations and runs in the
+ *       thread owning the QUdpSocket.
+ * @note A datagram read error causes immediate return and stops
+ *       processing of any remaining pending datagrams.
+ *
+ * @sa startDiscovery()
+ * @sa deviceFound()
+ */
 void SsdpDiscoverer::onReadyRead()
 {
     while (m_socket.hasPendingDatagrams()) {
@@ -75,18 +150,6 @@ void SsdpDiscoverer::onReadyRead()
 
         datagram.truncate(int(len));
         const QString text = QString::fromUtf8(datagram);
-/*
-        qDebug() << "SSDP response from" << sender.toString()
-                 << ":" << senderPort << "\n"
-                 << text;
-*(
-        /*
-        const QStringList lines = text.split(" ", Qt::SkipEmptyParts);
-        if(lines.length() ==2){
-        QString st = lines[0];
-            emit deviceFound(sender, senderPort, st);
-        }
-        */
 
         // Very simple parsing: look for "ST:", "USN:", "LOCATION:"
         QString st, usn, location;
@@ -108,8 +171,3 @@ void SsdpDiscoverer::onReadyRead()
     }
 }
 
-void SsdpDiscoverer::onDiscoveryTimeout()
-{
-    qDebug() << "SSDP discovery timeout.";
-    // Optional: emit a signal like discoveryFinished() if you want
-}

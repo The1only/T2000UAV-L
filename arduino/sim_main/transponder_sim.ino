@@ -48,6 +48,7 @@ int input_buffer_tail=0;
 
 //--------------------------------------------
 void setupTRANSPONDER() {
+//  Serial1.begin(9600);
   lastmode[0] = 't';
 }
 
@@ -56,6 +57,9 @@ void setupTRANSPONDER() {
 void write_to_transponder(char r)
 {
   static int ping_time = 0;
+ // Serial.print("-");
+ // Serial.print((char)r);
+
 
   ping_time++;
   if (r == '*' || ping_time>100)
@@ -146,7 +150,8 @@ void write_to_transponder(char r)
           if (serverClients[i] && serverClients[i].connected())
             serverClients[i].write(input_buffer, strlen(input_buffer));
 
-     //   Serial.println(input_buffer);
+//        Serial.print("|");
+//        Serial.println(input_buffer);
         input_buffer_head = 0;
       }
     }
@@ -181,6 +186,7 @@ void loopTRANSPONDER()
 
   // ----------------------
   // While we are not connected... Get some values to display in the OLED...
+  /*
   if (confirmRequestPending) 
   {
     confirmRequestPending = false;
@@ -196,7 +202,7 @@ void loopTRANSPONDER()
     }
     if (++state > 6) state = 2;
   }
-
+  */
   // ----------------------
   if(ident_timer){
     if(--ident_timer == 0){

@@ -1,3 +1,10 @@
+/**
+ * @file gpx_parser.cpp
+ * @brief Implementation of GpxParser.
+ *
+ * Contains the implementation details for the GpxParser class.
+ */
+
 #include "gpx_parse.h"
 #include <QFile>
 #include <QDomDocument>

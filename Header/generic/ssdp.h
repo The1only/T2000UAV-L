@@ -1,6 +1,17 @@
 // SsdpDiscoverer.h
 #pragma once
 
+/**
+ * @file ssdp.h
+ * @brief SSDP (Simple Service Discovery Protocol) discovery support.
+ *
+ * Declares the SsdpDiscoverer class, which provides basic SSDP discovery
+ * functionality using UDP multicast and integrates with Qt's event loop.
+ *
+ * This header is part of a larger Qt 6 project. Public API stability is
+ * required; names and signatures must not change.
+ */
+
 #include <QObject>
 #include <QUdpSocket>
 #include <QHostAddress>
@@ -37,7 +48,6 @@ signals:
 
 private slots:
     void onReadyRead();
-    void onDiscoveryTimeout();
 
 private:
     QUdpSocket m_socket;

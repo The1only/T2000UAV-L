@@ -51,7 +51,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>7</number>
     </property>
     <widget class="QWidget" name="page_2">
      <widget class="QPushButton" name="pushButton">
@@ -1144,7 +1144,7 @@ padding: 5px;
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>3</hour>
+        <hour>2</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>

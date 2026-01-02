@@ -6,6 +6,11 @@
 //  - V5 defined:   use v5-capable build (but still via async_client).
 //  - V5 not defined: "v3" style connect/publish/subscribe without v5 properties.
 
+// ps aux | grep mosquitto
+// brew services start mosquitto
+// mosquitto_pub -t xplane/rpm -m "0.42" -q 1 -r
+
+
 #include <mqtt/async_client.h>
 #include <mqtt/iaction_listener.h>   // used in the non-V5 branch
 #include <string>

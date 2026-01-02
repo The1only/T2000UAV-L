@@ -1,3 +1,11 @@
+/**
+ * @file mytcpsocket.cpp
+ * @brief Implementation of MyTcpSocket.
+ *
+ * Contains the implementation details for the MyTcpSocket class.
+ */
+
+
 // mytcpsocket.cpp
 // -----------------------------------------------------------------------------
 // Platform-independent interface to:
@@ -16,6 +24,8 @@
 #include <QThread>
 #include <QHostAddress>
 #include <QNetworkInterface>
+
+#include <QStringList>
 
 #ifdef Q_OS_ANDROID
 #include <QtCore/private/qandroidextras_p.h>
@@ -122,23 +132,24 @@ MyTcpSocket::MyTcpSocket(QObject *parent,
     // MQTT setup (X-Plane / simulator input)
     // ---------------------------------------------------------------------
     // NOTE: Currently configured for localhost mosquitto / similar broker.
-    SERVER_ADDRESS = std::string("tcp://localhost:1883");
+//    SERVER_ADDRESS = std::string("tcp://localhost:1883");
+    SERVER_ADDRESS = std::string("tcp://172.20.10.3:1883");
     CLIENT_ID      = std::string("transponder");
 
     mqtt = new MqttClient(SERVER_ADDRESS, CLIENT_ID);
     mqtt->setMessageHandler([this](const std::string &topic, const std::string &payload) {
         try {
-            float value = std::stof(payload);
-            this->handleUpdate(topic, value);
+            this->handleUpdate(topic, payload);
         } catch (const std::exception &e) {
             qWarning() << "Invalid float in payload:"
                        << QString::fromStdString(payload)
                        << "Error:" << e.what();
         }
-    });
+    });    
 
     mqtt->connect();
-    mqtt->subscribe("xplane/#");
+    mqtt->subscribe("xplane/+");
+//    mqtt->subscribe("xplane/#");
     try {
         mqtt->sendMessage("xplane/topic", "1.0 eMove GUI Controller!");
     } catch (const mqtt::exception &e) {
@@ -190,7 +201,7 @@ void MyTcpSocket::ssdpConfig()
                     qDebug() << "IMU FOUND:" << m_imu_address;
                     if (m_imuClient) {
                     //    if (m_imuClient->state() == QAbstractSocket::UnconnectedState) {
-                            m_imuClient->disconnectFromHost();
+                      //      m_imuClient->disconnectFromHost();
                         }
                     //}
                 }
@@ -199,7 +210,7 @@ void MyTcpSocket::ssdpConfig()
                     qDebug() << "RADAR FOUND:" << m_radar_address;
                     if (m_radarClient) {
                     //    if (m_radarClient->state() == QAbstractSocket::UnconnectedState) {
-                            m_radarClient->disconnectFromHost();
+                     //       m_radarClient->disconnectFromHost();
                         }
                     //}
                 }
@@ -208,8 +219,17 @@ void MyTcpSocket::ssdpConfig()
                     qDebug() << "TRANSPONDER FOUND:" << m_transponder_address;
                     if (m_transponderClient) {
                     //    if (m_transponderClient->state() == QAbstractSocket::UnconnectedState) {
-                            m_transponderClient->disconnectFromHost();
-                        }
+                    //        m_transponderClient->disconnectFromHost();
+                    }
+                    //}
+                }
+                else if (st == "ALTIMETER") {
+                    m_altimeter_address = addr.toString();
+                    qDebug() << "ALTIMETER FOUND:" << m_altimeter_address;
+                    if (m_altimeterClient) {
+                        //    if (m_transponderClient->state() == QAbstractSocket::UnconnectedState) {
+                    //    m_altimeterClient->disconnectFromHost();
+                    }
                     //}
                 }
                 else {
@@ -370,18 +390,22 @@ void MyTcpSocket::doStart()
         QCoreApplication::processEvents();
         break;
     case 1:
-        connectedIMU();          // try to find & initialize IMU / INS
+        connectedAltitude();          // try to find & initialize IMU / INS
         ++state;
         break;
     case 2:
-        connectedRadar();          // try to find & initialize IMU / INS
+        connectedIMU();          // try to find & initialize IMU / INS
         ++state;
         break;
     case 3:
-        connected();             // try to find & initialize transponder
+        connectedRadar();          // try to find & initialize IMU / INS
         ++state;
         break;
     case 4:
+        connected();             // try to find & initialize transponder
+        ++state;
+        break;
+    case 5:
         if(delay++ > 15){
             delay = 0;
             setbacklit();     // Android: periodically force bright backlight
@@ -625,12 +649,15 @@ void MyTcpSocket::connectedIMU()
             // somewhere in ctor or init:
             static void*_this = this;
             m_imuClient = new QTcpSocket(this);
-            connect(m_imuClient, &QTcpSocket::connected, this, []() {
+            connect(m_imuClient, &QTcpSocket::connected, this, [this]() {
                 qDebug() << "IMU TCP connected";
+                IMUconnected = true;
+//                INS_driver(static_cast<void *>(this), nullptr, nullptr,reinterpret_cast<void *>(parseIMU));
             });
             connect(m_imuClient, &QTcpSocket::disconnected, this, [this]() {
                 m_imuClient->connectToHost(QHostAddress(m_imu_address), 23);
                 qDebug() << "IMU TCP disconnected";
+                IMUconnected = false;
             });
             connect(m_imuClient, &QTcpSocket::readyRead, this, [this]() {
                 QByteArray data = m_imuClient->readAll();
@@ -639,10 +666,10 @@ void MyTcpSocket::connectedIMU()
                 }
             });
 
-            m_imuClient->connectToHost(QHostAddress(m_imu_address), 23);
-            m_imuClient->write("Host connected...\r\n");
+            // This must be set fast before INS_driver...
             IMUconnected = true;
 
+            m_imuClient->connectToHost(QHostAddress(m_imu_address), 23);
             INS_driver(static_cast<void *>(this), nullptr, nullptr,reinterpret_cast<void *>(parseIMU));
 
             NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(
@@ -722,12 +749,14 @@ void MyTcpSocket::connectedRadar()
             // somewhere in ctor or init:
             static void*_this = this;
             m_radarClient = new QTcpSocket(this);
-            connect(m_radarClient, &QTcpSocket::connected, this, []() {
+            connect(m_radarClient, &QTcpSocket::connected, this, [this]() {
                 qDebug() << "Radar TCP connected";
+                Radarstat = true;
             });
             connect(m_radarClient, &QTcpSocket::disconnected, this, [this]() {
                 m_radarClient->connectToHost(QHostAddress(m_radar_address), 23);
                 qDebug() << "Radar TCP disconnected";
+                Radarstat = false;
             });
             connect(m_radarClient, &QTcpSocket::readyRead, this, [this]() {
                 QByteArray data = m_radarClient->readAll();
@@ -736,8 +765,7 @@ void MyTcpSocket::connectedRadar()
                 }
             });
             m_radarClient->connectToHost(QHostAddress(m_radar_address), 23);
-            m_radarClient->write("Host connected...\r\n");
-            Radarstat = true;
+         //   Radarstat = true;
 
             NoButtonMessageBox *m_msgBoxRadar = new NoButtonMessageBox(tr("Found Radar on wlan!"));
             m_msgBoxRadar->show();
@@ -759,7 +787,7 @@ void MyTcpSocket::connectedRadar()
  * On success:
  *   - Sets Transponderstat = true
  *   - Queries version and configuration
- *   - Starts timerAlt to periodically call doTransponder()
+ *   - Starts timerTRANS to periodically call doTransponder()
  */
 void MyTcpSocket::connected()
 {
@@ -795,18 +823,19 @@ void MyTcpSocket::connected()
         delete m_msgBoxTrans;
 
         // Setup periodic transponder polling
-        if (timerAlt) {
-            timerAlt->stop();
-            delete timerAlt;
+        if (timerTRANS) {
+            timerTRANS->stop();
+            delete timerTRANS;
         }
-        timerAlt = new QTimer(this);
-        timerAlt->setSingleShot(false);
-        connect(timerAlt, SIGNAL(timeout()), SLOT(doTransponder()));
-        timerAlt->start(150);
+        timerTRANS = new QTimer(this);
+        timerTRANS->setSingleShot(false);
+        connect(timerTRANS, SIGNAL(timeout()), SLOT(doTransponder()));
+        timerTRANS->start(150);
     } else {
         Transponderstat = false;
     }
 #endif
+
     if (!Transponderstat)
     {
         NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(
@@ -822,24 +851,90 @@ void MyTcpSocket::connected()
             // somewhere in ctor or init:
             static void*_this = this;
             m_transponderClient = new QTcpSocket(this);
-            connect(m_transponderClient, &QTcpSocket::connected, this, []() {
+            connect(m_transponderClient, &QTcpSocket::connected, this, [this]() {
                 qDebug() << "Transponder TCP connected";
+                Transponderstat = true;
             });
             connect(m_transponderClient, &QTcpSocket::disconnected, this, [this]() {
                 m_transponderClient->connectToHost(QHostAddress(m_transponder_address), 23);
                 qDebug() << "Transponder TCP disconnected";
+                Transponderstat = false;
             });
             connect(m_transponderClient, &QTcpSocket::readyRead, this, [this]() {
-                QByteArray data = m_radarClient->readAll();
+                QByteArray data = m_transponderClient->readAll();
                 if (!data.isEmpty()) {
                     this->ret_transponder(this->parent, data, data.length());
                 }
             });
             m_transponderClient->connectToHost(QHostAddress(m_transponder_address), 23);
-            m_transponderClient->write("Host connected...\r\n");
-            Transponderstat = true;
+
+            // Setup periodic transponder polling
+            if (timerTRANS) {
+                timerTRANS->stop();
+                delete timerTRANS;
+            }
+
+            timerTRANS = new QTimer(this);
+            timerTRANS->setSingleShot(false);
+            connect(timerTRANS, SIGNAL(timeout()), SLOT(doTransponder()));
+            timerTRANS->start(150);
+
 
             NoButtonMessageBox *m_msgBoxTransponder = new NoButtonMessageBox(tr("Found Transponder on wlan!"));
+            m_msgBoxTransponder->show();
+            QCoreApplication::processEvents();
+            QThread::msleep(1000);
+            m_msgBoxTransponder->hide();
+            delete m_msgBoxTransponder;
+
+        }
+    }
+}
+
+
+/**
+ * @brief Try to connect transponder on the configured serial port.
+ *
+ * On success:
+ *   - Sets Transponderstat = true
+ *   - Queries version and configuration
+ *   - Starts timerTRANS to periodically call doTransponder()
+ */
+void MyTcpSocket::connectedAltitude()
+{
+    if (!Altitudestat)
+    {
+        NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(
+            tr("Looking for Networked device Altimeter ..."));
+        m_msgBoxIMU->show();
+        QCoreApplication::processEvents();
+        QThread::msleep(1000);
+        m_msgBoxIMU->hide();
+        delete m_msgBoxIMU;
+
+        if(m_altimeter_address != "")
+        {
+            // somewhere in ctor or init:
+            static void*_this = this;
+            m_altimeterClient = new QTcpSocket(this);
+            connect(m_altimeterClient, &QTcpSocket::connected, this, [this]() {
+                qDebug() << "Altimeter TCP connected";
+                Altitudestat = true;
+            });
+            connect(m_altimeterClient, &QTcpSocket::disconnected, this, [this]() {
+                m_altimeterClient->connectToHost(QHostAddress(m_transponder_address), 23);
+                qDebug() << "Altimeter TCP disconnected";
+                Altitudestat = false;
+            });
+            connect(m_altimeterClient, &QTcpSocket::readyRead, this, [this]() {
+                QByteArray data = m_altimeterClient->readAll();
+                if (!data.isEmpty()) {
+                    this->parseAltimeterLine(data);
+                }
+            });
+            m_altimeterClient->connectToHost(QHostAddress(m_altimeter_address), 23);
+
+            NoButtonMessageBox *m_msgBoxTransponder = new NoButtonMessageBox(tr("Found Altimeter on wlan!"));
             m_msgBoxTransponder->show();
             QCoreApplication::processEvents();
             QThread::msleep(1000);
@@ -882,50 +977,6 @@ static double nmea_ddmm_to_deg(int32_t raw) {
     return sign * deg;
 }
 
-/*
- Inputs:
-   vN, vE, vD   : velocity in NED (m/s)
-   roll_deg     : φ  (right-wing down positive)  [deg]
-   pitch_deg    : θ  (nose up positive)          [deg]
-   yaw_deg      : ψ  (heading from North, CW to East) [deg]
- Output:
-   LFD velocity components (Left, Forward, Down) in m/s
- Notes:
-   Uses standard aerospace ZYX Euler convention:
-     C_n_b = Rz(yaw) * Ry(pitch) * Rx(roll)  (body → NED)
-   Then v_b = C_b_n * v_n = C_n_b^T * v_n
-*/
-// deg→rad helper
-static inline double deg2rad(double deg){ return deg * M_PI / 180.0; }
-
-// If your course is TRUE and yaw is MAGNETIC, pass decl_deg = +declination (east positive)
-// to rotate magnetic -> true. If both already TRUE, pass 0.
-#define DEG2RAD (M_PI / 180.0)
-
-LFD body_vel_from_speed_course_yaw(double speed,
-                                   double course_deg,
-                                   double body_yaw_deg,
-                                   double vertical_speed,
-                                   double /*unused*/)
-{
-    LFD v{};
-
-    // Convert to radians
-    double chi = course_deg * DEG2RAD;      // GPS course
-    double psi = body_yaw_deg * DEG2RAD;    // body yaw
-
-    // Ground velocity in NED
-    double vN = speed * cos(chi);
-    double vE = speed * sin(chi);
-
-    // Rotate NED → body frame
-    v.F =  cos(psi) * vN + sin(psi) * vE;   // Forward
-    v.L = -sin(psi) * vN + cos(psi) * vE;   // Left/Right
-    v.D = vertical_speed;                   // Down
-
-    return v;
-}
-
 void MyTcpSocket::parseIMU(void *parent,uint32_t uiReg, uint16_t sRegAll[])
 {
     auto *local = static_cast<MyTcpSocket *>(parent);
@@ -959,9 +1010,13 @@ void MyTcpSocket::parseIMU(void *parent,uint32_t uiReg, uint16_t sRegAll[])
         local->Temp = (float) sReg[TEMP]/100.0;
         local->VER = sReg[VERSION];
 
-        local->m_pressure_raw = join32(sReg[PressureL],sReg[PressureH])/100.0;
-      //  local->m_preasure_alt     = join32(sReg[HeightL],sReg[HeightH])/100.0;
+        // If we got a seperat pressure decoder then do NOT use the IMU pressure...
+        if(!local->Altitudestat){
+            local->m_pressure_raw = join32(sReg[PressureL],sReg[PressureH])/100.0;
+          //  local->m_preasure_alt     = join32(sReg[HeightL],sReg[HeightH])/100.0;
+        }
 
+        // Find yaw angle...
         auto wrap360 = [](double deg) {
             deg = fmod(deg, 360.0);
             if (deg < 0) deg += 360.0;
@@ -974,27 +1029,9 @@ void MyTcpSocket::parseIMU(void *parent,uint32_t uiReg, uint16_t sRegAll[])
 
         // Now convert to float speed (whatever unit you encoded)
         float speed = raw100 / 100.0f;
-/*
-        qDebug() << "GPSVL=" << QString("0x%1").arg((uint16_t)sReg[GPSVL],4,16,QChar('0'))
-                 << "GPSVH=" << QString("0x%1").arg((uint16_t)sReg[GPSVH],4,16,QChar('0'))
-                 << "raw100=" << raw100
-                 << "speed=" << speed;
-*/
-        //double speed = (double)join32(sReg[GPSVL], sReg[GPSVH]) / 100.0;   // <-- double, not uint32_t
-        double cog   = (double)sReg[GPSYAW] / 100.0;                      // course over ground (deg)
-        double hdg   = (double)local->AngleZ;                             // your body heading (deg)
 
-        // If AngleZ is "negative heading" (as your parser does), you may need:
-        // hdg = -hdg;
-
-        cog = wrap360(cog);
-        hdg = wrap360(hdg);
-
-        LFD vel = body_vel_from_speed_course_yaw(speed, cog, hdg, 0.0, 0.0);
-
-        local->FW_Speed    = vel.F;
-        local->Donwn_Speed = vel.D;
-        local->m_gpsspeed  = vel.F;
+        local->Donwn_Speed = 0;
+        local->m_gpsspeed  = speed;
         local->m_speed     = speed; //abs(vel.F);
        // qDebug() << "GPSVL=" << local->m_speed;
     }
@@ -1095,7 +1132,7 @@ void MyTcpSocket::doTransponder()
         {
             char x[64];
             snprintf(x, sizeof(x), "a=%dM\r\n",
-                     static_cast<int>(m_pressure_raw * 0.3048));  // feet -> meters
+                     static_cast<int>(m_preasure_alt * 0.3048));  // feet -> meters
             readyWrite(x);
         }
         break;
@@ -1124,67 +1161,119 @@ void MyTcpSocket::doTransponder()
  * @param ID     Topic string.
  * @param value  Parsed float payload.
  */
-void MyTcpSocket::handleUpdate(const std::string &ID, float value)
+void MyTcpSocket::handleUpdate(const std::string &ID, const std::string &invalue)
 {
     static bool first       = true;
     static int  statusCount = 0;
 
     const QString topic = QString::fromStdString(ID);
-    qDebug() << "[MQTT]" << topic << "=" << value;
+    qDebug() << "[MQTT]" << topic << "=" << invalue;
 
-    if (ID == "xplane/topic") {
-        qDebug() << "TOPIC:" << topic;
-    } else if (ID == "xplane/ax") {
-        m_has_MQTT_gyro = true;
-        AsX = value;
-        ++statusCount;
-    } else if (ID == "xplane/ay") {
-        m_has_MQTT_gyro = true;
-        AsY = value;
-        ++statusCount;
-    } else if (ID == "xplane/az") {
-        m_has_MQTT_gyro = true;
-        AsZ = value;
-        ++statusCount;
-    } else if (ID == "xplane/rollRate") {
-        m_has_MQTT_accel = true;
-        ++statusCount;
-    } else if (ID == "xplane/pitchRate") {
-        m_has_MQTT_accel = true;
-        ++statusCount;
-    } else if (ID == "xplane/yawRate") {
-        m_has_MQTT_accel = true;
-        ++statusCount;
-    } else if (ID == "xplane/climbRate") {
-        m_has_MQTT_vsi = true;
-        ++statusCount;
-    } else if (ID == "xplane/heading") {
-        m_has_MQTT_heading = true;
-        //m_heading = value;
-        ++statusCount;
-    } else if (ID == "xplane/airspeed") {
-        m_has_MQTT_airspeed = true;
-        m_speed = value;
-        ++statusCount;
-    } else if (ID == "xplane/localPressure") {
-        m_has_MQTT_preassure = true;
-        ++statusCount;
-    } else if (ID == "xplane/roll") {
-        AngleX = value;
-        ++statusCount;
-    } else if (ID == "xplane/pitch") {
-        AngleY = value;
-        ++statusCount;
-    } else if (ID == "xplane/yaw") {
-        AngleZ = value;
+    if (ID == "xplane/engage") {
+        // If we return acknowledged command...
+        if(invalue == "Activated"){
+            qDebug() << "Activated:" << invalue;
+        }
+        else if(invalue == "Dectivated"){
+            qDebug() << "Dectivated:" << invalue;
+        }
         ++statusCount;
     }
+    else{
+        float value = std::stof(invalue);
 
+        if (ID == "xplane/topic") {
+            qDebug() << "TOPIC:" << topic;
+        } else if (ID == "xplane/ax") {
+            m_has_MQTT_gyro = true;
+            AccX = value;
+            ++statusCount;
+        } else if (ID == "xplane/ay") {
+            m_has_MQTT_gyro = true;
+            AccY = value;
+            ++statusCount;
+        } else if (ID == "xplane/az") {
+            m_has_MQTT_gyro = true;
+            AccZ = value;
+            ++statusCount;
+        } else if (ID == "xplane/rollRate") {
+            m_has_MQTT_accel = true;
+            AsX = value;
+            ++statusCount;
+        } else if (ID == "xplane/pitchRate") {
+            m_has_MQTT_accel = true;
+            AsY = value;
+            ++statusCount;
+        } else if (ID == "xplane/yawRate") {
+            m_has_MQTT_accel = true;
+            AsZ = value;
+            ++statusCount;
+        } else if (ID == "xplane/climbRate") {
+            m_has_MQTT_vsi = true;
+            ++statusCount;
+        } else if (ID == "xplane/heading") {
+            m_has_MQTT_heading = true;
+            //m_heading = value;
+            ++statusCount;
+        } else if (ID == "xplane/airspeed") {
+            m_has_MQTT_airspeed = true;
+            m_speed = value;
+            ++statusCount;
+        } else if (ID == "xplane/localPressure") {
+            m_has_MQTT_preassure = true;
+            m_pressure_raw = value;
+            ++statusCount;
+        } else if (ID == "xplane/roll") {
+            AngleX = value;
+            ++statusCount;
+        } else if (ID == "xplane/pitch") {
+            AngleY = value;
+            ++statusCount;
+        } else if (ID == "xplane/yaw") {
+            AngleZ = value;
+            ++statusCount;
+        }
+    }
     // Mark MQTT as usable once we have a minimum number of key values
     if (statusCount >= 4 && first) {
         first = false;
         m_has_MQTT = true;
     }
+}
+
+
+// ============================================================================
+// Low-level  helper
+// ============================================================================
+void MyTcpSocket::parseAltimeterLine(const QString &line)
+{
+    bool ok1, ok2, ok3, ok4;
+
+    // Remove whitespace and line endings
+    QString clean = line.trimmed();
+
+    // Split CSV
+    QStringList parts = clean.split(',');
+
+    // Expect 5 fields or more...
+    // the received data is buffered up so it might be mush more...
+    if (parts.size() < 5)
+        return;
+
+    // Validate header
+    if (parts[0] != "Altimeter")
+        return;
+
+    m_pressure_raw = parts[1].toFloat(&ok1);
+
+    // Not used for now...,
+    Altimeter_data.pressure    = parts[1].toFloat(&ok1);
+    Altimeter_data.temperature = parts[2].toFloat(&ok2);
+    Altimeter_data.relative    = parts[3].toFloat(&ok3);
+    Altimeter_data.altitude    = parts[4].toFloat(&ok4);
+
+//    if (!(ok1 && ok2 && ok3 && ok4))
+//        return std::nullopt;
 }
 
 // ============================================================================
@@ -1200,8 +1289,12 @@ void MyTcpSocket::readyWrite(char *data)
 {
     if (Transponderstat) {
         if(m_transponderClient != nullptr){
-//            qDebug() << "Sending: " << data;
-            m_transponderClient->write(data);
+            if (m_transponderClient->state() == QAbstractSocket::ConnectedState) {
+                m_transponderClient->write(data);
+            }
+            else{
+                qDebug() << "Error NOT connectd!!!" << data;
+            }
         }
         else{
 #ifndef Q_OS_IOS

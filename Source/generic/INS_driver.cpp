@@ -1,3 +1,10 @@
+/**
+ * @file ins_driver.cpp
+ * @brief Implementation of INS_driver.
+ *
+ * Contains the implementation details for the INS_driver class.
+ */
+
 // Main.cpp  (portable)
 // Build on macOS: clang++ -std=c++17 -O2 Main.cpp Com_posix.cpp wit_c_sdk.c -lpthread -o WitSimulate
 

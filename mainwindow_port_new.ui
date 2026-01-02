@@ -51,7 +51,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>4</number>
     </property>
     <widget class="QWidget" name="page_2">
      <widget class="QPushButton" name="pushButton">
@@ -1071,7 +1071,7 @@ padding: 5px;
        <string notr="true">color: rgb(135,135,135);</string>
       </property>
       <property name="text">
-       <string>v1.02a-2025</string>
+       <string>v2.01a-2025</string>
       </property>
      </widget>
      <zorder>pushButton</zorder>
@@ -1146,7 +1146,7 @@ padding: 5px;
       </property>
       <property name="dateTime">
        <datetime>
-        <hour>15</hour>
+        <hour>8</hour>
         <minute>0</minute>
         <second>0</second>
         <year>2023</year>
@@ -2218,7 +2218,7 @@ border-radius: 15px;
 border-style: outset;
 background: qradialgradient(
 cx: 0.3, cy: -0.4, fx: 0.3, fy: -0.4,
-radius: 1.35, stop: 0 #fff, stop: 1 #444
+radius: 1.35, stop: 0 #fff, stop: 1 #822
 );
 padding: 5px;
 }
@@ -2436,8 +2436,11 @@ QPushButton:pressed {
         <x>0</x>
         <y>0</y>
         <width>801</width>
-        <height>341</height>
+        <height>361</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
       </property>
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
@@ -2770,7 +2773,7 @@ QPushButton:pressed {
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">border-image: url(:/images/engage.png) 0 0 0 0 stretch stretch;</string>
       </property>
       <property name="text">
        <string/>
@@ -2786,7 +2789,7 @@ QPushButton:pressed {
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">border-image: url(:/images/test1.png) 0 0 0 0 stretch stretch;</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_UTC">
@@ -2965,6 +2968,31 @@ QPushButton:pressed {
        <enum>Qt::TextFormat::PlainText</enum>
       </property>
      </widget>
+     <widget class="QLabel" name="Autopilot_status">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>36</y>
+        <width>111</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(205, 124, 44);</string>
+      </property>
+      <property name="text">
+       <string>Disengaged</string>
+      </property>
+      <property name="textFormat">
+       <enum>Qt::TextFormat::PlainText</enum>
+      </property>
+     </widget>
      <zorder>quickWidget</zorder>
      <zorder>graphicsView_3</zorder>
      <zorder>select_gyro_page2_2</zorder>
@@ -2977,6 +3005,7 @@ QPushButton:pressed {
      <zorder>label_Roll</zorder>
      <zorder>label_TMP</zorder>
      <zorder>label_Power</zorder>
+     <zorder>Autopilot_status</zorder>
     </widget>
     <widget class="QWidget" name="page_8">
      <widget class="QPushButton" name="select_transponder_page_camera">

@@ -1,3 +1,10 @@
+/**
+ * @file main.cpp
+ * @brief Implementation of main.
+ *
+ * Contains the implementation details for the main.
+ */
+
 #include <QtWidgets/qapplication.h>
 #include <QtCore/QLoggingCategory>
 #include <QApplication>

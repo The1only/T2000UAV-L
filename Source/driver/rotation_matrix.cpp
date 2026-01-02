@@ -1,3 +1,10 @@
+/**
+ * @file rotation_matrix.cpp
+ * @brief Implementation of createRotationMatrix.
+ *
+ * Contains the implementation details for the createRotationMatrix class.
+ */
+
 #include "rotation_matrix.h"
 
 Matrix3x3 createRotationMatrixZ(double theta) {

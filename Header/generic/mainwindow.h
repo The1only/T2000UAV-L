@@ -472,7 +472,6 @@ private:
     // Misc state used in EKF / attitude blend
     // ------------------------------------------------------------------
     qreal  m_offset        = 0.0; ///< Pitch offset at calibration.
-    qreal  m_alt           = 0.0; ///< Ground reference altitude.
     double heading_offset  = 0.0; ///< Manual heading zeroing offset.
     bool   m_geopos        = false;
     double m_head_dir      = 0.0;
@@ -499,6 +498,8 @@ private:
     void accepted();
 
     void calcPosition(double vel_D);
+
+    void afterPressureReadingChanged();
 
 
 private slots:
