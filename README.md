@@ -1,6 +1,74 @@
 # IMU / Radar / Transponder for Sports planes
 
-Witmotion WTGAHRS3/1/BT + MicroAir T2000UAV-L + NRA24 NanoRadar user interface for Linux, Mac, Windows, Android, and IOS
+System Update Summary
+	•	Added a computer-screen layout optimized for larger displays and desktop use.
+	•	Added airspeed support, including Arduino firmware for the MS4525 differential airspeed sensor.
+	•	Migrated the platform to ESP32-S3.
+
+⸻
+
+Supported Sensors and Subsystems
+
+Barometer
+	•	Provides altitude information.
+	•	Supports:
+	•	Internal barometer
+	•	External BMP280 barometer
+	•	External barometer can be connected via USB or WLAN through an Arduino.
+
+⸻
+
+Airspeed
+	•	Provides an indicated airspeed display.
+	•	Uses an external Arduino connected to an MS4525 differential pressure sensor.
+	•	Communication supported over USB or WLAN.
+
+⸻
+
+IMU (Attitude and Motion)
+	•	Provides attitude, turn, slip, and artificial horizon.
+	•	Supports:
+	•	Built-in IMU sensors
+	•	External WITMOTION IMU sensors
+	•	Connection options:
+	•	Bluetooth
+	•	USB
+	•	Arduino-based interface
+	•	Includes an IMU simulator for debugging and development.
+
+⸻
+
+GPS
+	•	Provides:
+	•	Groundspeed
+	•	Position (latitude/longitude)
+	•	Absolute altitude
+	•	GPS data can originate from:
+	•	Internal GPS sensor
+	•	External IMU-integrated GPS
+
+⸻
+
+Transponder
+	•	Supports T2000-UAV Mode A/C transponder.
+	•	Full support for all transponder functions.
+	•	Arduino-based interfaces supported over:
+	•	USB
+	•	WLAN
+
+⸻
+
+Radar
+	•	Supports NanoRadar ground-tracking radar systems.
+	•	Radar can be mounted to measure:
+	•	Altitude
+	•	Ground speed
+	•	Altitude measurement provides the best accuracy.
+	•	Supported models:
+	•	300 m range
+	•	3000 m range
+	•	Additional models can be supported as needed.
+
 
 This software creates a bridge to all the devices.
 On PC and Android one can use USB-Serial and connect with cable or Bluetooth. However NOT on IOS (iPhone/iPad) these are restricted.  
