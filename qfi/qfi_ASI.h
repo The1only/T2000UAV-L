@@ -47,7 +47,7 @@ public:
     virtual ~qfi_ASI();
 
     /** Reinitiates widget. */
-    void reinit();
+    void reinit(int ver);
 
     /** Refreshes (redraws) widget. */
     void redraw();
@@ -82,7 +82,7 @@ private:
     const int _handZ;
     const int _caseZ;
 
-    void init();
+    void init(int ver);
 
     void reset();
 

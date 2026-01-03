@@ -89,6 +89,15 @@ struct AltimeterData {
     float altitude;
 };
 
+struct AirspeedData {
+    float pressure;
+    float temperature;
+    float dpPa;
+    float offset;
+    float corrected;
+    float airspeed;
+};
+
 /**
  * @brief Small frameless dialog for transient status messages.
  *
@@ -236,6 +245,13 @@ public:
      */
     void connectedAltitude();
 
+        /**
+     * @brief Try to connect and initialize RADAR (Net or USB).
+     *
+     * Radar, with status dialogs along the way.
+     */
+    void connectedAirspeed();
+
     /**
      * @brief Android: periodically bump external display backlight to max.
      *
@@ -267,7 +283,10 @@ public:
 
 
     void parseAltimeterLine(const QString &line);
+    void parseAirspeedLine(const QString &line);
+
     AltimeterData Altimeter_data = {0,0,0,0};
+    AirspeedData Airspeed_data = {0,0,0,0,0,-1};
 
 #ifdef Q_OS_MAC
     /**
@@ -386,8 +405,9 @@ public:
     bool Transponderstat = false;  ///< True if transponder is connected and open.
 #endif
     bool Altitudestat = false;   ///< For convenience on macOS (no USB check yet).
+    bool Airspeedstat = false;
+    bool Radarstat    = false;       ///< True if radar device is connected.
 
-    bool  Radarstat = false;       ///< True if radar device is connected.
     float rPos   = 0.0f;           ///< Raw radar "position" / bearing.
     float rSpeed = 0.0f;           ///< Radar radial speed along beam.
     float rDist  = 0.0f;           ///< Radar distance along beam.
@@ -440,6 +460,7 @@ public:
     double m_preasure      = 0.0;
     /// Raw barometric pressure [hPa] before offsets.
     double m_pressure_raw  = 0.0;
+    double m_airspeed = 0.0;
 
     /// Ground speed [km/h].
     double m_speed  = 0.0;
@@ -468,11 +489,13 @@ private:
     QString m_radar_address = "";
     QString m_transponder_address = "";
     QString m_altimeter_address = "";
+    QString m_airspeed_address = "";
 
     QTcpSocket *m_imuClient = nullptr;
     QTcpSocket *m_radarClient = nullptr;
     QTcpSocket *m_transponderClient = nullptr;
     QTcpSocket *m_altimeterClient = nullptr;
+    QTcpSocket *m_airspeedClient = nullptr;
 
 signals:
     /**

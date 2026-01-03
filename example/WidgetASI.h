@@ -50,7 +50,8 @@ public:
     ~WidgetASI();
 
     inline void redraw() { _asi->redraw(); }
-    inline void reinit() { _asi->reinit(); }
+    inline void reinit(int ver) { m_ver = ver; _asi->reinit(ver); }
+    inline int getver(){ return(m_ver);}
 
     inline void setAirspeed( double airspeed )
     {
@@ -62,6 +63,7 @@ private:
     Ui::WidgetASI *_ui;
     qfi_ASI       *_asi;
     LayoutSquare  *_layoutSq;
+    int m_ver;
 
     void setupUi();
 };

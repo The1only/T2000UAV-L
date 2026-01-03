@@ -60,7 +60,7 @@ qfi_ASI::qfi_ASI( QWidget *parent ) :
 
     _scene->clear();
 
-    init();
+    init(0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,13 +79,13 @@ qfi_ASI::~qfi_ASI()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void qfi_ASI::reinit()
+void qfi_ASI::reinit(int ver)
 {
     if ( _scene )
     {
         _scene->clear();
 
-        init();
+        init(ver);
     }
 }
 
@@ -117,19 +117,23 @@ void qfi_ASI::resizeEvent( QResizeEvent *event )
     QGraphicsView::resizeEvent( event );
     ////////////////////////////////////
 
-    reinit();
+    reinit(0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void qfi_ASI::init()
+void qfi_ASI::init(int ver)
 {
     _scaleX = static_cast< double >( width()  ) / static_cast< double >( _originalWidth  );
     _scaleY = static_cast< double >( height() ) / static_cast< double >( _originalHeight );
 
     reset();
 
-    _itemFace = new QGraphicsSvgItem( ":/qfi/images/asi/asi_face.svg" );
+    if(ver == 0){
+        _itemFace = new QGraphicsSvgItem( ":/qfi/images/asi/asi_face.svg" );
+    }else{
+        _itemFace = new QGraphicsSvgItem( ":/qfi/images/asi/asi_face_airspeed.svg" );
+    }
     _itemFace->setCacheMode( QGraphicsItem::NoCache );
     _itemFace->setZValue( _faceZ );
     _itemFace->setTransform( QTransform::fromScale( _scaleX, _scaleY ), true );

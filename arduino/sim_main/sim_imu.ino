@@ -44,7 +44,7 @@ static const uint16_t PERIOD_MS_IMU = 20;  ///< Loop delay when simulating IMU (
  * @param v Input value
  * @return int16_t Clamped output
  */
-int16_t clamp16(long v) {
+static int16_t clamp16(long v) {
   if (v > 32767) return 32767;
   if (v < -32768) return -32768;
   return (int16_t)v;
@@ -56,7 +56,7 @@ int16_t clamp16(long v) {
  * @return int16_t Scaled Q15 value
  */
 // scale degrees -> protocol int16 (±180°)
-int16_t angle_to_q15(float deg) {
+static int16_t angle_to_q15(float deg) {
   return clamp16((long)(deg * 32768.0f / 180.0f));
 }
 
@@ -65,7 +65,7 @@ int16_t angle_to_q15(float deg) {
  * @param celsius Temperature
  * @return uint16_t Encoded temperature
  */
-uint16_t make_temp_raw(float celsius = 25.0f) {
+static uint16_t make_temp_raw(float celsius = 25.0f) {
   float raw = (celsius - 36.53f) * 340.0f;
   long r = (long)(raw);
   if (r < 0) r = 0;
@@ -76,46 +76,46 @@ uint16_t make_temp_raw(float celsius = 25.0f) {
 
 // --- Simulator encoding helpers (MATCH PARSER) ---
 
-int16_t sim_accel_g(float g) {
+static int16_t sim_accel_g(float g) {
   return clamp16((long)(g / 16.0f * 32768.0f));
 }
 
-int16_t sim_gyro_dps(float dps) {
+static int16_t sim_gyro_dps(float dps) {
   return clamp16((long)(dps / 2000.0f * 32768.0f));
 }
 
-int16_t sim_angle_deg(float deg) {
+static int16_t sim_angle_deg(float deg) {
   return clamp16((long)(deg / 180.0f * 32768.0f));
 }
 
-int16_t sim_temp_c(float c) {
+static int16_t sim_temp_c(float c) {
   return (int16_t)(c * 100.0f);
 }
 
-uint32_t sim_pressure_pa(float pa) {
+static uint32_t sim_pressure_pa(float pa) {
   return (uint32_t)(pa * 100.0f);
 }
 // scale pressure hPa -> protocol int16 (hPa * 10)
-int16_t hpa_to_q10(float hpa) {
+static int16_t hpa_to_q10(float hpa) {
   return clamp16((long)(hpa * 10.0f));
 }
 
 /**
  * @brief Convert dps (degrees/sec) to Q15 (±2000 dps)
  */
-int16_t dps_to_q15(float dps) {
+static int16_t dps_to_q15(float dps) {
   return clamp16((long)(dps * 32768.0f / 2000.0f));
 }
 
 /**
  * @brief Convert G-force to Q15 (±16 g)
  */
-int16_t g_to_q15(float g) {
+static int16_t g_to_q15(float g) {
   return clamp16((long)(g * 32768.0f / 16.0f));
 }
 
 // Send a 32-bit value split across two consecutive registers
-void sendPacket32(uint8_t pid, uint32_t value) {
+static void sendPacket32(uint8_t pid, uint32_t value) {
   int16_t low = (int16_t)(value & 0xFFFF);
   int16_t high = (int16_t)((value >> 16) & 0xFFFF);
 
@@ -172,7 +172,7 @@ static int32_t deg_to_ddmm_scaled(double deg) {
  * @param z Z-axis  value (Q15)
  * @param tRaw Raw temperature value
  */
-void sendPacket(uint8_t pid, int16_t x, int16_t y, int16_t z, uint16_t tRaw) {
+static void sendPacket(uint8_t pid, int16_t x, int16_t y, int16_t z, uint16_t tRaw) {
   uint8_t pkt[11];
 
   pkt[0] = 0x55;
@@ -206,7 +206,7 @@ void sendPacket(uint8_t pid, int16_t x, int16_t y, int16_t z, uint16_t tRaw) {
  * @brief Forwards Telnet input into Serial1 (UART bridge mode only).
  * @param activeFlag Set to true if data received
  */
-void imu_handle_data(char ch) {
+static void imu_handle_data(char ch) {
   static int state = 0;
 
   // Wee need to spy on the communication to ba able to adapt to the changes...

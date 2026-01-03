@@ -60,7 +60,7 @@ void setupRADAR()
 
 }
 
-void calculatePayloadChecksum(uint8_t *data) {
+static void calculatePayloadChecksum(uint8_t *data) {
   uint16_t sum = 0;
   for (int i = 4; i < 4 + 7; i++) {
     sum += data[i];
@@ -68,7 +68,7 @@ void calculatePayloadChecksum(uint8_t *data) {
   data[11] = (uint8_t)(sum & 0xFF);
 }
 
-void sendCommand(uint8_t *cmd) {
+static void sendCommand(uint8_t *cmd) {
   
   char buff[10];
 //  calculatePayloadChecksum(cmd);

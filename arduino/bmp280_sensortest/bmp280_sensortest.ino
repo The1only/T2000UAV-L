@@ -3,9 +3,10 @@
 
 #include <Wire.h>
 #include <SPI.h>
+#include <Adafruit_BMP280.h>
+#include <FastLED.h>
 #include <EEPROM.h>
-#include <WiFiUdp.h>
-#include <math.h>
+#include "esp_task_wdt.h"
 
 #define EEPROM_SIZE 16
 #define EEPROM_MAGIC_ADDR 0
@@ -19,20 +20,38 @@
 #define SCL_PIN 6
 #define BMP280_ADDRESS_ALT_LOCAL (0x76)
 
+#define NUM_LEDS 1
+#define DATA_PIN 48
+
+#define WDT_TIMEOUT 5 // seconds
+
+CRGB leds[NUM_LEDS];
+
 float qnh = DEFAULT_QNH;
 float altitude_offset = 0.0f;
 
 Adafruit_BMP280 bmp;  // use I2C interface
 Adafruit_Sensor *bmp_pressure = bmp.getPressureSensor();
 Adafruit_Sensor *bmp_temp = bmp.getTemperatureSensor();
-static float filteredPressValue = 0;
-static float filteredTempValue = 0;
 
-void altimeter_setup() {
-//  Serial.begin(115200);
+void setup() {
+  Serial.begin(115200);
 //  while (!Serial) delay(100);  // wait for native usb
   Serial.println(F("BMP280 Sensor event test..."));
   loadQNH();
+
+  // Initialize Task Watchdog
+  esp_task_wdt_config_t wdt_config = {
+    .timeout_ms = WDT_TIMEOUT * 1000,
+    .idle_core_mask = (1 << portNUM_PROCESSORS) - 1, // watch both cores
+    .trigger_panic = true                            // reset on timeout
+  };
+  esp_task_wdt_init(&wdt_config);
+  // Add loop() task to watchdog
+  esp_task_wdt_add(NULL);
+
+
+  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
 
   // THIS IS THE IMPORTANT LINE
   Wire.begin(SDA_PIN, SCL_PIN);
@@ -63,7 +82,7 @@ void altimeter_setup() {
   }
 }
 
-static void loadQNH() {
+void loadQNH() {
   EEPROM.begin(EEPROM_SIZE);
 
   if (EEPROM.read(EEPROM_MAGIC_ADDR) == EEPROM_MAGIC) {
@@ -76,7 +95,7 @@ static void loadQNH() {
   }
 }
 
-static void saveQNH() {
+void saveQNH() {
   EEPROM.write(EEPROM_MAGIC_ADDR, EEPROM_MAGIC);
   EEPROM.put(EEPROM_QNH_ADDR, qnh);
   EEPROM.commit();
@@ -85,15 +104,15 @@ static void saveQNH() {
   Serial.println(qnh, 2);
 }
 
-static void calibrateAltitude(float pressure, float temp) {
+void calibrateAltitude(float pressure, float temp) {
   altitude_offset = pressureToAltitudeNEW(pressure, temp);
 }
 
-static float getRelativeAltitude(float pressure, float temp) {
+float getRelativeAltitude(float pressure, float temp) {
   return pressureToAltitudeNEW(pressure, temp) - altitude_offset;
 }
 
-static float pressureToAltitudeNEW(float pressure_hPa, float temperature_C) {
+float pressureToAltitudeNEW(float pressure_hPa, float temperature_C) {
   //void temperature_C;
   return 44330.0f * (1.0f - pow(pressure_hPa / qnh, 0.1903f));
 }
@@ -110,40 +129,38 @@ float pressureToAltitude(float pressure_hPa, float temperature_C) {
   return altitude_m;
 }
 */
-static void altitude_handle_data(char dta)  //float pressure, float temperature) {
-{
-  static String cmd = "";
-  cmd=cmd+dta;
+void handleSerialCommands(float pressure, float temperature) {
+  if (!Serial.available()) return;
 
-  if(dta == '\n'){
-    cmd.trim();
-    Serial.println(cmd);
+  String cmd = Serial.readStringUntil('\n');
+  cmd.trim();
 
-    if (cmd.equalsIgnoreCase("CAL")) {
-      calibrateAltitude(filteredPressValue, filteredTempValue);
+  if (cmd.equalsIgnoreCase("CAL")) {
+    calibrateAltitude(pressure, temperature);
+  }
+  else if (cmd.startsWith("QNH=")) {
+    float newQnh = cmd.substring(4).toFloat();
+    if (newQnh > 900 && newQnh < 1100) {
+      qnh = newQnh;
+      saveQNH();
+    } else {
+      Serial.println("Invalid QNH value");
     }
-    else if (cmd.startsWith("QNH=")) {
-      float newQnh = cmd.substring(4).toFloat();
-      if (newQnh > 900 && newQnh < 1100) {
-        qnh = newQnh;
-        saveQNH();
-      } else {
-        Serial.println("Invalid QNH value");
-      }
-    }
-    else if (cmd.equalsIgnoreCase("QNH?")) {
-      Serial.print("Current QNH = ");
-      Serial.println(qnh, 2);
-    }
-    else {
-      Serial.println("Unknown command");
-    }
-    cmd = "";
+  }
+  else if (cmd.equalsIgnoreCase("QNH?")) {
+    Serial.print("Current QNH = ");
+    Serial.println(qnh, 2);
+  }
+  else {
+    Serial.println("Unknown command");
   }
 }
 
-void altimeter_loop() {
+void loop() {
   const float alpha = 0.075; // Smoothing factor (0.0 to 1.0)
+  static float filteredPressValue = 0;
+  static float filteredTempValue = 0;
+  static bool lo = false;
   static int calibrate = 0; // After 10 sec do calibrate...
 
   sensors_event_t temp_event, pressure_event;
@@ -162,6 +179,9 @@ void altimeter_loop() {
     calibrate = 201;
   }
 
+// Handle serial input
+  handleSerialCommands(filteredPressValue, filteredTempValue);
+
   float altitude = pressureToAltitudeNEW(filteredPressValue,filteredTempValue);
   float relative = getRelativeAltitude(filteredPressValue,filteredTempValue);
   /*
@@ -174,22 +194,26 @@ void altimeter_loop() {
   Serial.println(" hPa");
   */
 
-  String s = String("Altimeter,") + 
-              String(filteredPressValue, 4) + "," + 
+  String s = String(filteredPressValue, 4) + "," + 
               String(filteredTempValue, 4) + "," + 
               String(relative, 4) + "," + 
-              String(altitude, 4) +
-              String("\n");
+              String(altitude, 4);
   
-  for (int i = 0; i < MAX_SRV_CLIENTS; i++) {
-    if (serverClients[i] && serverClients[i].connected()) {
-      serverClients[i].write((const uint8_t*)s.c_str(),  s.length());
-    }
+  if (Serial.availableForWrite() > s.length()) {
+    Serial.println(s);
   }
 
-//  if (Serial.availableForWrite() > s.length()) {
-//    Serial.println(s);
-//  }
+  if (lo == true) {
+    //  leds[0] = CRGB::Red; FastLED.show(); delay(500);
+    leds[0] = CRGB::Green;
+    FastLED.show();
+  } else {
+    //  leds[0] = CRGB::Blue; FastLED.show(); delay(500);
+    leds[0] = 0;
+    FastLED.show();
+  }
+  delay(100);
+  lo = !lo;
 
-  delay(200);
+  esp_task_wdt_reset();
 }

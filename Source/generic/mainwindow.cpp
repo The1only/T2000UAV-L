@@ -239,7 +239,7 @@ MainWindow::MainWindow(QWidget *parent)
     _widgetALT  = ui->widgetALT;
     _widgetALT->reinit();
     _widgetASI  = ui->widgetASI;
-    _widgetASI->reinit();
+    _widgetASI->reinit(0);
     _widgetVSI  = ui->widgetVSI;
     _widgetVSI->reinit();
     _widgetHI  = ui->widgetHI;
@@ -1581,15 +1581,32 @@ void MainWindow::onReadingChanged()
                     _widgetALT->setAltitude(this->mysocket->m_preasure_alt);
                 }else if( ui->radioButton_2->isChecked())
                 {
-                    _widgetALT->setAltitude(this->mysocket->m_altitude);
+                    if(this->mysocket->m_altitude > -100.0){
+                        _widgetALT->setAltitude(this->mysocket->m_altitude);
+                    }
+                    else{
+                        _widgetALT->setAltitude(0);
+                    }
                 }else{
                     _widgetALT->setAltitude(m_tansALT);
                 }
 
                 _widgetALT->redraw();
 
-                if(mysocket->m_speed >= 0 && mysocket->m_speed < 300)
+                if(mysocket->Airspeed_data.airspeed > -1){
+                    // If we got airspeed then change display to airspeed...
+                    if(!_widgetASI->getver()){
+                        _widgetASI->reinit(1);
+                    }
+                    _widgetASI->setAirspeed(mysocket->Airspeed_data.airspeed);
+                }
+                else if(mysocket->m_speed >= 0 && mysocket->m_speed < 300){
+                    // If we do NOT got airspeed then change display to groundspeed...
+                    if(_widgetASI->getver()){
+                        _widgetASI->reinit(0);
+                    }
                     _widgetASI->setAirspeed(mysocket->m_speed);
+                }
                 else
                     _widgetASI->setAirspeed(0);
 

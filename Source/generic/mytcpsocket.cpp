@@ -232,6 +232,15 @@ void MyTcpSocket::ssdpConfig()
                     }
                     //}
                 }
+                else if (st == "AIRSPEED") {
+                    m_airspeed_address = addr.toString();
+                    qDebug() << "AIRSPEED FOUND:" << m_airspeed_address;
+                    if (m_airspeedClient) {
+                        //    if (m_transponderClient->state() == QAbstractSocket::UnconnectedState) {
+                        //    m_altimeterClient->disconnectFromHost();
+                    }
+                    //}
+                }
                 else {
                     qDebug() << "Unknown SSDP service type:" << st;
                 }
@@ -394,18 +403,22 @@ void MyTcpSocket::doStart()
         ++state;
         break;
     case 2:
-        connectedIMU();          // try to find & initialize IMU / INS
+        connectedAirspeed();          // try to find & initialize IMU / INS
         ++state;
         break;
     case 3:
-        connectedRadar();          // try to find & initialize IMU / INS
+        connectedIMU();          // try to find & initialize IMU / INS
         ++state;
         break;
     case 4:
-        connected();             // try to find & initialize transponder
+        connectedRadar();          // try to find & initialize IMU / INS
         ++state;
         break;
     case 5:
+        connected();             // try to find & initialize transponder
+        ++state;
+        break;
+    case 6:
         if(delay++ > 15){
             delay = 0;
             setbacklit();     // Android: periodically force bright backlight
@@ -945,6 +958,59 @@ void MyTcpSocket::connectedAltitude()
     }
 }
 
+/**
+ * @brief Try to connect transponder on the configured serial port.
+ *
+ * On success:
+ *   - Sets Transponderstat = true
+ *   - Queries version and configuration
+ *   - Starts timerTRANS to periodically call doTransponder()
+ */
+void MyTcpSocket::connectedAirspeed()
+{
+    if (!Airspeedstat)
+    {
+        NoButtonMessageBox *m_msgBoxIMU = new NoButtonMessageBox(
+            tr("Looking for Networked device Altimeter ..."));
+        m_msgBoxIMU->show();
+        QCoreApplication::processEvents();
+        QThread::msleep(1000);
+        m_msgBoxIMU->hide();
+        delete m_msgBoxIMU;
+
+        if(m_airspeed_address != "")
+        {
+            // somewhere in ctor or init:
+            static void*_this = this;
+            m_airspeedClient = new QTcpSocket(this);
+            connect(m_airspeedClient, &QTcpSocket::connected, this, [this]() {
+                qDebug() << "Airspeed TCP connected";
+                Altitudestat = true;
+            });
+            connect(m_airspeedClient, &QTcpSocket::disconnected, this, [this]() {
+                m_airspeedClient->connectToHost(QHostAddress(m_airspeed_address), 23);
+                qDebug() << "Airspeed TCP disconnected";
+                Altitudestat = false;
+            });
+            connect(m_airspeedClient, &QTcpSocket::readyRead, this, [this]() {
+                QByteArray data = m_airspeedClient->readAll();
+                if (!data.isEmpty()) {
+                    this->parseAirspeedLine(data);
+                }
+            });
+            m_airspeedClient->connectToHost(QHostAddress(m_airspeed_address), 23);
+
+            NoButtonMessageBox *m_msgBoxTransponder = new NoButtonMessageBox(tr("Found Airspeed on wlan!"));
+            m_msgBoxTransponder->show();
+            QCoreApplication::processEvents();
+            QThread::msleep(1000);
+            m_msgBoxTransponder->hide();
+            delete m_msgBoxTransponder;
+
+        }
+    }
+}
+
 // ============================================================================
 // IMU data handling
 // ============================================================================
@@ -1241,6 +1307,41 @@ void MyTcpSocket::handleUpdate(const std::string &ID, const std::string &invalue
     }
 }
 
+// ============================================================================
+// Low-level  helper
+// ============================================================================
+void MyTcpSocket::parseAirspeedLine(const QString &line)
+{
+    bool ok1, ok2, ok3, ok4, ok5, ok6;
+
+    // Remove whitespace and line endings
+    QString clean = line.trimmed();
+
+    // Split CSV
+    QStringList parts = clean.split(',');
+
+    // Expect 5 fields or more...
+    // the received data is buffered up so it might be mush more...
+    if (parts.size() < 8)
+        return;
+
+    // Validate header
+    if (parts[0] != "Airspeed")
+        return;
+
+    m_airspeed = parts[6].toFloat(&ok1);
+
+    // Not used for now...,
+    Airspeed_data.pressure    = parts[1].toFloat(&ok1);
+    Airspeed_data.temperature = parts[2].toFloat(&ok2);
+    Airspeed_data.dpPa        = parts[3].toFloat(&ok3);
+    Airspeed_data.offset      = parts[4].toFloat(&ok4);
+    Airspeed_data.corrected   = parts[5].toFloat(&ok5);
+    Airspeed_data.airspeed    = parts[6].toFloat(&ok6)*3.6;
+
+//    if (!(ok1 && ok2 && ok3 && ok4))
+//        return std::nullopt;
+}
 
 // ============================================================================
 // Low-level  helper
@@ -1272,8 +1373,8 @@ void MyTcpSocket::parseAltimeterLine(const QString &line)
     Altimeter_data.relative    = parts[3].toFloat(&ok3);
     Altimeter_data.altitude    = parts[4].toFloat(&ok4);
 
-//    if (!(ok1 && ok2 && ok3 && ok4))
-//        return std::nullopt;
+    //    if (!(ok1 && ok2 && ok3 && ok4))
+    //        return std::nullopt;
 }
 
 // ============================================================================

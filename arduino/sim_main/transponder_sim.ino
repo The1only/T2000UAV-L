@@ -54,7 +54,7 @@ void setupTRANSPONDER() {
 
 //--------------------------------------------------
 // This now loops and writes to my selfe...
-void write_to_transponder(char r)
+static void write_to_transponder(char r)
 {
   static int ping_time = 0;
  // Serial.print("-");
@@ -159,7 +159,7 @@ void write_to_transponder(char r)
 }
 
 // ----------------------
-void handle_data(char r)
+static void handle_data(char r)
 {
   timout = 0;
   write_to_transponder(r);
@@ -171,7 +171,7 @@ void handle_data(char r)
 }
 
 //--------------------------------------------
-void send_to_transponder(char *x)
+static void send_to_transponder(char *x)
 {
   int size = strlen(x);
   for(int i=0; i < size; i++) write_to_transponder(x[i]);

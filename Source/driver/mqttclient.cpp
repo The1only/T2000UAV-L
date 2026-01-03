@@ -30,7 +30,12 @@ void MqttClient::connect(bool cleanSession, std::chrono::seconds keepAlive)
 
     try {
         auto tok = client_.connect(connOpts);
+        // This line is removed for not as it causes boot tile to increas....
+        // It MUST be put back for releas code...
+#ifdef RELEASE_BUILD
+        // Release-only code
         tok->wait();  // Synchronous wait: keep API simple
+#endif
     }
     catch (const mqtt::exception&) {
         // For simplicity we ignore connect failures here (often happens on shutdown);

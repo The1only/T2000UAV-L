@@ -15,6 +15,14 @@ INCLUDEPATH += ./Header/generic/
 INCLUDEPATH += ./Source/driver/
 INCLUDEPATH += ./Header/driver/
 
+CONFIG(debug, debug|release) {
+    DEFINES += DEBUG_BUILD
+}
+
+CONFIG(release, debug|release) {
+    DEFINES += RELEASE_BUILD
+}
+
 # ---- common defines ----
 DEFINES += QT_NO_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000

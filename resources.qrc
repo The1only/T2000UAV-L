@@ -44,5 +44,6 @@
         <file>images/tree.png</file>
         <file>images/two.png</file>
         <file>images/zero.png</file>
+        <file>images/radar_4.png</file>
     </qresource>
 </RCC>

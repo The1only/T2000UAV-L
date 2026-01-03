@@ -38,8 +38,9 @@
 #define SENSOR_IMU 2
 #define SENSOR_TRANSPONDER 3
 #define SENSOR_ALTIMETER 4
+#define SENSOR_AIRSPEED 5
 
-#define SENSOR_V SENSOR_TRANSPONDER  // set this manually or with build flags
+#define SENSOR_V SENSOR_AIRSPEED  // set this manually or with build flags
 
 #if SENSOR_V == SENSOR_RADAR
 #define SENSOR "RADAR"  //              ///< Sensor identifier reported in SSDP USN
@@ -49,6 +50,8 @@
 #define SENSOR "TRANSPONDER"  //              ///< Sensor identifier reported in SSDP USN
 #elif SENSOR_V == SENSOR_ALTIMETER
 #define SENSOR "ALTIMETER"  //              ///< Sensor identifier reported in SSDP USN
+#elif SENSOR_V == SENSOR_AIRSPEED
+#define SENSOR "AIRSPEED"  //              ///< Sensor identifier reported in SSDP USN
 #endif
 
 #define SENSOR_TYPE "Airplane-device"  ///< SSDP search target (ST)
@@ -69,7 +72,7 @@
 CRGB leds[NUM_LEDS];
 #endif
 
-bool SIMULATE = true;
+bool SIMULATE = false;
 
 // -----------------------------------------------------------------------------
 // Timing / LED
@@ -341,10 +344,12 @@ void handleTelnetToSerial(bool &activeFlag) {
           imu_handle_data(ch);
         }
         else{
-        Serial1.print((char)ch);
+          Serial1.print((char)ch);
         }
 #elif SENSOR_V == SENSOR_RADAR
-
+// ..
+#elif SENSOR_V == SENSOR_AIRSPEED
+//..
 #elif SENSOR_V == SENSOR_ALTIMETER
         altitude_handle_data(ch);
 #endif
@@ -494,10 +499,8 @@ void setup() {
     delay(10);
   }
 
-  Serial.println("v1.0");
-  Serial.print(SENSOR);
-
-  Serial1.begin(9600, SERIAL_8N1, 5, 4);  // Baud, format, RX pin, TX pin (check your board!)
+  Serial.print("v1.0 -> ");
+  Serial.println(SENSOR);
 
   // Set up LED...
 #ifdef USE_FastLED
@@ -513,7 +516,6 @@ void setup() {
   // esp_task_wdt_init(&wdt_config);
   // Add loop() task to watchdog
   // esp_task_wdt_add(NULL);
-
 
   loadStoredCredentials();
   addAccessPoints();
@@ -561,17 +563,20 @@ void setup() {
   //#endif
 
 #if SENSOR_V == SENSOR_RADAR
+  Serial1.begin(9600, SERIAL_8N1, 5, 4);  // Baud, format, RX pin, TX pin (check your board!)
   setupRADAR();
 #elif SENSOR_V == SENSOR_TRANSPONDER
+  Serial1.begin(9600, SERIAL_8N1, 5, 4);  // Baud, format, RX pin, TX pin (check your board!)
   setupTRANSPONDER();
 #elif SENSOR_V == SENSOR_imu
 //  imu_setup();
 #elif SENSOR_V == SENSOR_ALTIMETER
   altimeter_setup();
+#elif SENSOR_V == SENSOR_AIRSPEED
+  airspeed_setup();
 #endif
 
-
-  Serial.println(" Booted...");
+  Serial.println(" Booted...");  
 }
 
 
@@ -636,6 +641,8 @@ void loop() {
     #elif SENSOR_V == SENSOR_ALTIMETER
     handleTelnetToSerial(active);
     altimeter_loop();
+    #elif SENSOR_V == SENSOR_AIRSPEED
+    airspeed_loop();
     #endif
   }
 
