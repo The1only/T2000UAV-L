@@ -1,3 +1,5 @@
+# AI KEy  REMOVED_OPENAI_API_KEY
+
 TEMPLATE = app
 TARGET = lowenergyscanner
 
@@ -14,6 +16,7 @@ INCLUDEPATH += ./Source/generic/
 INCLUDEPATH += ./Header/generic/
 INCLUDEPATH += ./Source/driver/
 INCLUDEPATH += ./Header/driver/
+INCLUDEPATH += /Users/terjenilsen/Dropbox/Sportsfly/transponder/paho.mqtt.cpp
 
 CONFIG(debug, debug|release) {
     DEFINES += DEBUG_BUILD
