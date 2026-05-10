@@ -1194,7 +1194,7 @@ void MainWindow::calcPosition(double vel_D)
     // Fi we are simulation GPS (and we do not use MQTT)
     if(simGPS == true && !mysocket->m_has_MQTT)
     {
-        static bool first = true;
+ //       static bool first = true;
         static QList<TrackPoint> points;
 
         // IF this is the boot time, we read inn the stimuli data from the simulation file...

@@ -60,8 +60,8 @@ static const uint8_t __auchCRCLo[256] = {
     0x40
 };
 
-
-static uint16_t __CRC16(uint8_t *puchMsg, uint16_t usDataLen)
+static uint16_t __attribute__((unused)) __CRC16(uint8_t *puchMsg, uint16_t usDataLen)
+//static uint16_t __CRC16(uint8_t *puchMsg, uint16_t usDataLen)
 {
     uint8_t uchCRCHi = 0xFF;
     uint8_t uchCRCLo = 0xFF;

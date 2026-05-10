@@ -42,7 +42,9 @@ Matrix3x3 createRotationMatrix(Vector3x theta){
 }
 
 Matrix3x3 multiplyMatrix(const Matrix3x3& mat1, const Matrix3x3& mat2) {
-    Matrix3x3 result = {{0.0}}; // Initialize result matrix with zeros
+    //Matrix3x3 result = {{0.0}}; // Initialize result matrix with zeros
+    Matrix3x3 result = {{{0.0}}};
+
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             result[i][j] = 0;

@@ -24,12 +24,11 @@
 #include "bleuart.h"
 
 // Look for an external IMU over Bluetooth
-//#ifndef Q_OS_IOS
-//#undef  USE_BT_IMU
-#define USE_BT_IMU
-//#else
-//#undef  USE_BT_IMU
-//#endif
+#ifndef Q_OS_IOS
+    #define USE_BT_IMU
+#else
+    #undef  USE_BT_IMU
+#endif
 
 #ifdef Q_OS_IOS
 #undef Q_OS_MAC

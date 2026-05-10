@@ -288,6 +288,7 @@ void MyTcpSocket::setSerialPorts(QString imu, QString transponder, QString radar
 QVector<PortEntry> MyTcpSocket::listSerialPortsDetailed()
 {
     QVector<PortEntry> out;
+#ifndef Q_OS_IOS
     const auto ports = QSerialPortInfo::availablePorts();
     out.reserve(ports.size());
 
@@ -302,6 +303,7 @@ QVector<PortEntry> MyTcpSocket::listSerialPortsDetailed()
         e.productId      = p.hasProductIdentifier() ? p.productIdentifier() : 0;
         out.push_back(e);
     }
+#endif
     return out;
 }
 
@@ -316,6 +318,8 @@ QMap<QString, QString> MyTcpSocket::serialToPortMap(bool useSystemLocation)
     static QString portNum ="";  // reused temporary
 
     QMap<QString, QString> result;
+    
+#ifndef Q_OS_IOS
     static const auto &x= listSerialPortsDetailed();
     for (const auto &e : listSerialPortsDetailed()) {
         // If FTDI og Profillic...
@@ -383,6 +387,7 @@ QMap<QString, QString> MyTcpSocket::serialToPortMap(bool useSystemLocation)
 
         }
     }
+#endif
     qDebug() << result;
     return result;
 }
