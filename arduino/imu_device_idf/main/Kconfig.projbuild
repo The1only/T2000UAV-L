@@ -1,0 +1,24 @@
+menu "Project settings"
+
+config SENSOR_MODE
+    int "Sensor mode"
+    default 3
+    range 1 3
+    help
+        1 = RADAR
+        2 = IMU
+        3 = TRANSPONDER
+
+config ENABLE_SIMULATOR
+    bool "Enable WIT packet simulator"
+    default y
+
+config TELNET_PORT
+    int "Telnet port"
+    default 23
+
+config SSDP_PORT
+    int "SSDP UDP port"
+    default 4210
+
+endmenu

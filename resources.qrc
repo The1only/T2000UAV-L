@@ -1,0 +1,50 @@
+<RCC>
+    <qresource prefix="/">
+        <file>places_map.qml</file>
+        <file>marker.qml</file>
+        <file>example.gpx</file>
+        <file>sin.gpx</file>
+        <file>images/arrow-right.svg</file>
+        <file>images/backwards.svg</file>
+        <file>images/button1.png</file>
+        <file>images/button1.png.paint</file>
+        <file>images/button2.png</file>
+        <file>images/compass.png</file>
+        <file>images/config.svg</file>
+        <file>images/del.png</file>
+        <file>images/eight.png</file>
+        <file>images/engage.png</file>
+        <file>images/enter.png</file>
+        <file>images/five.png</file>
+        <file>images/fore.png</file>
+        <file>images/forwards.svg</file>
+        <file>images/frontend.png</file>
+        <file>images/GPS Velocity Components (NED Frame).png</file>
+        <file>images/ident_off.png</file>
+        <file>images/ident_on.png</file>
+        <file>images/ident.png</file>
+        <file>images/image_2.png</file>
+        <file>images/image_3.png</file>
+        <file>images/image_4.png</file>
+        <file>images/image_5.png</file>
+        <file>images/image_6.png</file>
+        <file>images/image.png</file>
+        <file>images/nine.png</file>
+        <file>images/one.png</file>
+        <file>images/plane.png</file>
+        <file>images/podcast.svg</file>
+        <file>images/power1.png</file>
+        <file>images/radar.png</file>
+        <file>images/radar_2.png</file>
+        <file>images/radar_3.png</file>
+        <file>images/seven.png</file>
+        <file>images/six.png</file>
+        <file>images/splash.png</file>
+        <file>images/test1.png</file>
+        <file>images/tree.png</file>
+        <file>images/two.png</file>
+        <file>images/zero.png</file>
+        <file>images/radar_4.png</file>
+        <file>images/imageB.png</file>
+    </qresource>
+</RCC>

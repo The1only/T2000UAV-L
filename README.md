@@ -1,0 +1,112 @@
+# IMU / Radar / Transponder for Sports planes
+
+System Update Summary
+	•	Added a computer-screen layout optimized for larger displays and desktop use.
+	•	Added airspeed support, including Arduino firmware for the MS4525 differential airspeed sensor.
+	•	Migrated the platform to ESP32-S3.
+
+⸻
+
+Supported Sensors and Subsystems
+
+Barometer
+	•	Provides altitude information.
+	•	Supports:
+	•	Internal barometer
+	•	External BMP280 barometer
+	•	External barometer can be connected via USB or WLAN through an Arduino.
+
+⸻
+
+Airspeed
+	•	Provides an indicated airspeed display.
+	•	Uses an external Arduino connected to an MS4525 differential pressure sensor.
+	•	Communication supported over USB or WLAN.
+
+⸻
+
+IMU (Attitude and Motion)
+	•	Provides attitude, turn, slip, and artificial horizon.
+	•	Supports:
+	•	Built-in IMU sensors
+	•	External WITMOTION IMU sensors
+	•	Connection options:
+	•	Bluetooth
+	•	USB
+	•	Arduino-based interface
+	•	Includes an IMU simulator for debugging and development.
+
+⸻
+
+GPS
+	•	Provides:
+	•	Groundspeed
+	•	Position (latitude/longitude)
+	•	Absolute altitude
+	•	GPS data can originate from:
+	•	Internal GPS sensor
+	•	External IMU-integrated GPS
+
+⸻
+
+Transponder
+	•	Supports T2000-UAV Mode A/C transponder.
+	•	Full support for all transponder functions.
+	•	Arduino-based interfaces supported over:
+	•	USB
+	•	WLAN
+
+⸻
+
+Radar
+	•	Supports NanoRadar ground-tracking radar systems.
+	•	Radar can be mounted to measure:
+	•	Altitude
+	•	Ground speed
+	•	Altitude measurement provides the best accuracy.
+	•	Supported models:
+	•	300 m range
+	•	3000 m range
+	•	Additional models can be supported as needed.
+
+
+This software creates a bridge to all the devices.
+On PC and Android one can use USB-Serial and connect with cable or Bluetooth. However NOT on IOS (iPhone/iPad) these are restricted.  
+On all systems one can use WLan bridges using ARDUINO and SSDP over Broadcast.
+
+We uses the ESP32S3 as Sensor simulator and sensor inteface. 
+Also the ESP32C6 works, the ESP32C3 is a low cost solution, using Wlan I have seen some working some not, USB seems fine for all.
+
+It includes tree artificial horizon versions, camera, map, list of used frequencies and call signs, a RADAR, and a Transponder Mode C screen.
+In addition up to 4 screens can be connected at the same time (Android + iPhone + iPad etc. in any combination)
+The system supports both external IMU and internal Android and IOS IMU (prety bad on all devices). 
+It can be used in a split screen on a pad together with Skydemon etc.
+Soon to come an Autopilot interface (the screen is there already).
+
+Takeoff and landing is automatically logged to screen and log file, as is the local QNH (by calculating it from the GPS altitude when at ground/not moving). 
+
+<img width="867" height="410" alt="Screenshot 2025-10-24 at 14 13 30" src="https://github.com/user-attachments/assets/e9bac420-f465-4934-8e1d-e7a1b7004baf" />
+<img width="865" height="410" alt="Screenshot 2025-10-24 at 14 18 13" src="https://github.com/user-attachments/assets/9b340342-3944-4415-bb72-3d4a53b99011" />
+<img width="865" height="378" alt="Screenshot 2025-11-21 at 13 33 03" src="https://github.com/user-attachments/assets/6e30c939-8673-4881-ac2a-ba5833163d5e" />
+<img width="860" height="373" alt="Screenshot 2025-11-21 at 13 33 15" src="https://github.com/user-attachments/assets/07c4ab33-8c71-4db3-a341-f9b255b09c53" />
+
+![Image 14-02-2025 at 17 27](https://github.com/user-attachments/assets/aba1260b-9114-43ed-a97e-ba2f127c9c8b)
+![Image 14-02-2025 at 17 27 (1)](https://github.com/user-attachments/assets/70d21569-e40b-4f17-9266-99547bd3e868)
+
+![IMG_0917](https://github.com/user-attachments/assets/0493c3a0-16d4-4a38-be89-f638df30b38e)
+![Image 02-10-2024 at 12 04](https://github.com/user-attachments/assets/cd66978a-af2e-43ad-bf76-4d7dfc3056ae)
+
+![IMG_0923](https://github.com/user-attachments/assets/ab5e302f-c7a1-4116-b5f9-e0cb81a96349)
+![IMG_0922](https://github.com/user-attachments/assets/9e7f01c7-ca1d-4382-8a61-2bd3c34d8bc0)
+
+https://github.com/user-attachments/assets/b51a6757-2694-4823-8a55-b29c78411293
+
+
+
+https://github.com/user-attachments/assets/cae083fd-6b50-4ff1-9921-959475d50658
+<<<<<<< HEAD
+
+=======
+>>>>>>> 69d3ffa3daead801b1e40fd761a8766854bc8e1d
+
+

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>CFBundleIconFile</key>
+	<string>${ASSETCATALOG_COMPILER_APPICON_NAME}</string>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>image_3.png</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+	</dict>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleName</key>
+	<string>terjenilsen</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${QMAKE_SHORT_VERSION}</string>
+	<key>CFBundleSignature</key>
+	<string>${QMAKE_PKGINFO_TYPEINFO}</string>
+	<key>CFBundleVersion</key>
+	<string>${QMAKE_FULL_VERSION}</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>MinimumOSVersion</key>
+	<string>${IPHONEOS_DEPLOYMENT_TARGET}</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Qt LE scanner wants to access your Bluetooth adapter</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_ssdp._udp</string>
+		<string>_http._tcp</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to record voice memos.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app discovers sensors on your local network.</string>
+	<key>NSLocationAlwaysAndWhenInUsageDescription</key>
+	<string>Always and in usage permissions</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>always permissions</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>When in use permissions</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Need to use this</string>
+	<key>NSTerjeNilsen</key>
+	<string>This is a test.</string>
+	<key>UILaunchStoryboardName</key>
+	<string></string>
+	<key>UIStatusBarStyle</key>
+	<string></string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>com.apple.developer.networking.multicast</key>
+	<true/>
+</dict>
+</plist>

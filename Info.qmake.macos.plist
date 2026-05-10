@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>NSLocalNetworkUsageDescription</key>
+        <string>This app discovers local sensors and needs LAN access.</string>
+        <key>com.apple.developer.networking.multicast</key>
+        <true/>
+        <key>NSLocationAlwaysUsageDescription</key>
+        <string>Program requires GPS</string>
+        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+        <string>Program requires GPS</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>Program requires GPS</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>This app uses your Microphone to allow Voice over IP communication with the Program Admin system</string>
+        <key>NSLocationUsageDescription</key>
+        <string>For test</string>
+        <key>NSCameraUsageDescription</key>
+        <string>Need to access your camera to capture a photo add and update profile picture.</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Need to access your photo library to select a photo add and update profile picture</string>
+        <key>CFBundleExecutable</key>
+        <string>${EXECUTABLE_NAME}</string>
+        <key>CFBundleIconFile</key>
+        <string></string>
+        <key>CFBundleIdentifier</key>
+        <string>${PRODUCT_BUNDLE_IDENTIFIER}</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleSignature</key>
+        <string>????</string>
+        <key>LSMinimumSystemVersion</key>
+        <string>${MACOSX_DEPLOYMENT_TARGET}</string>
+        <key>NSPrincipalClass</key>
+        <string>NSApplication</string>
+        <key>NSSupportsAutomaticGraphicsSwitching</key>
+        <true/>
+        <key>NSBluetoothAlwaysUsageDescription</key>
+        <string>This app uses Bluetooth to communicate with nearby devices.</string>
+        <key>UIBackgroundModes</key>
+        <array>
+            <string>bluetooth-central</string>
+        </array>
+        <key>TerjeNilsen</key>
+        <string>This is a test.</string>
+</dict>
+</plist>

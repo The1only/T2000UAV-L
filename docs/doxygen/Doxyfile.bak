@@ -1,0 +1,8 @@
+INPUT += \
+    docs/doxygen \
+    src \
+    include
+
+FILE_PATTERNS = *.h *.cpp *.dox
+RECURSIVE = YES
+
