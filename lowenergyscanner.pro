@@ -1,5 +1,7 @@
 # AI KEy  REMOVED_OPENAI_API_KEY
 
+DEFINES += OPENAI_API_KEY=\\\"$$system(echo $$OPENAI_API_KEY)\\\"
+
 TEMPLATE = app
 TARGET = lowenergyscanner
 
